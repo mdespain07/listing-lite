@@ -1,7 +1,14 @@
 "use client";
 
+import { Cormorant_Garamond } from "next/font/google";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useDropzone } from "react-dropzone";
+
+const cormorant = Cormorant_Garamond({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+  display: "swap",
+});
 
 const MAX_IMAGES = 5;
 const INITIAL_CREDITS = 3;
@@ -55,13 +62,13 @@ function conditionBadgeClass(condition) {
   if (c.includes("poor")) {
     return "border-red-200 bg-red-50 text-red-800";
   }
-  return "border-zinc-200 bg-zinc-100 text-zinc-700";
+  return "border-[#E8E4DC] bg-[#FAFAF8] text-[#1A1A18]";
 }
 
 function Spinner() {
   return (
     <svg
-      className="h-9 w-9 animate-spin text-teal-600"
+      className="h-9 w-9 animate-spin text-[#C9A96E]"
       xmlns="http://www.w3.org/2000/svg"
       fill="none"
       viewBox="0 0 24 24"
@@ -85,6 +92,23 @@ function Spinner() {
 }
 
 /**
+ * @param {{ children: import('react').ReactNode }} props
+ */
+function SectionLabel({ children }) {
+  return (
+    <div className="mb-3 flex min-w-0 items-center gap-3">
+      <span className="shrink-0 text-[10px] font-medium uppercase leading-none tracking-[0.14em] text-[#888780]">
+        {children}
+      </span>
+      <span
+        className="h-px min-w-[1rem] flex-1 bg-[#E8E4DC]"
+        aria-hidden
+      />
+    </div>
+  );
+}
+
+/**
  * @param {{ text: string; label: string }} props
  */
 function CopyableField({ text, label }) {
@@ -103,22 +127,22 @@ function CopyableField({ text, label }) {
   return (
     <div>
       <div className="mb-2.5 flex items-center justify-between gap-2">
-        <span className="text-xs font-semibold uppercase tracking-wider text-zinc-500">
+        <span className="text-[10px] font-medium uppercase tracking-[0.14em] text-[#888780]">
           {label}
         </span>
         <button
           type="button"
           onClick={copy}
-          className="rounded-lg border border-zinc-200/90 bg-white px-3 py-1.5 text-xs font-semibold text-zinc-700 shadow-sm transition-colors hover:border-teal-200 hover:bg-teal-50/60 hover:text-teal-900 focus:outline-none focus:ring-2 focus:ring-teal-500/30 focus:ring-offset-1"
+          className="rounded-[8px] border-[0.5px] border-[#E8E4DC] bg-white px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-[#1A1A18] transition-colors hover:bg-[#FAFAF8] focus:outline-none focus:ring-1 focus:ring-[#C9A96E]/50"
         >
-          {copied ? "Copied!" : "Copy"}
+          {copied ? "Copied" : "Copy"}
         </button>
       </div>
       <textarea
         readOnly
         value={text}
         rows={label.includes("Description") ? 8 : 2}
-        className="w-full resize-y rounded-xl border border-zinc-200 bg-zinc-50/80 px-3.5 py-3 font-mono text-[13px] leading-relaxed text-zinc-900 focus:outline-none focus:ring-2 focus:ring-teal-500/25 focus:border-teal-300/80"
+        className="w-full resize-y rounded-[12px] border-[0.5px] border-[#E8E4DC] bg-[#FAFAF8] px-3.5 py-3 font-mono text-[13px] leading-relaxed text-[#1A1A18] focus:outline-none focus:ring-1 focus:ring-[#C9A96E]/40"
         onFocus={(e) => e.target.select()}
       />
     </div>
@@ -277,131 +301,103 @@ export default function Home() {
   };
 
   return (
-    <div className="flex min-h-full flex-col bg-gradient-to-b from-zinc-50 via-white to-teal-50/30 font-sans text-zinc-900 antialiased">
-      <header className="border-b border-zinc-200/80 bg-white/95 shadow-sm shadow-zinc-900/[0.03] backdrop-blur-md">
+    <div className="flex min-h-full flex-col bg-[#F8F6F2] font-sans text-[#1A1A18] antialiased">
+      <header className="bg-[#1A1A18]">
         <div className="mx-auto flex max-w-3xl items-center justify-between gap-4 px-4 py-4 sm:px-6 sm:py-5">
-          <div className="flex items-center gap-3.5">
-            <div
-              className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-teal-500 to-teal-700 text-sm font-bold tracking-tight text-white shadow-md shadow-teal-900/25 ring-1 ring-white/20"
-              aria-hidden
-            >
-              LS
-            </div>
-            <div>
-              <p className="text-lg font-semibold tracking-tight text-zinc-900 sm:text-xl">
-                ListSmart Lite
-              </p>
-              <p className="text-[13px] leading-snug text-zinc-500">
-                Listings for eBay, Marketplace &amp; more
-              </p>
-            </div>
-          </div>
+          <p
+            className={`${cormorant.className} text-xl font-semibold tracking-[0.02em] text-white sm:text-2xl`}
+          >
+            ListSmart Lite
+          </p>
           <div
-            className="flex shrink-0 items-center gap-2 rounded-full border border-zinc-200/90 bg-white px-3.5 py-2 text-sm shadow-sm"
+            className="flex shrink-0 items-center rounded-full bg-[#C9A96E] px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#1A1A18]"
             role="status"
             aria-label={`${credits} credits remaining`}
           >
-            <span className="relative flex h-2 w-2">
-              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-teal-400 opacity-40" />
-              <span className="relative inline-flex h-2 w-2 rounded-full bg-teal-500" />
-            </span>
-            <span className="font-semibold tabular-nums text-zinc-800">
-              {credits} credits
-            </span>
+            {credits} credits
           </div>
         </div>
       </header>
 
-      <main className="mx-auto w-full max-w-3xl flex-1 px-4 py-10 sm:px-6 sm:py-12">
-        <div className="rounded-2xl border border-zinc-200/80 bg-white p-7 shadow-xl shadow-zinc-900/[0.04] ring-1 ring-zinc-900/[0.02] sm:p-10">
-          <h1 className="text-balance text-2xl font-semibold tracking-tight text-zinc-900 sm:text-3xl sm:leading-tight">
-            Describe your item with photos
-          </h1>
-          <p className="mt-3 max-w-2xl text-base leading-relaxed text-zinc-600">
-            Add up to {MAX_IMAGES} clear photos. We&apos;ll help you craft a
-            listing you can use on eBay, Facebook Marketplace, KSL Classifieds,
-            and similar sites.
+      <section className="bg-[#1A1A18] px-4 pb-12 pt-10 sm:px-6 sm:pb-14 sm:pt-12">
+        <div className="mx-auto max-w-3xl">
+          <p className="text-[10px] font-medium uppercase tracking-[0.2em] text-[#C9A96E]">
+            Listing intelligence
           </p>
+          <h1
+            className={`${cormorant.className} mt-5 max-w-2xl text-balance text-[2.125rem] font-medium leading-[1.12] tracking-[0.01em] text-white sm:text-5xl sm:leading-[1.08]`}
+          >
+            Sell smarter. List faster.
+          </h1>
+          <p className="mt-5 max-w-lg text-sm leading-relaxed text-[#9C9A94] sm:text-[15px]">
+            Add up to {MAX_IMAGES} photos and optional notes — we analyze your
+            item, draft listing copy, and prepare sales-ready images for
+            marketplaces and classifieds.
+          </p>
+        </div>
+      </section>
 
-          <div className="mt-10 space-y-8">
+      <main className="mx-auto w-full max-w-3xl flex-1 px-4 py-10 sm:px-6 sm:py-12">
+        <div className="rounded-[12px] border-[0.5px] border-[#E8E4DC] bg-[#FFFFFF] p-7 sm:p-9">
+          <div className="space-y-9">
             <div>
-              <label className="mb-3 block text-xs font-semibold uppercase tracking-wider text-zinc-500">
-                Photos <span className="font-medium normal-case text-zinc-400">(1–5)</span>
-              </label>
+              <SectionLabel>Photos (1–5)</SectionLabel>
               <div
                 {...getRootProps()}
                 className={[
-                  "relative flex min-h-[196px] cursor-pointer flex-col items-center justify-center overflow-hidden rounded-2xl border-2 border-dashed px-6 py-10 transition-all duration-200",
+                  "relative flex min-h-[200px] cursor-pointer flex-col items-center justify-center overflow-hidden rounded-[12px] border border-dashed border-[#E8E4DC] bg-[#FAFAF8]/50 px-6 py-10 transition-colors",
                   files.length >= MAX_IMAGES
-                    ? "cursor-not-allowed border-zinc-200 bg-zinc-50/80 opacity-65"
+                    ? "cursor-not-allowed opacity-50"
                     : isDragActive
-                      ? "scale-[1.01] border-teal-400 bg-teal-50/90 shadow-inner shadow-teal-900/5"
-                      : "border-zinc-200 bg-zinc-50/40 hover:border-teal-300 hover:bg-teal-50/25 hover:shadow-md hover:shadow-teal-900/[0.04]",
+                      ? "border-[#C9A96E] bg-[#F8F6F2]"
+                      : "hover:border-[#C9A96E]/60 hover:bg-[#FAFAF8]",
                 ].join(" ")}
               >
                 <input {...getInputProps()} />
-                <div
-                  className={[
-                    "mb-4 flex h-14 w-14 items-center justify-center rounded-2xl transition-colors",
-                    isDragActive && files.length < MAX_IMAGES
-                      ? "bg-teal-100 text-teal-700"
-                      : "bg-white text-teal-600 shadow-sm ring-1 ring-zinc-200/80",
-                  ].join(" ")}
-                >
+                <div className="mb-5 flex h-16 w-16 items-center justify-center rounded-full bg-[#1A1A18] shadow-md">
                   <svg
-                    className="h-7 w-7"
+                    className="h-7 w-7 text-[#C9A96E]"
                     fill="none"
                     viewBox="0 0 24 24"
                     stroke="currentColor"
-                    strokeWidth={1.5}
+                    strokeWidth="1.75"
                     aria-hidden
                   >
                     <path
                       strokeLinecap="round"
                       strokeLinejoin="round"
-                      d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5"
+                      d="M12 5v14m0 0l-6-6m6 6l6-6"
                     />
                   </svg>
                 </div>
                 {files.length >= MAX_IMAGES ? (
-                  <p className="text-center text-sm font-semibold text-zinc-600">
+                  <p className="text-center text-sm font-medium text-[#888780]">
                     Maximum {MAX_IMAGES} photos reached
                   </p>
                 ) : (
                   <>
-                    <p className="text-center text-base font-semibold text-zinc-900">
+                    <p
+                      className={`${cormorant.className} text-center text-xl font-medium tracking-[0.02em] text-[#1A1A18] sm:text-2xl`}
+                    >
                       {isDragActive
-                        ? "Drop images here"
+                        ? "Release to upload"
                         : "Upload product photos"}
                     </p>
-                    <p className="mt-2 max-w-xs text-center text-sm leading-relaxed text-zinc-500">
+                    <p className="mt-3 max-w-sm text-center text-sm leading-relaxed text-[#888780]">
                       {isDragActive
-                        ? "Release to add them to your listing"
-                        : "Drag and drop files here, or click anywhere in this area to browse your device."}
+                        ? "Add them to your listing."
+                        : "Drag and drop here, or click to browse. PNG, JPG, or WebP — up to five images."}
                     </p>
-                    <div className="mt-5 flex flex-wrap items-center justify-center gap-2">
-                      {["PNG", "JPG", "WebP"].map((fmt) => (
-                        <span
-                          key={fmt}
-                          className="rounded-md border border-zinc-200/90 bg-white px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide text-zinc-500"
-                        >
-                          {fmt}
-                        </span>
-                      ))}
-                      <span className="text-[11px] font-medium text-zinc-400">
-                        · max {MAX_IMAGES}
-                      </span>
-                    </div>
                   </>
                 )}
               </div>
 
               {files.length > 0 && (
-                <ul className="mt-5 grid grid-cols-2 gap-3.5 sm:grid-cols-3 sm:gap-4">
+                <ul className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4">
                   {files.map((file, index) => (
                     <li
                       key={`${file.name}-${file.lastModified}-${index}`}
-                      className="group relative aspect-square overflow-hidden rounded-xl border border-zinc-200/90 bg-zinc-100 shadow-md shadow-zinc-900/5 ring-1 ring-zinc-900/[0.02]"
+                      className="group relative aspect-square overflow-hidden rounded-[12px] border-[0.5px] border-[#E8E4DC] bg-[#FAFAF8]"
                     >
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img
@@ -412,7 +408,7 @@ export default function Home() {
                       <button
                         type="button"
                         onClick={() => removeAt(index)}
-                        className="absolute right-2 top-2 flex h-8 w-8 items-center justify-center rounded-full bg-zinc-900/80 text-white opacity-0 shadow-lg backdrop-blur-sm transition-all hover:bg-zinc-950 group-hover:opacity-100 focus:opacity-100 focus:outline-none focus:ring-2 focus:ring-teal-400 focus:ring-offset-2"
+                        className="absolute right-2 top-2 flex h-8 w-8 items-center justify-center rounded-full bg-[#1A1A18] text-[#C9A96E] opacity-0 shadow-md transition-opacity hover:bg-black group-hover:opacity-100 focus:opacity-100 focus:outline-none focus:ring-1 focus:ring-[#C9A96E]"
                         aria-label={`Remove image ${index + 1}`}
                       >
                         <svg
@@ -436,76 +432,45 @@ export default function Home() {
             </div>
 
             <div>
-              <label
-                htmlFor="item-notes"
-                className="mb-3 block text-xs font-semibold uppercase tracking-wider text-zinc-500"
-              >
-                Notes{" "}
-                <span className="font-medium normal-case text-zinc-400">(optional)</span>
-              </label>
+              <SectionLabel>Notes (optional)</SectionLabel>
               <textarea
                 id="item-notes"
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
                 rows={4}
                 placeholder='e.g. "Small crack on the base", "Original box included", "Battery holds ~80% charge"'
-                className="w-full resize-y rounded-xl border border-zinc-200 bg-white px-4 py-3.5 text-[15px] leading-relaxed text-zinc-900 placeholder:text-zinc-400 shadow-sm transition-colors focus:border-teal-400 focus:outline-none focus:ring-2 focus:ring-teal-500/20"
+                className="w-full resize-y rounded-[12px] border-[0.5px] border-[#E8E4DC] bg-white px-4 py-3.5 text-[15px] leading-relaxed text-[#1A1A18] placeholder:text-[#888780] focus:outline-none focus:ring-1 focus:ring-[#C9A96E]/50"
               />
             </div>
 
-            <div className="pt-1">
+            <div>
               <button
                 type="button"
                 disabled={!canAnalyze}
                 onClick={handleAnalyze}
-                className="group relative w-full overflow-hidden rounded-2xl bg-gradient-to-r from-teal-600 via-teal-600 to-teal-700 px-6 py-4 text-center text-base font-semibold tracking-tight text-white shadow-lg shadow-teal-900/25 ring-1 ring-teal-500/40 transition-all hover:from-teal-500 hover:via-teal-600 hover:to-teal-700 hover:shadow-xl hover:shadow-teal-900/30 focus:outline-none focus:ring-2 focus:ring-teal-400 focus:ring-offset-2 disabled:cursor-not-allowed disabled:from-zinc-200 disabled:via-zinc-200 disabled:to-zinc-200 disabled:text-zinc-500 disabled:shadow-none disabled:ring-0"
+                className="w-full rounded-[12px] bg-[#1A1A18] py-4 text-center text-[12px] font-semibold uppercase tracking-[0.18em] text-[#C9A96E] transition-opacity hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-[#C9A96E]/40 focus:ring-offset-2 focus:ring-offset-[#F8F6F2] disabled:cursor-not-allowed disabled:opacity-35"
               >
-                <span className="relative z-10 flex items-center justify-center gap-2">
-                  {analyzing ? (
-                    "Analyzing…"
-                  ) : (
-                    <>
-                      <span>Analyze My Item</span>
-                      <svg
-                        className="h-5 w-5 opacity-90 transition-transform group-hover:translate-x-0.5"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                        strokeWidth={2}
-                        aria-hidden
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          d="M13 7l5 5m0 0l-5 5m5-5H6"
-                        />
-                      </svg>
-                    </>
-                  )}
-                </span>
-                {!analyzing && canAnalyze && (
-                  <span className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/10 to-transparent opacity-0 transition-opacity group-hover:opacity-100" />
-                )}
+                {analyzing ? "Analyzing…" : "Analyze My Item"}
               </button>
               {analyzing && (
                 <div
-                  className="mt-5 flex flex-col items-center justify-center gap-4 rounded-2xl border border-teal-100/80 bg-gradient-to-b from-teal-50/80 to-white py-8"
+                  className="mt-5 flex flex-col items-center justify-center gap-4 rounded-[12px] border-[0.5px] border-[#E8E4DC] bg-[#FAFAF8] py-8"
                   role="status"
                   aria-live="polite"
                 >
                   <Spinner />
-                  <p className="max-w-sm text-center text-sm font-medium leading-relaxed text-zinc-700">
+                  <p className="max-w-sm text-center text-sm leading-relaxed text-[#888780]">
                     Analyzing your item and preparing sales-ready images...
                   </p>
                 </div>
               )}
               {!canAnalyze && !analyzing && files.length < 1 && (
-                <p className="mt-3 text-center text-sm text-zinc-500">
+                <p className="mt-3 text-center text-sm text-[#888780]">
                   Upload at least one photo to continue
                 </p>
               )}
               {!analyzing && files.length >= 1 && credits < 1 && (
-                <p className="mt-3 text-center text-sm font-medium text-amber-800">
+                <p className="mt-3 text-center text-sm font-medium text-[#8B4513]">
                   You&apos;re out of credits. Add more to keep analyzing.
                 </p>
               )}
@@ -514,130 +479,150 @@ export default function Home() {
         </div>
 
         <section
-          className="mt-10 rounded-2xl border border-zinc-200/90 bg-white px-6 py-9 shadow-xl shadow-zinc-900/[0.04] ring-1 ring-zinc-900/[0.02] sm:px-9 sm:py-10"
+          className="mt-10 overflow-hidden rounded-[12px] border-[0.5px] border-[#E8E4DC] bg-[#FFFFFF]"
           aria-labelledby="results-heading"
         >
-          <h2
-            id="results-heading"
-            className="text-xs font-semibold uppercase tracking-[0.2em] text-teal-800/80"
-          >
-            Analysis results
-          </h2>
+          <div className="border-b-[0.5px] border-[#E8E4DC] px-6 py-6 sm:px-8 sm:py-7">
+            <div className="flex min-w-0 items-center gap-3">
+              <span
+                id="results-heading"
+                className="shrink-0 text-[10px] font-medium uppercase leading-none tracking-[0.14em] text-[#888780]"
+              >
+                Analysis results
+              </span>
+              <span className="h-px min-w-[1rem] flex-1 bg-[#E8E4DC]" aria-hidden />
+            </div>
+          </div>
 
-          {error && (
-            <p
-              className="mt-5 rounded-xl border border-red-200/80 bg-red-50/90 px-4 py-3.5 text-sm leading-relaxed text-red-900"
-              role="alert"
-            >
-              {error}
-            </p>
-          )}
-
-          {!results && !error && !analyzing && (
-            <p className="mx-auto mt-6 max-w-md text-center text-[15px] leading-relaxed text-zinc-500">
-              Your title, description, and suggested details will appear here
-              after you run an analysis.
-            </p>
-          )}
-
-          {results && (
-            <div className="mt-8 space-y-8 text-left">
-              <div>
-                <h3 className="text-balance text-3xl font-semibold tracking-tight text-zinc-900 sm:text-[1.75rem] sm:leading-snug">
-                  {String(results.itemName ?? "")}
-                </h3>
-                <p className="mt-2 text-lg font-medium text-zinc-600 sm:text-xl">
-                  {String(results.brand ?? "")}
-                </p>
-              </div>
-
-              <div className="flex flex-wrap items-start gap-3">
-                <span
-                  className={`inline-flex items-center rounded-full border px-3.5 py-1.5 text-sm font-semibold ${conditionBadgeClass(String(results.condition ?? ""))}`}
-                >
-                  {String(results.condition ?? "—")}
-                </span>
-              </div>
-              <p className="text-[15px] leading-relaxed text-zinc-600">
-                {String(results.conditionExplanation ?? "")}
+          <div className="px-6 py-6 sm:px-8 sm:py-8">
+            {error && (
+              <p
+                className="rounded-[12px] border-[0.5px] border-red-200/90 bg-red-50/90 px-4 py-3.5 text-sm leading-relaxed text-red-900"
+                role="alert"
+              >
+                {error}
               </p>
+            )}
 
-              <div className="rounded-2xl border border-teal-100/90 bg-gradient-to-br from-teal-50/60 to-white px-5 py-5 ring-1 ring-teal-900/[0.03]">
-                <p className="text-xs font-semibold uppercase tracking-wider text-teal-900/70">
-                  Estimated price range
-                </p>
-                <p className="mt-2 text-3xl font-semibold tracking-tight text-zinc-900 sm:text-4xl">
-                  {formatMoney(results.priceLow)} – {formatMoney(results.priceHigh)}
-                </p>
-              </div>
+            {!results && !error && !analyzing && (
+              <p className="mx-auto max-w-md text-center text-[15px] leading-relaxed text-[#888780]">
+                Your title, description, and suggested details will appear here
+                after you run an analysis.
+              </p>
+            )}
 
-              <CopyableField
-                label="Listing title"
-                text={String(results.listingTitle ?? "")}
-              />
-              <CopyableField
-                label="Listing description"
-                text={String(results.listingDescription ?? "")}
-              />
-            </div>
-          )}
-
-          {results && enhancedImages && enhancedImages.length > 0 && (
-            <div className="mt-12 border-t border-zinc-100 pt-12">
-              <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                <h2 className="text-lg font-semibold tracking-tight text-zinc-900 sm:text-xl">
-                  Your Sales-Ready Images
-                </h2>
-                {enhancedImages.some(Boolean) && (
-                  <button
-                    type="button"
-                    onClick={downloadAllEnhanced}
-                    className="rounded-xl border border-zinc-200 bg-white px-4 py-2.5 text-sm font-semibold text-zinc-800 shadow-sm transition-colors hover:border-teal-200 hover:bg-teal-50/50 hover:text-teal-900 focus:outline-none focus:ring-2 focus:ring-teal-500/30 focus:ring-offset-2"
+            {results && (
+              <div className="space-y-0">
+                <div className="bg-[#1A1A18] px-6 py-8 sm:px-8 sm:py-10">
+                  <p className="text-[10px] font-medium uppercase tracking-[0.2em] text-[#C9A96E]">
+                    Identified item
+                  </p>
+                  <h3
+                    className={`${cormorant.className} mt-4 text-balance text-3xl font-medium leading-tight tracking-[0.02em] text-white sm:text-[2.25rem]`}
                   >
-                    Download All Images
-                  </button>
-                )}
+                    {String(results.itemName ?? "")}
+                  </h3>
+                  <p className="mt-3 text-sm font-medium text-[#9C9A94] sm:text-base">
+                    {String(results.brand ?? "")}
+                  </p>
+                </div>
+
+                <div className="space-y-6 border-t-[0.5px] border-[#E8E4DC] bg-[#FFFFFF] px-6 py-8 sm:px-8 sm:py-9">
+                  <div className="flex flex-wrap items-start gap-3">
+                    <span
+                      className={`inline-flex items-center rounded-full border-[0.5px] px-3.5 py-1.5 text-xs font-semibold uppercase tracking-wide ${conditionBadgeClass(String(results.condition ?? ""))}`}
+                    >
+                      {String(results.condition ?? "—")}
+                    </span>
+                  </div>
+                  <p className="text-[15px] leading-relaxed text-[#5C5C58]">
+                    {String(results.conditionExplanation ?? "")}
+                  </p>
+
+                  <div>
+                    <div className="mb-3 flex min-w-0 items-center gap-3">
+                      <span className="shrink-0 text-[10px] font-medium uppercase tracking-[0.14em] text-[#888780]">
+                        Estimated price range
+                      </span>
+                      <span className="h-px min-w-[1rem] flex-1 bg-[#E8E4DC]" aria-hidden />
+                    </div>
+                    <p
+                      className={`${cormorant.className} text-4xl font-medium tracking-tight text-[#1A1A18] sm:text-5xl`}
+                    >
+                      {formatMoney(results.priceLow)} –{" "}
+                      {formatMoney(results.priceHigh)}
+                    </p>
+                  </div>
+
+                  <CopyableField
+                    label="LISTING TITLE"
+                    text={String(results.listingTitle ?? "")}
+                  />
+                  <CopyableField
+                    label="LISTING DESCRIPTION"
+                    text={String(results.listingDescription ?? "")}
+                  />
+                </div>
               </div>
-              {enhanceNotice && (
-                <p className="mt-4 text-sm font-medium leading-relaxed text-amber-900/90">
-                  {enhanceNotice}
-                </p>
-              )}
-              <ul className="mt-7 grid grid-cols-2 gap-3.5 sm:grid-cols-3 sm:gap-4">
-                {enhancedImages.map((url, i) =>
-                  url ? (
-                    <li
-                      key={`enhanced-${i}`}
-                      className="aspect-square overflow-hidden rounded-xl border border-zinc-200/90 bg-white shadow-md shadow-zinc-900/5 ring-1 ring-zinc-900/[0.02]"
+            )}
+
+            {results && enhancedImages && enhancedImages.length > 0 && (
+              <div className="border-t-[0.5px] border-[#E8E4DC] px-6 py-8 sm:px-8 sm:py-9">
+                <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                  <div className="flex min-w-0 flex-1 items-center gap-3">
+                    <span className="shrink-0 text-[10px] font-medium uppercase tracking-[0.14em] text-[#888780]">
+                      Sales-ready images
+                    </span>
+                    <span className="h-px min-w-[1rem] flex-1 bg-[#E8E4DC]" aria-hidden />
+                  </div>
+                  {enhancedImages.some(Boolean) && (
+                    <button
+                      type="button"
+                      onClick={downloadAllEnhanced}
+                      className="shrink-0 rounded-[12px] border-[0.5px] border-[#E8E4DC] bg-[#1A1A18] px-4 py-2.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-[#C9A96E] transition-opacity hover:opacity-90 focus:outline-none focus:ring-1 focus:ring-[#C9A96E]/50"
                     >
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img
-                        src={url}
-                        alt={`Sales-ready product photo ${i + 1}`}
-                        className="h-full w-full object-contain"
-                      />
-                    </li>
-                  ) : (
-                    <li
-                      key={`enhanced-fail-${i}`}
-                      className="flex aspect-square items-center justify-center rounded-xl border border-dashed border-zinc-200 bg-zinc-50/80 px-3 text-center text-xs font-medium leading-snug text-zinc-500"
-                    >
-                      Couldn&apos;t enhance this photo
-                    </li>
-                  )
+                      Download all
+                    </button>
+                  )}
+                </div>
+                {enhanceNotice && (
+                  <p className="mt-4 text-sm leading-relaxed text-[#8B6914]">
+                    {enhanceNotice}
+                  </p>
                 )}
-              </ul>
-            </div>
-          )}
+                <ul className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4">
+                  {enhancedImages.map((url, i) =>
+                    url ? (
+                      <li
+                        key={`enhanced-${i}`}
+                        className="aspect-square overflow-hidden rounded-[12px] border-[0.5px] border-[#E8E4DC] bg-[#FAFAF8]"
+                      >
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={url}
+                          alt={`Sales-ready product photo ${i + 1}`}
+                          className="h-full w-full object-contain"
+                        />
+                      </li>
+                    ) : (
+                      <li
+                        key={`enhanced-fail-${i}`}
+                        className="flex aspect-square items-center justify-center rounded-[12px] border border-dashed border-[#E8E4DC] bg-[#FAFAF8] px-3 text-center text-xs leading-snug text-[#888780]"
+                      >
+                        Couldn&apos;t enhance this photo
+                      </li>
+                    )
+                  )}
+                </ul>
+              </div>
+            )}
+          </div>
         </section>
       </main>
 
-      <footer className="mt-auto border-t border-zinc-200/70 bg-white/60 py-8 text-center backdrop-blur-sm">
-        <p className="text-sm font-semibold tracking-tight text-zinc-700">
-          ListSmart Lite
-        </p>
-        <p className="mt-1 text-xs text-zinc-400">
-          Listing intelligence for serious sellers
+      <footer className="mt-auto border-t-[0.5px] border-[#E8E4DC] bg-[#F8F6F2] py-8 text-center">
+        <p className="text-[10px] font-medium uppercase tracking-[0.22em] text-[#888780]">
+          ListSmart · Sell with confidence
         </p>
       </footer>
     </div>
