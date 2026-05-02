@@ -1,10 +1,31 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { useDropzone } from "react-dropzone";
 
 const MAX_IMAGES = 5;
 const INITIAL_CREDITS = 3;
+/** Longest edge for resized JPEG sent to APIs (mobile Safari / memory). */
+const MAX_IMAGE_LONG_EDGE = 1200;
+const JPEG_QUALITY = 0.8;
+const MAX_UPLOAD_WARNING_BYTES = 10 * 1024 * 1024;
+
+const PAYLOAD_TOO_LARGE_MESSAGE =
+  "This request was too large for the server or your browser. Try removing a photo or using smaller originals — we shrink photos before upload, but the total can still exceed limits on some networks.";
+
+/**
+ * @param {Response} res
+ */
+function isPayloadTooLargeError(res) {
+  if (res.status === 413 || res.status === 431) return true;
+  return false;
+}
 
 const CATEGORY_OPTIONS = [
   "Clothing & Accessories",
@@ -71,6 +92,53 @@ function fileToDataURL(file) {
     };
     reader.onerror = () => reject(new Error("Could not read image"));
     reader.readAsDataURL(file);
+  });
+}
+
+/**
+ * Downscale if longest edge > MAX_IMAGE_LONG_EDGE, then JPEG at JPEG_QUALITY.
+ * Falls back to raw data URL if decode/canvas fails (e.g. some HEIC edge cases).
+ * @param {File} file
+ * @returns {Promise<string>}
+ */
+function compressImageFileToDataUrl(file) {
+  return new Promise((resolve, reject) => {
+    const objectUrl = URL.createObjectURL(file);
+    const img = new Image();
+    img.onload = () => {
+      try {
+        let w = img.naturalWidth || img.width;
+        let h = img.naturalHeight || img.height;
+        if (!w || !h) throw new Error("Invalid dimensions");
+        const long = Math.max(w, h);
+        if (long > MAX_IMAGE_LONG_EDGE) {
+          const scale = MAX_IMAGE_LONG_EDGE / long;
+          w = Math.max(1, Math.round(w * scale));
+          h = Math.max(1, Math.round(h * scale));
+        }
+        const canvas = document.createElement("canvas");
+        canvas.width = w;
+        canvas.height = h;
+        const ctx = canvas.getContext("2d");
+        if (!ctx) throw new Error("No 2d context");
+        ctx.drawImage(img, 0, 0, w, h);
+        const dataUrl = canvas.toDataURL("image/jpeg", JPEG_QUALITY);
+        URL.revokeObjectURL(objectUrl);
+        resolve(dataUrl);
+      } catch {
+        URL.revokeObjectURL(objectUrl);
+        fileToDataURL(file).then(resolve).catch(() => {
+          reject(new Error("Could not process image"));
+        });
+      }
+    };
+    img.onerror = () => {
+      URL.revokeObjectURL(objectUrl);
+      fileToDataURL(file).then(resolve).catch(() => {
+        reject(new Error("Could not read image"));
+      });
+    };
+    img.src = objectUrl;
   });
 }
 
@@ -148,10 +216,13 @@ function conditionBadgeClass(condition) {
   return "border-[#E8EDE9] bg-[#F4F9F7] text-[#1A3A32]";
 }
 
-function Spinner() {
+/**
+ * @param {{ className?: string }} props
+ */
+function Spinner({ className = "h-9 w-9" }) {
   return (
     <svg
-      className="h-9 w-9 animate-spin text-[#2A6B52]"
+      className={`${className} animate-spin text-[#2A6B52]`}
       xmlns="http://www.w3.org/2000/svg"
       fill="none"
       viewBox="0 0 24 24"
@@ -246,6 +317,15 @@ export default function Home() {
   const [enhancedImages, setEnhancedImages] = useState(null);
   const [enhanceNotice, setEnhanceNotice] = useState(null);
   const [downloadBusy, setDownloadBusy] = useState(false);
+  const [analysisPhase, setAnalysisPhase] = useState(
+    /** @type {'compress' | 'upload' | null} */ (null)
+  );
+  const analyzeStatusRef = useRef(null);
+
+  const hasOversizeUpload = useMemo(
+    () => files.some((f) => f.size > MAX_UPLOAD_WARNING_BYTES),
+    [files]
+  );
 
   const onDrop = useCallback((acceptedFiles) => {
     setFiles((prev) => {
@@ -279,18 +359,33 @@ export default function Home() {
     return () => previewUrls.forEach((url) => URL.revokeObjectURL(url));
   }, [previewUrls]);
 
+  useEffect(() => {
+    if (!analyzing) return;
+    const id = requestAnimationFrame(() => {
+      analyzeStatusRef.current?.scrollIntoView({
+        behavior: "smooth",
+        block: "center",
+      });
+    });
+    return () => cancelAnimationFrame(id);
+  }, [analyzing]);
+
   const canAnalyze =
     files.length >= 1 && credits >= 1 && !analyzing;
 
   const handleAnalyze = async () => {
     if (files.length < 1 || credits < 1) return;
     setAnalyzing(true);
+    setAnalysisPhase("compress");
     setError(null);
     setEnhanceNotice(null);
     setEnhancedImages(null);
 
     try {
-      const images = await Promise.all(files.map((f) => fileToDataURL(f)));
+      const images = await Promise.all(
+        files.map((f) => compressImageFileToDataUrl(f))
+      );
+      setAnalysisPhase("upload");
 
       const analyzeBody = JSON.stringify({
         images,
@@ -332,18 +427,25 @@ export default function Home() {
       if (!analyzeRes.ok) {
         setEnhancedImages(null);
         setEnhanceNotice(null);
-        const msg =
-          typeof analyzeData.error === "string"
-            ? analyzeData.error
-            : "Something went wrong. Please try again.";
-        setError(msg);
+        if (isPayloadTooLargeError(analyzeRes)) {
+          setError(PAYLOAD_TOO_LARGE_MESSAGE);
+        } else {
+          const msg =
+            typeof analyzeData.error === "string"
+              ? analyzeData.error
+              : "Something went wrong. Please try again.";
+          setError(msg);
+        }
         return;
       }
 
       setResults(analyzeData);
       setCredits((c) => Math.max(0, c - 1));
 
-      if (Array.isArray(enhanceData.images)) {
+      if (isPayloadTooLargeError(enhanceRes)) {
+        setEnhancedImages([]);
+        setEnhanceNotice(PAYLOAD_TOO_LARGE_MESSAGE);
+      } else if (Array.isArray(enhanceData.images)) {
         setEnhancedImages(enhanceData.images);
         if (!enhanceRes.ok) {
           setEnhanceNotice(
@@ -369,13 +471,18 @@ export default function Home() {
             : "Sales-ready images could not be loaded."
         );
       }
-    } catch {
-      setError(
-        "We couldn’t read your photos or reach the server. Check your connection and try again."
-      );
+    } catch (e) {
+      const msg =
+        e instanceof Error &&
+        (e.message === "Could not process image" ||
+          e.message === "Could not read image")
+          ? "We couldn’t process one of your photos. Try another picture or a smaller file (JPEG or PNG works best)."
+          : "We couldn’t read your photos or reach the server. Check your connection and try again.";
+      setError(msg);
       setEnhancedImages(null);
     } finally {
       setAnalyzing(false);
+      setAnalysisPhase(null);
     }
   };
 
@@ -468,7 +575,9 @@ export default function Home() {
         </div>
       </section>
 
-      <main className="mx-auto w-full max-w-3xl flex-1 px-4 py-10 sm:px-6 sm:py-12">
+      <main
+        className={`mx-auto w-full max-w-3xl flex-1 px-4 py-10 sm:px-6 sm:py-12 ${analyzing ? "max-sm:pb-32" : ""}`}
+      >
         <div className="rounded-[12px] border-[0.5px] border-[#E8EDE9] bg-[#FFFFFF] p-5 sm:p-9">
           <div className="space-y-9">
             <div>
@@ -576,6 +685,18 @@ export default function Home() {
                   ))}
                 </ul>
               )}
+              {hasOversizeUpload && (
+                <p
+                  className="mt-4 rounded-[12px] border-[0.5px] border-amber-200/90 bg-amber-50/90 px-4 py-3.5 text-sm leading-relaxed text-amber-950"
+                  role="status"
+                >
+                  <span className="font-semibold">Large photos: </span>
+                  At least one file is over 10 MB. We shrink and compress images
+                  before sending, but very large originals may still be slow or
+                  fail on some phones — consider fewer photos or smaller files if
+                  you run into issues.
+                </p>
+              )}
             </div>
 
             <div>
@@ -671,14 +792,24 @@ export default function Home() {
               </button>
               {analyzing && (
                 <div
-                  className="mt-5 flex flex-col items-center justify-center gap-4 rounded-[12px] border-[0.5px] border-[#E8EDE9] bg-[#F4F9F7] py-8"
+                  ref={analyzeStatusRef}
+                  className="mt-5 flex flex-col items-center justify-center gap-4 rounded-[12px] border-[0.5px] border-[#E8EDE9] bg-[#F4F9F7] py-10 ring-2 ring-[#2A6B52]/20 sm:py-8"
                   role="status"
                   aria-live="polite"
                 >
-                  <Spinner />
-                  <p className="max-w-sm text-center text-sm leading-relaxed text-[#7A8F88]">
-                    Analyzing your item and preparing sales-ready images...
-                  </p>
+                  <Spinner className="h-12 w-12 sm:h-9 sm:w-9" />
+                  <div className="space-y-1.5 text-center">
+                    <p className="text-base font-semibold text-[#1A3A32] sm:text-sm">
+                      {analysisPhase === "compress"
+                        ? "Optimizing photos…"
+                        : "Analyzing & enhancing…"}
+                    </p>
+                    <p className="max-w-sm text-sm leading-relaxed text-[#7A8F88]">
+                      {analysisPhase === "compress"
+                        ? "Resizing and compressing images so your phone can upload them reliably."
+                        : "This can take a moment. Keep this tab open."}
+                    </p>
+                  </div>
                 </div>
               )}
               {!canAnalyze && !analyzing && files.length < 1 && (
@@ -876,6 +1007,33 @@ export default function Home() {
           </div>
         </section>
       </main>
+
+      {analyzing && (
+        <div
+          className="fixed bottom-0 left-0 right-0 z-50 border-t border-[#E8EDE9] bg-[#FFFFFF]/95 px-4 py-4 shadow-[0_-8px_32px_rgba(26,58,50,0.12)] backdrop-blur-sm sm:hidden"
+          style={{
+            paddingBottom: "max(1rem, env(safe-area-inset-bottom, 0px))",
+          }}
+          role="status"
+          aria-live="polite"
+        >
+          <div className="mx-auto flex max-w-lg items-center gap-4">
+            <Spinner className="h-11 w-11 shrink-0" />
+            <div className="min-w-0 flex-1">
+              <p className="font-semibold leading-tight text-[#1A3A32]">
+                {analysisPhase === "compress"
+                  ? "Optimizing photos…"
+                  : "Analyzing your item…"}
+              </p>
+              <p className="mt-1 text-sm leading-snug text-[#7A8F88]">
+                {analysisPhase === "compress"
+                  ? "Shrinking images for upload."
+                  : "Generating listing details and enhanced images."}
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
 
       <footer className="mt-auto border-t-[0.5px] border-[#E8EDE9] bg-[#F4F9F7] py-8 text-center">
         <p className="text-[10px] font-medium uppercase tracking-[0.22em] text-[#7A8F88]">
