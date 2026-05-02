@@ -6,6 +6,58 @@ import { useDropzone } from "react-dropzone";
 const MAX_IMAGES = 5;
 const INITIAL_CREDITS = 3;
 
+const CATEGORY_OPTIONS = [
+  "Clothing & Accessories",
+  "Electronics & Tech",
+  "Collectibles & Toys",
+  "Furniture & Home Decor",
+  "Sporting Goods & Outdoors",
+  "Books & Media",
+  "Baby & Kids",
+  "Tools & Equipment",
+  "Jewelry & Watches",
+  "Other",
+];
+
+const YNU_OPTIONS = [
+  { value: "yes", label: "Yes" },
+  { value: "no", label: "No" },
+  { value: "unsure", label: "Unsure" },
+];
+
+const AGE_OPTIONS = [
+  { value: "under-1", label: "Under 1 yr" },
+  { value: "1-5", label: "1–5 yrs" },
+  { value: "5-10", label: "5–10 yrs" },
+  { value: "10-plus", label: "10+ yrs" },
+  { value: "unknown", label: "Unknown" },
+];
+
+/**
+ * @param {{ selected: string; onChange: (v: string) => void; options: ReadonlyArray<{ value: string; label: string }> }} props
+ */
+function SegmentedControl({ selected, onChange, options }) {
+  return (
+    <div className="flex flex-wrap gap-1.5">
+      {options.map(({ value: v, label }) => (
+        <button
+          key={v}
+          type="button"
+          onClick={() => onChange(v)}
+          className={[
+            "touch-manipulation rounded-[8px] border-[0.5px] px-2.5 py-1.5 text-center text-[11px] font-medium leading-tight transition-colors",
+            selected === v
+              ? "border-[#2A6B52] bg-[#2A6B52] text-[#F0EDE6]"
+              : "border-[#E8EDE9] bg-[#FFFFFF] text-[#1A3A32] hover:bg-[#F4F9F7]/80",
+          ].join(" ")}
+        >
+          {label}
+        </button>
+      ))}
+    </div>
+  );
+}
+
 /**
  * @param {File} file
  * @returns {Promise<string>}
@@ -36,6 +88,44 @@ function formatMoney(value) {
     currency: "USD",
     maximumFractionDigits: 0,
   }).format(n);
+}
+
+/** Safe filename stem from identified item name, e.g. Breyer-Horse-Figurine */
+function slugifyItemNameForFilename(name) {
+  const raw = String(name ?? "").trim();
+  if (!raw) return "Item";
+  const cleaned = raw
+    .normalize("NFKD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/['\u2019]/g, "")
+    .replace(/[^\w\s-]+/g, " ")
+    .trim();
+  const hyphenated = cleaned.replace(/\s+/g, "-").replace(/-+/g, "-");
+  const safe = hyphenated.replace(/^[-.]+|[-.]+$/g, "").slice(0, 120);
+  return safe || "Item";
+}
+
+const DOWNLOAD_STAGGER_MS = 550;
+
+/**
+ * @param {string} dataUrl
+ * @param {string} filename
+ */
+async function downloadDataUrlAsFile(dataUrl, filename) {
+  const blob = await fetch(dataUrl).then((r) => r.blob());
+  const objectUrl = URL.createObjectURL(blob);
+  try {
+    const a = document.createElement("a");
+    a.href = objectUrl;
+    a.download = filename;
+    a.rel = "noopener noreferrer";
+    a.style.display = "none";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  } finally {
+    setTimeout(() => URL.revokeObjectURL(objectUrl), 1500);
+  }
 }
 
 /**
@@ -145,12 +235,17 @@ function CopyableField({ text, label }) {
 export default function Home() {
   const [files, setFiles] = useState([]);
   const [notes, setNotes] = useState("");
+  const [category, setCategory] = useState("");
+  const [packagingTags, setPackagingTags] = useState("unsure");
+  const [partsComplete, setPartsComplete] = useState("unsure");
+  const [approximateAge, setApproximateAge] = useState("unknown");
   const [credits, setCredits] = useState(INITIAL_CREDITS);
   const [analyzing, setAnalyzing] = useState(false);
   const [results, setResults] = useState(null);
   const [error, setError] = useState(null);
   const [enhancedImages, setEnhancedImages] = useState(null);
   const [enhanceNotice, setEnhanceNotice] = useState(null);
+  const [downloadBusy, setDownloadBusy] = useState(false);
 
   const onDrop = useCallback((acceptedFiles) => {
     setFiles((prev) => {
@@ -200,6 +295,10 @@ export default function Home() {
       const analyzeBody = JSON.stringify({
         images,
         notes: notes.trim() || undefined,
+        category: category.trim() || undefined,
+        packagingIncluded: packagingTags,
+        partsIncluded: partsComplete,
+        approximateAge,
       });
       const enhanceBody = JSON.stringify({ images });
 
@@ -280,22 +379,44 @@ export default function Home() {
     }
   };
 
-  const downloadAllEnhanced = () => {
-    if (!enhancedImages?.length) return;
-    enhancedImages.forEach((dataUrl, i) => {
-      if (!dataUrl || typeof dataUrl !== "string") return;
-      const m = /^data:([^;]+);base64,/i.exec(dataUrl);
-      const mime = m ? m[1] : "image/png";
-      const ext = mime.includes("jpeg") ? "jpg" : mime.includes("webp") ? "webp" : "png";
-      const a = document.createElement("a");
-      a.href = dataUrl;
-      a.download = `sales-ready-${i + 1}.${ext}`;
-      a.rel = "noopener";
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-    });
-  };
+  const downloadAllEnhanced = useCallback(async () => {
+    if (!enhancedImages?.length || downloadBusy) return;
+    const base = slugifyItemNameForFilename(results?.itemName);
+    setDownloadBusy(true);
+    try {
+      let index = 0;
+      for (let i = 0; i < enhancedImages.length; i++) {
+        const dataUrl = enhancedImages[i];
+        if (!dataUrl || typeof dataUrl !== "string") continue;
+        if (index > 0) {
+          await new Promise((r) => setTimeout(r, DOWNLOAD_STAGGER_MS));
+        }
+        index += 1;
+        const m = /^data:([^;]+);base64,/i.exec(dataUrl);
+        const mime = m ? m[1] : "image/png";
+        const ext = mime.includes("jpeg")
+          ? "jpg"
+          : mime.includes("webp")
+            ? "webp"
+            : "png";
+        const filename = `${base}-${index}.${ext}`;
+        try {
+          await downloadDataUrlAsFile(dataUrl, filename);
+        } catch {
+          const a = document.createElement("a");
+          a.href = dataUrl;
+          a.download = filename;
+          a.rel = "noopener noreferrer";
+          a.style.display = "none";
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+        }
+      }
+    } finally {
+      setDownloadBusy(false);
+    }
+  }, [enhancedImages, results, downloadBusy]);
 
   return (
     <div className="flex min-h-dvh flex-col bg-[#F4F9F7] font-sans text-[#1A3A32] antialiased">
@@ -469,6 +590,76 @@ export default function Home() {
               />
             </div>
 
+            <div className="space-y-6">
+              <SectionLabel>Listing context (optional)</SectionLabel>
+              <p className="-mt-2 text-[13px] leading-relaxed text-[#7A8F88]">
+                Quick hints for the analysis. Everything is still verified against
+                your photos.
+              </p>
+
+              <div>
+                <label
+                  htmlFor="listing-category"
+                  className="mb-2 block text-[10px] font-medium uppercase tracking-[0.18em] text-[#7A8F88]"
+                >
+                  Category
+                </label>
+                <select
+                  id="listing-category"
+                  value={category}
+                  onChange={(e) => setCategory(e.target.value)}
+                  className="w-full cursor-pointer touch-manipulation appearance-none rounded-[12px] border-[0.5px] border-[#E8EDE9] bg-[#FFFFFF] px-4 py-3.5 text-[15px] leading-relaxed text-[#1A3A32] focus:outline-none focus:ring-1 focus:ring-[#2A6B52]/35"
+                  style={{
+                    backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%237A8F88'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E")`,
+                    backgroundRepeat: "no-repeat",
+                    backgroundPosition: "right 0.75rem center",
+                    backgroundSize: "1.25rem",
+                    paddingRight: "2.5rem",
+                  }}
+                >
+                  <option value="">Select category…</option>
+                  {CATEGORY_OPTIONS.map((opt) => (
+                    <option key={opt} value={opt}>
+                      {opt}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="grid grid-cols-1 gap-6 sm:grid-cols-3 sm:gap-5">
+                <div className="min-w-0">
+                  <p className="mb-2 text-[10px] font-medium uppercase leading-snug tracking-[0.16em] text-[#7A8F88]">
+                    Original packaging / tags included?
+                  </p>
+                  <SegmentedControl
+                    selected={packagingTags}
+                    onChange={setPackagingTags}
+                    options={YNU_OPTIONS}
+                  />
+                </div>
+                <div className="min-w-0">
+                  <p className="mb-2 text-[10px] font-medium uppercase leading-snug tracking-[0.16em] text-[#7A8F88]">
+                    All parts / accessories included?
+                  </p>
+                  <SegmentedControl
+                    selected={partsComplete}
+                    onChange={setPartsComplete}
+                    options={YNU_OPTIONS}
+                  />
+                </div>
+                <div className="min-w-0">
+                  <p className="mb-2 text-[10px] font-medium uppercase leading-snug tracking-[0.16em] text-[#7A8F88]">
+                    Approximate age
+                  </p>
+                  <SegmentedControl
+                    selected={approximateAge}
+                    onChange={setApproximateAge}
+                    options={AGE_OPTIONS}
+                  />
+                </div>
+              </div>
+            </div>
+
             <div>
               <button
                 type="button"
@@ -563,6 +754,49 @@ export default function Home() {
                     {String(results.conditionExplanation ?? "")}
                   </p>
 
+                  {String(results.modelDetails ?? "").trim() !== "" && (
+                    <div>
+                      <div className="mb-3 flex min-w-0 items-center gap-3">
+                        <span className="shrink-0 text-[10px] font-medium uppercase tracking-[0.18em] text-[#7A8F88]">
+                          Model details
+                        </span>
+                        <span className="h-px min-w-[1rem] flex-1 bg-[#E8EDE9]" aria-hidden />
+                      </div>
+                      <p className="text-[15px] leading-relaxed text-[#1A3A32]">
+                        {String(results.modelDetails ?? "")}
+                      </p>
+                    </div>
+                  )}
+
+                  {String(results.visibleAccessories ?? "").trim() !== "" && (
+                    <div>
+                      <div className="mb-3 flex min-w-0 items-center gap-3">
+                        <span className="shrink-0 text-[10px] font-medium uppercase tracking-[0.18em] text-[#7A8F88]">
+                          Visible in photos
+                        </span>
+                        <span className="h-px min-w-[1rem] flex-1 bg-[#E8EDE9]" aria-hidden />
+                      </div>
+                      <ul className="list-inside list-disc space-y-1 text-[15px] leading-relaxed text-[#1A3A32]">
+                        {String(results.visibleAccessories ?? "")
+                          .split(";")
+                          .map((s) => s.trim())
+                          .filter(Boolean)
+                          .map((item, i) => (
+                            <li key={`${i}-${item.slice(0, 48)}`}>{item}</li>
+                          ))}
+                      </ul>
+                    </div>
+                  )}
+
+                  {String(results.caveat ?? "").trim() !== "" && (
+                    <p className="rounded-[12px] border-[0.5px] border-[#E8EDE9] bg-[#FAFAF8] px-4 py-3.5 text-sm leading-relaxed text-[#5C6B66]">
+                      <span className="font-semibold text-[#7A8F88]">
+                        Note:{" "}
+                      </span>
+                      {String(results.caveat ?? "")}
+                    </p>
+                  )}
+
                   <div>
                     <div className="mb-3 flex min-w-0 items-center gap-3">
                       <span className="shrink-0 text-[10px] font-medium uppercase tracking-[0.18em] text-[#7A8F88]">
@@ -600,10 +834,11 @@ export default function Home() {
                   {enhancedImages.some(Boolean) && (
                     <button
                       type="button"
-                      onClick={downloadAllEnhanced}
-                      className="shrink-0 touch-manipulation rounded-[12px] bg-[#2A6B52] px-4 py-2.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-[#F0EDE6] transition-opacity hover:opacity-90 focus:outline-none focus:ring-1 focus:ring-[#2A6B52]/45"
+                      disabled={downloadBusy}
+                      onClick={() => void downloadAllEnhanced()}
+                      className="shrink-0 touch-manipulation rounded-[12px] bg-[#2A6B52] px-4 py-2.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-[#F0EDE6] transition-opacity hover:opacity-90 focus:outline-none focus:ring-1 focus:ring-[#2A6B52]/45 disabled:cursor-wait disabled:opacity-60"
                     >
-                      Download all
+                      {downloadBusy ? "Downloading…" : "Download all"}
                     </button>
                   )}
                 </div>
