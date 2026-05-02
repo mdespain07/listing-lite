@@ -126,7 +126,7 @@ function CopyableField({ text, label }) {
         <button
           type="button"
           onClick={copy}
-          className="rounded-[8px] border-[0.5px] border-[#E8EDE9] bg-white px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-[#1A3A32] transition-colors hover:bg-[#F4F9F7] focus:outline-none focus:ring-1 focus:ring-[#2A6B52]/35"
+          className="touch-manipulation rounded-[8px] border-[0.5px] border-[#E8EDE9] bg-white px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-[#1A3A32] transition-colors hover:bg-[#F4F9F7] focus:outline-none focus:ring-1 focus:ring-[#2A6B52]/35"
         >
           {copied ? "Copied" : "Copy"}
         </button>
@@ -160,11 +160,15 @@ export default function Home() {
     });
   }, []);
 
+  const atPhotoLimit = files.length >= MAX_IMAGES;
+
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
     accept: { "image/*": [] },
-    disabled: files.length >= MAX_IMAGES,
+    disabled: atPhotoLimit,
     multiple: true,
+    // Keep `<input type="file">` path on iOS/Android; FS Access API is desktop-only.
+    useFsAccessApi: false,
   });
 
   const removeAt = (index) => {
@@ -294,7 +298,7 @@ export default function Home() {
   };
 
   return (
-    <div className="flex min-h-full flex-col bg-[#F4F9F7] font-sans text-[#1A3A32] antialiased">
+    <div className="flex min-h-dvh flex-col bg-[#F4F9F7] font-sans text-[#1A3A32] antialiased">
       <header className="border-b border-[#E8EDE9] bg-[#FFFFFF]">
         <div className="mx-auto flex max-w-3xl items-center justify-between gap-4 px-4 py-4 sm:px-6 sm:py-5">
           <div className="flex min-w-0 items-center gap-3 sm:gap-4">
@@ -344,23 +348,22 @@ export default function Home() {
       </section>
 
       <main className="mx-auto w-full max-w-3xl flex-1 px-4 py-10 sm:px-6 sm:py-12">
-        <div className="rounded-[12px] border-[0.5px] border-[#E8EDE9] bg-[#FFFFFF] p-7 sm:p-9">
+        <div className="rounded-[12px] border-[0.5px] border-[#E8EDE9] bg-[#FFFFFF] p-5 sm:p-9">
           <div className="space-y-9">
             <div>
               <SectionLabel>Photos (1–5)</SectionLabel>
               <div
                 {...getRootProps()}
                 className={[
-                  "relative flex min-h-[200px] cursor-pointer flex-col items-center justify-center overflow-hidden rounded-[12px] border border-dashed border-[#E8EDE9] bg-[#FFFFFF] px-6 py-10 transition-colors",
-                  files.length >= MAX_IMAGES
+                  "relative flex min-h-[200px] touch-manipulation cursor-pointer flex-col items-center justify-center overflow-hidden rounded-[12px] border border-dashed border-[#E8EDE9] bg-[#FFFFFF] px-6 py-10 transition-colors",
+                  atPhotoLimit
                     ? "cursor-not-allowed opacity-50"
                     : isDragActive
                       ? "border-[#8FCFB0] bg-[#F4F9F7]"
                       : "hover:border-[#8FCFB0]/80 hover:bg-[#F4F9F7]/60",
                 ].join(" ")}
               >
-                <input {...getInputProps()} />
-                <div className="mb-5 flex h-14 w-14 items-center justify-center rounded-full bg-[#2A6B52] shadow-md">
+                <div className="pointer-events-none mb-5 flex h-14 w-14 items-center justify-center rounded-full bg-[#2A6B52] shadow-md">
                   <svg
                     className="h-7 w-7 text-[#F0EDE6]"
                     fill="none"
@@ -376,24 +379,43 @@ export default function Home() {
                     />
                   </svg>
                 </div>
-                {files.length >= MAX_IMAGES ? (
-                  <p className="text-center text-sm font-medium text-[#7A8F88]">
+                {atPhotoLimit ? (
+                  <p className="pointer-events-none text-center text-sm font-medium text-[#7A8F88]">
                     Maximum {MAX_IMAGES} photos reached
                   </p>
                 ) : (
                   <>
-                    <p className="font-serif text-center text-xl font-medium tracking-[0.02em] text-[#1A3A32] sm:text-2xl">
+                    <p className="pointer-events-none font-serif text-center text-xl font-medium tracking-[0.02em] text-[#1A3A32] sm:text-2xl">
                       {isDragActive
                         ? "Release to upload"
                         : "Upload product photos"}
                     </p>
-                    <p className="mt-3 max-w-sm text-center text-sm leading-relaxed text-[#7A8F88]">
+                    <p className="pointer-events-none mt-3 max-w-sm text-center text-sm leading-relaxed text-[#7A8F88]">
                       {isDragActive
                         ? "Add them to your listing."
-                        : "Drag and drop here, or click to browse. PNG, JPG, or WebP — up to five images."}
+                        : "Tap to add photos, or drag and drop on desktop. PNG, JPG, or WebP — up to five images."}
                     </p>
                   </>
                 )}
+                <input
+                  {...getInputProps({
+                    disabled: atPhotoLimit,
+                    style: {
+                      position: "absolute",
+                      inset: 0,
+                      width: "100%",
+                      height: "100%",
+                      margin: 0,
+                      padding: 0,
+                      opacity: 0,
+                      cursor: atPhotoLimit ? "not-allowed" : "pointer",
+                      zIndex: 10,
+                      fontSize: "100%",
+                      border: "none",
+                      appearance: "none",
+                    },
+                  })}
+                />
               </div>
 
               {files.length > 0 && (
@@ -412,7 +434,7 @@ export default function Home() {
                       <button
                         type="button"
                         onClick={() => removeAt(index)}
-                        className="absolute right-2 top-2 flex h-8 w-8 items-center justify-center rounded-full bg-[#2A6B52] text-[#F0EDE6] opacity-0 shadow-md transition-opacity hover:bg-[#245948] group-hover:opacity-100 focus:opacity-100 focus:outline-none focus:ring-1 focus:ring-[#8FCFB0]"
+                        className="absolute right-1 top-1 z-20 flex min-h-11 min-w-11 touch-manipulation items-center justify-center rounded-full bg-[#2A6B52] text-[#F0EDE6] opacity-100 shadow-md transition-opacity hover:bg-[#245948] focus:opacity-100 focus:outline-none focus:ring-1 focus:ring-[#8FCFB0] sm:right-2 sm:top-2 sm:h-8 sm:w-8 sm:min-h-0 sm:min-w-0 sm:opacity-0 sm:group-hover:opacity-100"
                         aria-label={`Remove image ${index + 1}`}
                       >
                         <svg
@@ -452,7 +474,7 @@ export default function Home() {
                 type="button"
                 disabled={!canAnalyze}
                 onClick={handleAnalyze}
-                className="w-full rounded-[12px] bg-[#2A6B52] py-4 text-center text-[11px] font-semibold uppercase tracking-[0.2em] text-[#F0EDE6] transition-opacity hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-[#2A6B52]/50 focus:ring-offset-2 focus:ring-offset-[#F4F9F7] disabled:cursor-not-allowed disabled:opacity-40"
+                className="w-full touch-manipulation rounded-[12px] bg-[#2A6B52] py-4 text-center text-[11px] font-semibold uppercase tracking-[0.2em] text-[#F0EDE6] transition-opacity hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-[#2A6B52]/50 focus:ring-offset-2 focus:ring-offset-[#F4F9F7] disabled:cursor-not-allowed disabled:opacity-40"
               >
                 {analyzing ? "Analyzing…" : "Analyze My Item"}
               </button>
@@ -579,7 +601,7 @@ export default function Home() {
                     <button
                       type="button"
                       onClick={downloadAllEnhanced}
-                      className="shrink-0 rounded-[12px] bg-[#2A6B52] px-4 py-2.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-[#F0EDE6] transition-opacity hover:opacity-90 focus:outline-none focus:ring-1 focus:ring-[#2A6B52]/45"
+                      className="shrink-0 touch-manipulation rounded-[12px] bg-[#2A6B52] px-4 py-2.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-[#F0EDE6] transition-opacity hover:opacity-90 focus:outline-none focus:ring-1 focus:ring-[#2A6B52]/45"
                     >
                       Download all
                     </button>
