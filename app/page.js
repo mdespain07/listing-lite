@@ -12,12 +12,20 @@ import { useDropzone } from "react-dropzone";
 const MAX_IMAGES = 5;
 const INITIAL_CREDITS = 3;
 /** Longest edge for resized JPEG sent to APIs (mobile Safari / memory). */
-const MAX_IMAGE_LONG_EDGE = 1200;
-const JPEG_QUALITY = 0.8;
+const MAX_IMAGE_LONG_EDGE = 800;
+const JPEG_QUALITY = 0.6;
 const MAX_UPLOAD_WARNING_BYTES = 10 * 1024 * 1024;
+/** Longer than server `maxDuration` so slow networks can finish; triggers client-side timeout message if needed. */
+const API_FETCH_TIMEOUT_MS = 125_000;
 
 const PAYLOAD_TOO_LARGE_MESSAGE =
   "This request was too large for the server or your browser. Try removing a photo or using smaller originals — we shrink photos before upload, but the total can still exceed limits on some networks.";
+
+const NETWORK_TIMEOUT_MESSAGE =
+  "Analysis is taking longer than expected — please try on WiFi or with fewer photos";
+
+const ENHANCE_SKIPPED_MESSAGE =
+  "Sales-ready images couldn’t be generated this time. Your listing analysis above is still complete — try again on WiFi if you need enhanced photos.";
 
 /**
  * @param {Response} res
@@ -25,6 +33,37 @@ const PAYLOAD_TOO_LARGE_MESSAGE =
 function isPayloadTooLargeError(res) {
   if (res.status === 413 || res.status === 431) return true;
   return false;
+}
+
+/**
+ * Gateway / client timeout–style HTTP statuses.
+ * @param {Response} res
+ */
+function isTimeoutHttpError(res) {
+  return [408, 504, 522, 524].includes(res.status);
+}
+
+/**
+ * @param {unknown} e
+ */
+function isAbortOrTimeoutError(e) {
+  const name =
+    typeof e === "object" && e !== null && "name" in e
+      ? String(/** @type {{ name?: unknown }} */ (e).name)
+      : "";
+  return name === "AbortError" || name === "TimeoutError";
+}
+
+/**
+ * @param {string} url
+ * @param {Parameters<typeof fetch>[1]} init
+ */
+function fetchWithTimeout(url, init) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), API_FETCH_TIMEOUT_MS);
+  return fetch(url, { ...init, signal: controller.signal }).finally(() => {
+    clearTimeout(timer);
+  });
 }
 
 const CATEGORY_OPTIONS = [
@@ -46,12 +85,17 @@ const YNU_OPTIONS = [
   { value: "unsure", label: "Unsure" },
 ];
 
+const YES_NO_OPTIONS = [
+  { value: "yes", label: "Yes" },
+  { value: "no", label: "No" },
+];
+
 const AGE_OPTIONS = [
-  { value: "under-1", label: "Under 1 yr" },
-  { value: "1-5", label: "1–5 yrs" },
-  { value: "5-10", label: "5–10 yrs" },
-  { value: "10-plus", label: "10+ yrs" },
-  { value: "unknown", label: "Unknown" },
+  { value: "under-1", label: "Brand new" },
+  { value: "1-5", label: "1–5 years old" },
+  { value: "5-10", label: "5–10 years old" },
+  { value: "10-plus", label: "10+ years old" },
+  { value: "unknown", label: "Not sure" },
 ];
 
 /**
@@ -296,7 +340,7 @@ function CopyableField({ text, label }) {
         readOnly
         value={text}
         rows={label.includes("Description") ? 8 : 2}
-        className="w-full resize-y rounded-[12px] border-[0.5px] border-[#E8EDE9] bg-[#FAFAF8] px-3.5 py-3 font-mono text-[13px] leading-relaxed text-[#1A3A32] focus:outline-none focus:ring-1 focus:ring-[#2A6B52]/30"
+        className="w-full resize-y rounded-[12px] border-[0.5px] border-[#E8EDE9] bg-[#F0EDE6] px-3.5 py-3 text-[15px] leading-relaxed text-[#1A3A32] focus:outline-none focus:ring-1 focus:ring-[#2A6B52]/30"
         onFocus={(e) => e.target.select()}
       />
     </div>
@@ -307,7 +351,8 @@ export default function Home() {
   const [files, setFiles] = useState([]);
   const [notes, setNotes] = useState("");
   const [category, setCategory] = useState("");
-  const [packagingTags, setPackagingTags] = useState("unsure");
+  const [packagingIncluded, setPackagingIncluded] = useState("no");
+  const [tagsAttached, setTagsAttached] = useState("no");
   const [partsComplete, setPartsComplete] = useState("unsure");
   const [approximateAge, setApproximateAge] = useState("unknown");
   const [credits, setCredits] = useState(INITIAL_CREDITS);
@@ -391,24 +436,30 @@ export default function Home() {
         images,
         notes: notes.trim() || undefined,
         category: category.trim() || undefined,
-        packagingIncluded: packagingTags,
+        packagingIncluded,
+        tagsAttached,
         partsIncluded: partsComplete,
         approximateAge,
       });
       const enhanceBody = JSON.stringify({ images });
 
-      const [analyzeRes, enhanceRes] = await Promise.all([
-        fetch("/api/analyze", {
+      let analyzeRes;
+      try {
+        analyzeRes = await fetchWithTimeout("/api/analyze", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: analyzeBody,
-        }),
-        fetch("/api/enhance-images", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: enhanceBody,
-        }),
-      ]);
+        });
+      } catch (e) {
+        setEnhancedImages(null);
+        setEnhanceNotice(null);
+        setError(
+          isAbortOrTimeoutError(e)
+            ? NETWORK_TIMEOUT_MESSAGE
+            : "We couldn’t reach the server. Check your connection and try again."
+        );
+        return;
+      }
 
       let analyzeData = {};
       try {
@@ -417,18 +468,13 @@ export default function Home() {
         analyzeData = {};
       }
 
-      let enhanceData = {};
-      try {
-        enhanceData = await enhanceRes.json();
-      } catch {
-        enhanceData = {};
-      }
-
       if (!analyzeRes.ok) {
         setEnhancedImages(null);
         setEnhanceNotice(null);
         if (isPayloadTooLargeError(analyzeRes)) {
           setError(PAYLOAD_TOO_LARGE_MESSAGE);
+        } else if (isTimeoutHttpError(analyzeRes)) {
+          setError(NETWORK_TIMEOUT_MESSAGE);
         } else {
           const msg =
             typeof analyzeData.error === "string"
@@ -442,33 +488,59 @@ export default function Home() {
       setResults(analyzeData);
       setCredits((c) => Math.max(0, c - 1));
 
-      if (isPayloadTooLargeError(enhanceRes)) {
-        setEnhancedImages([]);
-        setEnhanceNotice(PAYLOAD_TOO_LARGE_MESSAGE);
-      } else if (Array.isArray(enhanceData.images)) {
-        setEnhancedImages(enhanceData.images);
-        if (!enhanceRes.ok) {
+      /** Optional: never fail the main flow if enhance errors or times out. */
+      try {
+        const enhanceRes = await fetchWithTimeout("/api/enhance-images", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: enhanceBody,
+        });
+
+        let enhanceData = {};
+        try {
+          enhanceData = await enhanceRes.json();
+        } catch {
+          enhanceData = {};
+        }
+
+        if (isPayloadTooLargeError(enhanceRes)) {
+          setEnhancedImages([]);
+          setEnhanceNotice(PAYLOAD_TOO_LARGE_MESSAGE);
+        } else if (isTimeoutHttpError(enhanceRes)) {
+          setEnhancedImages([]);
+          setEnhanceNotice(NETWORK_TIMEOUT_MESSAGE);
+        } else if (Array.isArray(enhanceData.images)) {
+          setEnhancedImages(enhanceData.images);
+          if (!enhanceRes.ok) {
+            setEnhanceNotice(
+              typeof enhanceData.error === "string"
+                ? enhanceData.error
+                : ENHANCE_SKIPPED_MESSAGE
+            );
+          } else if (
+            Array.isArray(enhanceData.errors) &&
+            enhanceData.errors.length > 0
+          ) {
+            setEnhanceNotice(
+              "Some photos could not be enhanced. Check the placeholders below."
+            );
+          } else {
+            setEnhanceNotice(null);
+          }
+        } else {
+          setEnhancedImages([]);
           setEnhanceNotice(
             typeof enhanceData.error === "string"
               ? enhanceData.error
-              : "Sales-ready images could not be generated."
+              : ENHANCE_SKIPPED_MESSAGE
           );
-        } else if (
-          Array.isArray(enhanceData.errors) &&
-          enhanceData.errors.length > 0
-        ) {
-          setEnhanceNotice(
-            "Some photos could not be enhanced. Check the placeholders below."
-          );
-        } else {
-          setEnhanceNotice(null);
         }
-      } else {
+      } catch (e) {
         setEnhancedImages([]);
         setEnhanceNotice(
-          typeof enhanceData.error === "string"
-            ? enhanceData.error
-            : "Sales-ready images could not be loaded."
+          isAbortOrTimeoutError(e)
+            ? NETWORK_TIMEOUT_MESSAGE
+            : ENHANCE_SKIPPED_MESSAGE
         );
       }
     } catch (e) {
@@ -541,11 +613,11 @@ export default function Home() {
             </div>
             <div className="min-w-0">
               <p className="font-serif text-xl font-semibold leading-tight tracking-[0.02em] sm:text-2xl">
-                <span className="text-[#1A3A32]">list</span>
-                <span className="text-[#8FCFB0]">fora</span>
+                <span className="text-[#1A3A32]">Bright</span>
+                <span className="text-[#8FCFB0]">Listed</span>
               </p>
               <p className="mt-1 text-[10px] font-medium uppercase tracking-[0.22em] text-[#7A8F88]">
-                Listings in a Snap
+                LISTINGS IN A SNAP
               </p>
             </div>
           </div>
@@ -562,15 +634,14 @@ export default function Home() {
       <section className="border-b border-[#E8EDE9] bg-[#FFFFFF] px-4 py-9 sm:px-6 sm:py-11">
         <div className="mx-auto max-w-3xl">
           <p className="text-[10px] font-medium uppercase tracking-[0.22em] text-[#7A8F88]">
-            Listings in a Snap
+            LISTINGS IN A SNAP
           </p>
           <h1 className="font-serif mt-4 max-w-2xl text-balance text-[2rem] font-medium leading-[1.15] tracking-[0.01em] text-[#1A3A32] sm:text-[2.5rem] sm:leading-tight">
             From photos to a polished listing.
           </h1>
           <p className="mt-4 max-w-lg text-sm leading-relaxed text-[#7A8F88] sm:text-[15px]">
-            Add up to {MAX_IMAGES} photos and optional notes — we analyze your
-            item, draft listing copy, and prepare sales-ready images for
-            marketplaces and classifieds.
+            Upload photos of any item and get an AI-powered listing, accurate
+            pricing, and sales-ready images — in a snap.
           </p>
         </div>
       </section>
@@ -664,7 +735,7 @@ export default function Home() {
                       <button
                         type="button"
                         onClick={() => removeAt(index)}
-                        className="absolute right-1 top-1 z-20 flex min-h-11 min-w-11 touch-manipulation items-center justify-center rounded-full bg-[#2A6B52] text-[#F0EDE6] opacity-100 shadow-md transition-opacity hover:bg-[#245948] focus:opacity-100 focus:outline-none focus:ring-1 focus:ring-[#8FCFB0] sm:right-2 sm:top-2 sm:h-8 sm:w-8 sm:min-h-0 sm:min-w-0 sm:opacity-0 sm:group-hover:opacity-100"
+                        className="absolute right-1 top-1 z-20 flex min-h-11 min-w-11 touch-manipulation items-center justify-center rounded-full bg-[#2A6B52] text-[#F0EDE6] opacity-100 shadow-md transition-opacity hover:opacity-90 focus:opacity-100 focus:outline-none focus:ring-1 focus:ring-[#8FCFB0] sm:right-2 sm:top-2 sm:h-8 sm:w-8 sm:min-h-0 sm:min-w-0 sm:opacity-0 sm:group-hover:opacity-100"
                         aria-label={`Remove image ${index + 1}`}
                       >
                         <svg
@@ -747,15 +818,25 @@ export default function Home() {
                 </select>
               </div>
 
-              <div className="grid grid-cols-1 gap-6 sm:grid-cols-3 sm:gap-5">
+              <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-4 sm:gap-5">
                 <div className="min-w-0">
                   <p className="mb-2 text-[10px] font-medium uppercase leading-snug tracking-[0.16em] text-[#7A8F88]">
-                    Original packaging / tags included?
+                    Original box or packaging included?
                   </p>
                   <SegmentedControl
-                    selected={packagingTags}
-                    onChange={setPackagingTags}
-                    options={YNU_OPTIONS}
+                    selected={packagingIncluded}
+                    onChange={setPackagingIncluded}
+                    options={YES_NO_OPTIONS}
+                  />
+                </div>
+                <div className="min-w-0">
+                  <p className="mb-2 text-[10px] font-medium uppercase leading-snug tracking-[0.16em] text-[#7A8F88]">
+                    Tags still attached?
+                  </p>
+                  <SegmentedControl
+                    selected={tagsAttached}
+                    onChange={setTagsAttached}
+                    options={YES_NO_OPTIONS}
                   />
                 </div>
                 <div className="min-w-0">
@@ -770,7 +851,7 @@ export default function Home() {
                 </div>
                 <div className="min-w-0">
                   <p className="mb-2 text-[10px] font-medium uppercase leading-snug tracking-[0.16em] text-[#7A8F88]">
-                    Approximate age
+                    How old is this item?
                   </p>
                   <SegmentedControl
                     selected={approximateAge}
@@ -818,7 +899,7 @@ export default function Home() {
                 </p>
               )}
               {!analyzing && files.length >= 1 && credits < 1 && (
-                <p className="mt-3 text-center text-sm font-medium text-[#7A4F32]">
+                <p className="mt-3 text-center text-sm font-medium text-[#1A3A32]">
                   You&apos;re out of credits. Add more to keep analyzing.
                 </p>
               )}
@@ -868,7 +949,7 @@ export default function Home() {
                   <h3 className="font-serif mt-4 text-balance text-3xl font-medium leading-tight tracking-[0.02em] text-[#F0EDE6] sm:text-[2.25rem]">
                     {String(results.itemName ?? "")}
                   </h3>
-                  <p className="mt-3 text-sm font-medium text-[#B8C9C2] sm:text-base">
+                  <p className="mt-3 text-sm font-medium text-[#8FCFB0]/85 sm:text-base">
                     {String(results.brand ?? "")}
                   </p>
                 </div>
@@ -920,7 +1001,7 @@ export default function Home() {
                   )}
 
                   {String(results.caveat ?? "").trim() !== "" && (
-                    <p className="rounded-[12px] border-[0.5px] border-[#E8EDE9] bg-[#FAFAF8] px-4 py-3.5 text-sm leading-relaxed text-[#5C6B66]">
+                    <p className="rounded-[12px] border-[0.5px] border-[#E8EDE9] bg-[#F0EDE6] px-4 py-3.5 text-sm leading-relaxed text-[#7A8F88]">
                       <span className="font-semibold text-[#7A8F88]">
                         Note:{" "}
                       </span>
@@ -953,6 +1034,17 @@ export default function Home() {
               </div>
             )}
 
+            {results && enhanceNotice && !enhancedImages?.length && (
+              <div className="border-t-[0.5px] border-[#E8EDE9] bg-[#F0EDE6] px-6 py-5 sm:px-8">
+                <p
+                  className="text-sm leading-relaxed text-[#7A8F88]"
+                  role="status"
+                >
+                  {enhanceNotice}
+                </p>
+              </div>
+            )}
+
             {results && enhancedImages && enhancedImages.length > 0 && (
               <div className="border-t-[0.5px] border-[#E8EDE9] px-6 py-8 sm:px-8 sm:py-9">
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -974,7 +1066,7 @@ export default function Home() {
                   )}
                 </div>
                 {enhanceNotice && (
-                  <p className="mt-4 text-sm leading-relaxed text-[#7A6B32]">
+                  <p className="mt-4 text-sm leading-relaxed text-[#7A8F88]">
                     {enhanceNotice}
                   </p>
                 )}
@@ -1037,7 +1129,7 @@ export default function Home() {
 
       <footer className="mt-auto border-t-[0.5px] border-[#E8EDE9] bg-[#F4F9F7] py-8 text-center">
         <p className="text-[10px] font-medium uppercase tracking-[0.22em] text-[#7A8F88]">
-          Listfora · Listings in a Snap
+          BRIGHTLISTED · LISTINGS IN A SNAP
         </p>
       </footer>
     </div>

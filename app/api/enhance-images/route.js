@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 
+export const maxDuration = 60;
+
 const PHOTOROOM_EDIT_URL = "https://image-api.photoroom.com/v2/edit";
 
 const ALLOWED_MEDIA_TYPES = new Set([

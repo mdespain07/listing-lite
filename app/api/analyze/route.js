@@ -1,11 +1,13 @@
 import { NextResponse } from "next/server";
 
+export const maxDuration = 60;
+
 const ANTHROPIC_MESSAGES_URL = "https://api.anthropic.com/v1/messages";
 const MODEL = "claude-haiku-4-5-20251001";
 
 const SYSTEM_PROMPT = `You analyze product photos for secondhand listings. Your answers must be grounded ONLY in what is directly visible in the images. Do not guess, assume, or invent details.
 
-The user message may begin with optional seller-provided hints (category, packaging, completeness, approximate age). Treat these as unverified claims: use them only as soft context for identification or pricing when they do not contradict the photos. Never state something as visible or confirmed based on hints alone—only the photos can confirm physical details.
+The user message may begin with optional seller-provided hints (category, packaging, tags, completeness, approximate age). Treat these as unverified claims: use them only as soft context for identification or pricing when they do not contradict the photos. Never state something as visible or confirmed based on hints alone—only the photos can confirm physical details.
 
 Rules:
 - Describe ONLY what is clearly visible in the photos. If something is not shown, do not claim it.
@@ -71,11 +73,11 @@ const ALLOWED_CATEGORIES = new Set([
 const ALLOWED_YNU = new Set(["yes", "no", "unsure"]);
 
 const AGE_LABELS = {
-  "under-1": "Under 1 yr",
-  "1-5": "1–5 yrs",
-  "5-10": "5–10 yrs",
-  "10-plus": "10+ yrs",
-  unknown: "Unknown",
+  "under-1": "Brand new",
+  "1-5": "1–5 years old",
+  "5-10": "5–10 years old",
+  "10-plus": "10+ years old",
+  unknown: "Not sure",
 };
 
 const ALLOWED_AGE = new Set(Object.keys(AGE_LABELS));
@@ -119,6 +121,7 @@ function sanitizeAge(v) {
  *   packagingIncluded: string;
  *   partsIncluded: string;
  *   approximateAge: string;
+ *   tagsAttached?: string;
  * }} fields
  * @param {string} notesText
  */
@@ -131,9 +134,18 @@ function buildSellerContextBlock(fields, notesText) {
   }
   const yn = (k) =>
     k === "yes" ? "Yes" : k === "no" ? "No" : "Unsure";
-  lines.push(
-    `- Seller says original packaging or tags included: ${yn(fields.packagingIncluded)}`
-  );
+  if (fields.tagsAttached === undefined) {
+    lines.push(
+      `- Seller says original packaging or tags included: ${yn(fields.packagingIncluded)}`
+    );
+  } else {
+    lines.push(
+      `- Seller says original box or packaging included: ${yn(fields.packagingIncluded)}`
+    );
+    lines.push(
+      `- Seller says tags still attached: ${yn(fields.tagsAttached)}`
+    );
+  }
   lines.push(
     `- Seller says all parts/accessories included: ${yn(fields.partsIncluded)}`
   );
@@ -279,8 +291,15 @@ export async function POST(request) {
     );
   }
 
-  const { images, notes, category, packagingIncluded, partsIncluded, approximateAge } =
-    body;
+  const {
+    images,
+    notes,
+    category,
+    packagingIncluded,
+    tagsAttached,
+    partsIncluded,
+    approximateAge,
+  } = body;
 
   if (!Array.isArray(images)) {
     return NextResponse.json(
@@ -322,6 +341,9 @@ export async function POST(request) {
   const contextFields = {
     category: sanitizeCategory(category),
     packagingIncluded: sanitizeYnu(packagingIncluded),
+    ...("tagsAttached" in body && tagsAttached !== undefined
+      ? { tagsAttached: sanitizeYnu(tagsAttached) }
+      : {}),
     partsIncluded: sanitizeYnu(partsIncluded),
     approximateAge: sanitizeAge(approximateAge),
   };

@@ -15,9 +15,9 @@ const cormorant = Cormorant_Garamond({
 });
 
 export const metadata = {
-  title: "Listfora — Listings in a Snap",
+  title: "BrightListed — Listings in a Snap",
   description:
-    "Turn product photos into listing copy and sales-ready images for marketplaces and classifieds.",
+    "AI-powered listing assistance. Upload photos, get professional listings, accurate pricing, and sales-ready images in seconds.",
 };
 
 export const viewport = {
@@ -32,7 +32,9 @@ export default function RootLayout({ children }) {
       lang="en"
       className={`${inter.variable} ${cormorant.variable} h-full min-h-dvh antialiased`}
     >
-      <body className="flex min-h-dvh flex-col font-sans">{children}</body>
+      <body className="flex min-h-dvh flex-col bg-[#F4F9F7] font-sans text-[#1A3A32]">
+        {children}
+      </body>
     </html>
   );
 }
