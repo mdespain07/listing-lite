@@ -6,11 +6,25 @@ import {
   useMemo,
   useRef,
   useState,
+  startTransition,
 } from "react";
 import { useDropzone } from "react-dropzone";
 
 const MAX_IMAGES = 5;
 const INITIAL_CREDITS = 3;
+const CREDITS_STORAGE_KEY = "brightlisted:credits";
+
+/** Ensures `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` is included in the client bundle. */
+const STRIPE_PUBLISHABLE_KEY =
+  process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY ?? "";
+
+const CREDIT_PACKAGES = [
+  { credits: 1, priceUsd: 0.99, popular: false },
+  { credits: 5, priceUsd: 3.99, popular: false },
+  { credits: 15, priceUsd: 9.99, popular: true },
+  { credits: 30, priceUsd: 17.99, popular: false },
+];
+
 /** Longest edge for resized JPEG sent to APIs (mobile Safari / memory). */
 const MAX_IMAGE_LONG_EDGE = 800;
 const JPEG_QUALITY = 0.6;
@@ -202,6 +216,27 @@ function formatMoney(value) {
   }).format(n);
 }
 
+/**
+ * @param {number} amount
+ */
+function formatUsd(amount) {
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(amount);
+}
+
+/**
+ * @param {number} credits
+ * @param {number} priceUsd
+ */
+function formatPerCredit(credits, priceUsd) {
+  if (!credits || credits < 1) return "—";
+  return formatUsd(priceUsd / credits);
+}
+
 /** Safe filename stem from identified item name, e.g. Breyer-Horse-Figurine */
 function slugifyItemNameForFilename(name) {
   const raw = String(name ?? "").trim();
@@ -347,6 +382,158 @@ function CopyableField({ text, label }) {
   );
 }
 
+/**
+ * @param {{
+ *   open: boolean;
+ *   onClose: () => void;
+ *   onSelectCredits: (credits: number) => void;
+ *   busyCredits: number | null;
+ *   error: string | null;
+ * }} props
+ */
+function BuyCreditsModal({ open, onClose, onSelectCredits, busyCredits, error }) {
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e) => {
+      if (e.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [open, onClose]);
+
+  useEffect(() => {
+    if (!open) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = prev;
+    };
+  }, [open]);
+
+  if (!open) return null;
+
+  return (
+    <div
+      className="fixed inset-0 z-[60] flex items-end justify-center p-4 pb-[max(1rem,env(safe-area-inset-bottom))] sm:items-center sm:p-6"
+      role="presentation"
+      onMouseDown={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
+    >
+      <div
+        className="absolute inset-0 bg-[#1A3A32]/45 backdrop-blur-[2px]"
+        aria-hidden
+      />
+      <div
+        key={STRIPE_PUBLISHABLE_KEY ? "stripe-pk" : "stripe-no-pk"}
+        className="relative z-10 flex max-h-[min(92dvh,720px)] w-full max-w-lg flex-col overflow-hidden rounded-[20px] border-[0.5px] border-[#E8EDE9] bg-[#FFFFFF] shadow-[0_24px_80px_rgba(26,58,50,0.18)]"
+        role="dialog"
+        aria-modal
+        aria-labelledby="buy-credits-title"
+      >
+        <div className="shrink-0 border-b-[0.5px] border-[#E8EDE9] bg-gradient-to-b from-[#F4F9F7] to-[#FFFFFF] px-6 pb-5 pt-6 sm:px-8 sm:pb-6 sm:pt-8">
+          <div className="flex items-start justify-between gap-4">
+            <div className="min-w-0">
+              <p className="text-[10px] font-medium uppercase tracking-[0.22em] text-[#7A8F88]">
+                BrightListed
+              </p>
+              <h2
+                id="buy-credits-title"
+                className="font-serif mt-2 text-balance text-2xl font-medium tracking-[0.02em] text-[#1A3A32] sm:text-[1.75rem]"
+              >
+                Add listing credits
+              </h2>
+              <p className="mt-2 max-w-md text-sm leading-relaxed text-[#7A8F88]">
+                Choose a pack. You&apos;ll finish payment on Stripe&apos;s secure
+                checkout, then return here with credits ready to use.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={onClose}
+              className="touch-manipulation rounded-full border-[0.5px] border-[#E8EDE9] bg-white p-2.5 text-[#1A3A32] transition-colors hover:bg-[#F4F9F7] focus:outline-none focus:ring-1 focus:ring-[#2A6B52]/35"
+              aria-label="Close"
+            >
+              <svg
+                className="h-4 w-4"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={2}
+                aria-hidden
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M6 18L18 6M6 6l12 12"
+                />
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <div className="min-h-0 flex-1 overflow-y-auto px-6 py-6 sm:px-8 sm:py-7">
+          {error && (
+            <p
+              className="mb-5 rounded-[12px] border-[0.5px] border-red-200/90 bg-red-50/90 px-4 py-3 text-sm leading-relaxed text-red-900"
+              role="alert"
+            >
+              {error}
+            </p>
+          )}
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4">
+            {CREDIT_PACKAGES.map((pkg) => {
+              const busy = busyCredits === pkg.credits;
+              return (
+                <button
+                  key={pkg.credits}
+                  type="button"
+                  disabled={busyCredits !== null}
+                  onClick={() => onSelectCredits(pkg.credits)}
+                  className={[
+                    "relative touch-manipulation rounded-[14px] border-[0.5px] p-4 text-left transition-all sm:p-5",
+                    pkg.popular
+                      ? "border-[#E8C97A]/90 bg-gradient-to-b from-[#FFFBF0] to-[#FFFFFF] shadow-[0_0_0_1px_rgba(232,201,122,0.35)]"
+                      : "border-[#E8EDE9] bg-[#FFFFFF] hover:border-[#8FCFB0]/70 hover:bg-[#F4F9F7]/50",
+                    busyCredits !== null && !busy ? "opacity-45" : "",
+                  ].join(" ")}
+                >
+                  {pkg.popular && (
+                    <span className="absolute -right-0.5 -top-0.5 rounded-bl-[10px] rounded-tr-[13px] bg-[#2A6B52] px-2.5 py-1 text-[9px] font-semibold uppercase tracking-[0.14em] text-[#F0EDE6]">
+                      Most popular
+                    </span>
+                  )}
+                  <p className="font-serif text-lg font-medium text-[#1A3A32]">
+                    {pkg.credits === 1
+                      ? "1 credit"
+                      : `${pkg.credits} credits`}
+                  </p>
+                  <p className="mt-3 font-serif text-2xl font-medium tracking-tight text-[#1A3A32]">
+                    {formatUsd(pkg.priceUsd)}
+                  </p>
+                  <p className="mt-2 text-[11px] leading-snug text-[#7A8F88]">
+                    {formatPerCredit(pkg.credits, pkg.priceUsd)} per credit
+                  </p>
+                  {busy && (
+                    <span className="mt-3 inline-flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-[#2A6B52]">
+                      <Spinner className="h-4 w-4" />
+                      Redirecting…
+                    </span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+          <p className="mt-6 text-center text-[11px] leading-relaxed text-[#7A8F88]">
+            One credit runs a full analysis — title, pricing, description, and
+            enhanced photos when available.
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function Home() {
   const [files, setFiles] = useState([]);
   const [notes, setNotes] = useState("");
@@ -366,6 +553,18 @@ export default function Home() {
     /** @type {'compress' | 'upload' | null} */ (null)
   );
   const analyzeStatusRef = useRef(null);
+  const [creditsModalOpen, setCreditsModalOpen] = useState(false);
+  const [checkoutBusyCredits, setCheckoutBusyCredits] = useState(
+    /** @type {number | null} */ (null)
+  );
+  const [checkoutClientError, setCheckoutClientError] = useState(
+    /** @type {string | null} */ (null)
+  );
+  const [purchaseBanner, setPurchaseBanner] = useState(
+    /** @type {null | { type: 'success'; credits: number } | { type: 'cancelled' }} */ (
+      null
+    )
+  );
 
   const hasOversizeUpload = useMemo(
     () => files.some((f) => f.size > MAX_UPLOAD_WARNING_BYTES),
@@ -414,6 +613,72 @@ export default function Home() {
     });
     return () => cancelAnimationFrame(id);
   }, [analyzing]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const raw = localStorage.getItem(CREDITS_STORAGE_KEY);
+    let next = INITIAL_CREDITS;
+    if (raw !== null) {
+      const n = Number.parseInt(raw, 10);
+      if (!Number.isNaN(n) && n >= 0) next = n;
+    }
+
+    const params = new URLSearchParams(window.location.search);
+    const success = params.get("success");
+    const sessionId = params.get("session_id");
+    const purchasedRaw = params.get("credits");
+
+    const stripCheckoutParams = () => {
+      const url = new URL(window.location.href);
+      url.searchParams.delete("success");
+      url.searchParams.delete("credits");
+      url.searchParams.delete("session_id");
+      url.searchParams.delete("cancelled");
+      const qs = url.searchParams.toString();
+      window.history.replaceState(
+        {},
+        "",
+        `${url.pathname}${qs ? `?${qs}` : ""}`
+      );
+    };
+
+    /** @type {null | { type: 'success'; credits: number } | { type: 'cancelled' }} */
+    let banner = null;
+
+    if (success === "true" && purchasedRaw != null) {
+      const add = Number.parseInt(purchasedRaw, 10);
+      const dedupeKey =
+        sessionId && sessionId.length > 0
+          ? `brightlisted:stripeSession:${sessionId}`
+          : null;
+      const alreadyHandled = dedupeKey
+        ? sessionStorage.getItem(dedupeKey)
+        : null;
+
+      if (!Number.isNaN(add) && add > 0 && !alreadyHandled) {
+        if (dedupeKey) sessionStorage.setItem(dedupeKey, "1");
+        next += add;
+        banner = { type: "success", credits: add };
+      }
+      stripCheckoutParams();
+    } else if (params.get("cancelled") === "true") {
+      banner = { type: "cancelled" };
+      stripCheckoutParams();
+    }
+
+    localStorage.setItem(CREDITS_STORAGE_KEY, String(next));
+    startTransition(() => {
+      if (banner) setPurchaseBanner(banner);
+      setCredits(next);
+    });
+  }, []);
+
+  useEffect(() => {
+    if (!purchaseBanner) return;
+    const id = window.setTimeout(() => setPurchaseBanner(null), 8000);
+    return () => window.clearTimeout(id);
+  }, [purchaseBanner]);
 
   const canAnalyze =
     files.length >= 1 && credits >= 1 && !analyzing;
@@ -486,7 +751,16 @@ export default function Home() {
       }
 
       setResults(analyzeData);
-      setCredits((c) => Math.max(0, c - 1));
+      setCredits((c) => {
+        const nextCredits = Math.max(0, c - 1);
+        if (typeof window !== "undefined") {
+          localStorage.setItem(
+            CREDITS_STORAGE_KEY,
+            String(nextCredits)
+          );
+        }
+        return nextCredits;
+      });
 
       /** Optional: never fail the main flow if enhance errors or times out. */
       try {
@@ -558,6 +832,43 @@ export default function Home() {
     }
   };
 
+  const startCheckout = useCallback(async (packageCredits) => {
+    setCheckoutClientError(null);
+    setCheckoutBusyCredits(packageCredits);
+    try {
+      const res = await fetch("/api/create-checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ credits: packageCredits }),
+      });
+      let data = {};
+      try {
+        data = await res.json();
+      } catch {
+        data = {};
+      }
+      if (!res.ok) {
+        setCheckoutClientError(
+          typeof data.error === "string"
+            ? data.error
+            : "Could not start checkout."
+        );
+        setCheckoutBusyCredits(null);
+        return;
+      }
+      if (typeof data.url === "string" && data.url.length > 0) {
+        window.location.href = data.url;
+        return;
+      }
+      setCheckoutClientError("Invalid response from server.");
+    } catch {
+      setCheckoutClientError(
+        "Could not reach the server. Check your connection."
+      );
+    }
+    setCheckoutBusyCredits(null);
+  }, []);
+
   const downloadAllEnhanced = useCallback(async () => {
     if (!enhancedImages?.length || downloadBusy) return;
     const base = slugifyItemNameForFilename(results?.itemName);
@@ -621,15 +932,72 @@ export default function Home() {
               </p>
             </div>
           </div>
-          <div
-            className="flex shrink-0 items-center rounded-full bg-[#2A6B52] px-4 py-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-[#F0EDE6]"
-            role="status"
-            aria-label={`${credits} credits remaining`}
-          >
-            {credits} credits
+          <div className="flex shrink-0 items-center gap-2 sm:gap-3">
+            <button
+              type="button"
+              onClick={() => {
+                setCheckoutClientError(null);
+                setCreditsModalOpen(true);
+              }}
+              className="touch-manipulation rounded-full border-[0.5px] border-[#2A6B52] bg-[#FFFFFF] px-3.5 py-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-[#2A6B52] transition-colors hover:bg-[#F4F9F7] focus:outline-none focus:ring-1 focus:ring-[#2A6B52]/35 sm:px-4"
+            >
+              Buy Credits
+            </button>
+            <div
+              className="flex shrink-0 items-center rounded-full bg-[#2A6B52] px-4 py-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-[#F0EDE6]"
+              role="status"
+              aria-label={`${credits} credits remaining`}
+            >
+              {credits} credits
+            </div>
           </div>
         </div>
       </header>
+
+      {purchaseBanner?.type === "success" && (
+        <div
+          className="border-b border-[#8FCFB0]/50 bg-gradient-to-r from-[#F4F9F7] via-[#E8F5EE] to-[#F4F9F7] px-4 py-3.5 sm:px-6"
+          role="status"
+        >
+          <div className="mx-auto flex max-w-3xl items-start justify-between gap-3">
+            <p className="min-w-0 text-sm leading-relaxed text-[#1A3A32]">
+              <span className="font-serif font-medium text-[#2A6B52]">
+                Thank you.
+              </span>{" "}
+              {purchaseBanner.credits === 1
+                ? "1 credit has been added to your balance."
+                : `${purchaseBanner.credits} credits have been added to your balance.`}
+            </p>
+            <button
+              type="button"
+              onClick={() => setPurchaseBanner(null)}
+              className="shrink-0 touch-manipulation rounded-full border-[0.5px] border-[#E8EDE9] bg-white px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-[#7A8F88] hover:bg-[#FFFFFF]"
+            >
+              Dismiss
+            </button>
+          </div>
+        </div>
+      )}
+      {purchaseBanner?.type === "cancelled" && (
+        <div
+          className="border-b border-[#E8EDE9] bg-[#FFFFFF] px-4 py-3 sm:px-6"
+          role="status"
+        >
+          <div className="mx-auto flex max-w-3xl items-start justify-between gap-3">
+            <p className="text-sm leading-relaxed text-[#7A8F88]">
+              No worries — checkout was cancelled. Your credits are unchanged
+              whenever you&apos;re ready.
+            </p>
+            <button
+              type="button"
+              onClick={() => setPurchaseBanner(null)}
+              className="shrink-0 touch-manipulation rounded-full border-[0.5px] border-[#E8EDE9] bg-[#F4F9F7] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-[#7A8F88]"
+            >
+              OK
+            </button>
+          </div>
+        </div>
+      )}
 
       <section className="border-b border-[#E8EDE9] bg-[#FFFFFF] px-4 py-9 sm:px-6 sm:py-11">
         <div className="mx-auto max-w-3xl">
@@ -1126,6 +1494,18 @@ export default function Home() {
           </div>
         </div>
       )}
+
+      <BuyCreditsModal
+        open={creditsModalOpen}
+        onClose={() => {
+          if (checkoutBusyCredits !== null) return;
+          setCreditsModalOpen(false);
+          setCheckoutClientError(null);
+        }}
+        onSelectCredits={(c) => void startCheckout(c)}
+        busyCredits={checkoutBusyCredits}
+        error={checkoutClientError}
+      />
 
       <footer className="mt-auto border-t-[0.5px] border-[#E8EDE9] bg-[#F4F9F7] py-8 text-center">
         <p className="text-[10px] font-medium uppercase tracking-[0.22em] text-[#7A8F88]">
