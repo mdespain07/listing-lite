@@ -237,22 +237,40 @@ function formatPerCredit(credits, priceUsd) {
   return formatUsd(priceUsd / credits);
 }
 
-/** Safe filename stem from identified item name, e.g. Breyer-Horse-Figurine */
-function slugifyItemNameForFilename(name) {
-  const raw = String(name ?? "").trim();
-  if (!raw) return "Item";
-  const cleaned = raw
-    .normalize("NFKD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .replace(/['\u2019]/g, "")
-    .replace(/[^\w\s-]+/g, " ")
-    .trim();
-  const hyphenated = cleaned.replace(/\s+/g, "-").replace(/-+/g, "-");
-  const safe = hyphenated.replace(/^[-.]+|[-.]+$/g, "").slice(0, 120);
-  return safe || "Item";
+const DOWNLOAD_STAGGER_MS = 550;
+
+/**
+ * @param {string} dataUrl
+ */
+function extensionFromDataUrl(dataUrl) {
+  const m = /^data:([^;]+);base64,/i.exec(dataUrl);
+  const mime = m ? m[1] : "image/png";
+  if (mime.includes("jpeg")) return "jpg";
+  if (mime.includes("webp")) return "webp";
+  return "png";
 }
 
-const DOWNLOAD_STAGGER_MS = 550;
+/**
+ * @param {string} label
+ */
+function humanReadableEnhanceLabel(label) {
+  switch (label) {
+    case "ghost_mannequin":
+      return "Ghost Mannequin";
+    case "flat_lay":
+      return "Flat Lay";
+    case "enhanced":
+      return "Enhanced";
+    case "clean":
+      return "Clean Background";
+    case "staged":
+      return "Lifestyle Staged";
+    default:
+      return String(label || "")
+        .replace(/_/g, " ")
+        .trim() || "Output";
+  }
+}
 
 /**
  * @param {string} dataUrl
@@ -706,7 +724,6 @@ export default function Home() {
         partsIncluded: partsComplete,
         approximateAge,
       });
-      const enhanceBody = JSON.stringify({ images });
 
       let analyzeRes;
       try {
@@ -760,6 +777,20 @@ export default function Home() {
           );
         }
         return nextCredits;
+      });
+
+      const enhanceCategory = String(
+        (typeof analyzeData.category === "string"
+          ? analyzeData.category
+          : "") ||
+          category ||
+          ""
+      ).trim();
+
+      const enhanceBody = JSON.stringify({
+        images,
+        category: enhanceCategory,
+        heroIndex: 0,
       });
 
       /** Optional: never fail the main flow if enhance errors or times out. */
@@ -871,42 +902,37 @@ export default function Home() {
 
   const downloadAllEnhanced = useCallback(async () => {
     if (!enhancedImages?.length || downloadBusy) return;
-    const base = slugifyItemNameForFilename(results?.itemName);
     setDownloadBusy(true);
     try {
-      let index = 0;
-      for (let i = 0; i < enhancedImages.length; i++) {
-        const dataUrl = enhancedImages[i];
-        if (!dataUrl || typeof dataUrl !== "string") continue;
-        if (index > 0) {
-          await new Promise((r) => setTimeout(r, DOWNLOAD_STAGGER_MS));
-        }
-        index += 1;
-        const m = /^data:([^;]+);base64,/i.exec(dataUrl);
-        const mime = m ? m[1] : "image/png";
-        const ext = mime.includes("jpeg")
-          ? "jpg"
-          : mime.includes("webp")
-            ? "webp"
-            : "png";
-        const filename = `${base}-${index}.${ext}`;
-        try {
-          await downloadDataUrlAsFile(dataUrl, filename);
-        } catch {
-          const a = document.createElement("a");
-          a.href = dataUrl;
-          a.download = filename;
-          a.rel = "noopener noreferrer";
-          a.style.display = "none";
-          document.body.appendChild(a);
-          a.click();
-          document.body.removeChild(a);
+      let n = 0;
+      for (const imgResult of enhancedImages) {
+        const outputs = imgResult.outputs ?? [];
+        for (const output of outputs) {
+          if (!output.url || typeof output.url !== "string") continue;
+          if (n > 0) {
+            await new Promise((r) => setTimeout(r, DOWNLOAD_STAGGER_MS));
+          }
+          n += 1;
+          const ext = extensionFromDataUrl(output.url);
+          const filename = `brightlisted-${imgResult.isHero ? "hero" : imgResult.index}-${output.label}.${ext}`;
+          try {
+            await downloadDataUrlAsFile(output.url, filename);
+          } catch {
+            const a = document.createElement("a");
+            a.href = output.url;
+            a.download = filename;
+            a.rel = "noopener noreferrer";
+            a.style.display = "none";
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+          }
         }
       }
     } finally {
       setDownloadBusy(false);
     }
-  }, [enhancedImages, results, downloadBusy]);
+  }, [enhancedImages, downloadBusy]);
 
   return (
     <div className="flex min-h-dvh flex-col bg-[#F4F9F7] font-sans text-[#1A3A32] antialiased">
@@ -1406,7 +1432,7 @@ export default function Home() {
                     </span>
                     <span className="h-px min-w-[1rem] flex-1 bg-[#E8EDE9]" aria-hidden />
                   </div>
-                  {enhancedImages.some(Boolean) && (
+                  {enhancedImages.some((r) => r.outputs?.some((o) => o.url)) && (
                     <button
                       type="button"
                       disabled={downloadBusy}
@@ -1422,30 +1448,88 @@ export default function Home() {
                     {enhanceNotice}
                   </p>
                 )}
-                <ul className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4">
-                  {enhancedImages.map((url, i) =>
-                    url ? (
-                      <li
-                        key={`enhanced-${i}`}
-                        className="aspect-square overflow-hidden rounded-[12px] border-[0.5px] border-[#E8EDE9] bg-[#F4F9F7]"
+                <div className="mt-8 space-y-10">
+                  {[...enhancedImages]
+                    .sort((a, b) => a.index - b.index)
+                    .map((imgResult) => (
+                      <section
+                        key={`enhanced-photo-${imgResult.index}`}
+                        className="space-y-4"
                       >
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img
-                          src={url}
-                          alt={`Sales-ready product photo ${i + 1}`}
-                          className="h-full w-full object-contain"
-                        />
-                      </li>
-                    ) : (
-                      <li
-                        key={`enhanced-fail-${i}`}
-                        className="flex aspect-square items-center justify-center rounded-[12px] border border-dashed border-[#E8EDE9] bg-[#F4F9F7] px-3 text-center text-xs leading-snug text-[#4A5568]"
-                      >
-                        Couldn&apos;t enhance this photo
-                      </li>
-                    )
-                  )}
-                </ul>
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className="text-sm font-semibold text-[#4A5568]">
+                            Photo {imgResult.index + 1}
+                          </span>
+                          {imgResult.isHero ? (
+                            <span className="rounded-full border-[0.5px] border-[#8FCFB0]/80 bg-[#F4F9F7] px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-[#2A6B52]">
+                              HERO
+                            </span>
+                          ) : null}
+                        </div>
+                        <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4">
+                          {(imgResult.outputs ?? []).map((output) => (
+                            <li
+                              key={`${imgResult.index}-${output.label}`}
+                              className="flex flex-col overflow-hidden rounded-[12px] border-[0.5px] border-[#E8EDE9] bg-[#FFFFFF] shadow-sm"
+                            >
+                              <div className="aspect-square bg-[#F4F9F7]">
+                                {output.url ? (
+                                  <>
+                                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                                    <img
+                                      src={output.url}
+                                      alt={`${humanReadableEnhanceLabel(output.label)} — photo ${imgResult.index + 1}`}
+                                      className="h-full w-full object-contain"
+                                    />
+                                  </>
+                                ) : (
+                                  <div className="flex h-full flex-col items-center justify-center gap-2 px-3 text-center">
+                                    <p className="text-xs font-medium text-[#4A5568]">
+                                      Could not generate
+                                    </p>
+                                  </div>
+                                )}
+                              </div>
+                              <div className="flex flex-col gap-2 border-t border-[#E8EDE9]/80 bg-[#FFFFFF] p-3">
+                                <p className="text-center text-xs font-semibold leading-snug text-[#1A3A32]">
+                                  {humanReadableEnhanceLabel(output.label)}
+                                </p>
+                                <button
+                                  type="button"
+                                  disabled={downloadBusy || !output.url}
+                                  onClick={() => {
+                                    if (!output.url) return;
+                                    void (async () => {
+                                      const ext = extensionFromDataUrl(output.url);
+                                      const filename = `brightlisted-${imgResult.isHero ? "hero" : imgResult.index}-${output.label}.${ext}`;
+                                      try {
+                                        await downloadDataUrlAsFile(
+                                          output.url,
+                                          filename
+                                        );
+                                      } catch {
+                                        const a = document.createElement("a");
+                                        a.href = output.url;
+                                        a.download = filename;
+                                        a.rel = "noopener noreferrer";
+                                        a.style.display = "none";
+                                        document.body.appendChild(a);
+                                        a.click();
+                                        document.body.removeChild(a);
+                                      }
+                                    })();
+                                  }}
+                                  className="touch-manipulation min-h-9 w-full rounded-full border-[0.5px] border-[#2A6B52] bg-[#FFFFFF] px-3 py-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-[#2A6B52] transition-colors hover:bg-[#F4F9F7] focus:outline-none focus:ring-1 focus:ring-[#2A6B52]/35 disabled:cursor-not-allowed disabled:opacity-40"
+                                >
+                                  Download
+                                </button>
+                              </div>
+                            </li>
+                          ))}
+                        </ul>
+                      </section>
+                    ))}
+                </div>
               </div>
             )}
           </div>
