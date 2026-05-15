@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg id="Layer_1" data-name="Layer 1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 2971.21 875.51">
+  <defs>
+    <style>
+      .cls-1, .cls-2, .cls-3, .cls-4 {
+        fill: #8fcfb0;
+      }
+
+      .cls-1, .cls-5, .cls-6 {
+        fill-rule: evenodd;
+      }
+
+      .cls-2 {
+        letter-spacing: 0em;
+      }
+
+      .cls-2, .cls-3, .cls-4 {
+        font-family: CormorantGaramond-Regular, 'Cormorant Garamond';
+      }
+
+      .cls-7 {
+        font-family: CormorantGaramond-Bold, 'Cormorant Garamond';
+        font-weight: 700;
+      }
+
+      .cls-7, .cls-5 {
+        fill: #2a6b52;
+      }
+
+      .cls-3 {
+        letter-spacing: 0em;
+      }
+
+      .cls-8 {
+        letter-spacing: .21em;
+      }
+
+      .cls-9 {
+        letter-spacing: .23em;
+      }
+
+      .cls-10 {
+        font-size: 427.34px;
+      }
+
+      .cls-11 {
+        fill: #79847f;
+        font-family: DIN2014-Regular, 'DIN 2014';
+        font-size: 134.57px;
+      }
+
+      .cls-6 {
+        fill: #2b5e45;
+      }
+
+      .cls-12 {
+        fill: #e8c97a;
+      }
+    </style>
+  </defs>
+  <text class="cls-10" transform="translate(485 434.18)"><tspan class="cls-7" x="0" y="0">Bright</tspan><tspan class="cls-2" x="1082.43" y="0">List</tspan><tspan class="cls-3" x="1715.73" y="0">e</tspan><tspan class="cls-4" x="1887.52" y="0">d.ai</tspan></text>
+  <polygon class="cls-5" points="449.7 297.28 3 0 3 193.17 304.57 393.87 449.7 297.28"/>
+  <polygon class="cls-6" points="449.7 297.28 304.57 200.7 103.29 259.91 304.57 393.87 449.7 297.28"/>
+  <polygon class="cls-1" points="449.7 297.28 3 594.57 3 401.4 304.57 200.7 449.7 297.28"/>
+  <text/>
+  <text class="cls-11" transform="translate(805.45 724.1) scale(1.14 1)"><tspan class="cls-9" x="0" y="0">LI</tspan><tspan class="cls-8" x="166.46" y="0">S</tspan><tspan class="cls-9" x="272.1" y="0">TINGS IN A SNAP</tspan></text>
+  <circle class="cls-12" cx="51.64" cy="297.65" r="51.64"/>
+</svg>

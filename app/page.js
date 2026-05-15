@@ -912,26 +912,11 @@ export default function Home() {
     <div className="flex min-h-dvh flex-col bg-[#F4F9F7] font-sans text-[#1A3A32] antialiased">
       <header className="border-b border-[#E8EDE9] bg-[#FFFFFF]">
         <div className="mx-auto flex max-w-3xl items-center justify-between gap-4 px-4 py-4 sm:px-6 sm:py-5">
-          <div className="flex min-w-0 items-center gap-3 sm:gap-4">
-            <div
-              className="relative flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-[#2A6B52] shadow-sm"
-              aria-hidden
-            >
-              <span className="font-serif text-2xl font-bold leading-none text-[#8FCFB0]">
-                L
-              </span>
-              <span className="absolute bottom-1 right-1 h-1.5 w-1.5 rounded-full bg-[#E8C97A]" />
-            </div>
-            <div className="min-w-0">
-              <p className="font-serif text-xl font-semibold leading-tight tracking-[0.02em] sm:text-2xl">
-                <span className="text-[#1A3A32]">Bright</span>
-                <span className="text-[#8FCFB0]">Listed</span>
-              </p>
-              <p className="mt-1 text-[10px] font-medium uppercase tracking-[0.22em] text-[#7A8F88]">
-                LISTINGS IN A SNAP
-              </p>
-            </div>
-          </div>
+          <img
+            src="/logo.svg"
+            alt="BrightListed"
+            className="h-10 w-auto shrink-0 sm:h-12"
+          />
           <div className="flex shrink-0 items-center gap-2 sm:gap-3">
             <button
               type="button"
