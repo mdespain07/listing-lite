@@ -919,24 +919,27 @@ export default function Home() {
               className="h-14 w-auto shrink-0 sm:h-16"
             />
           </div>
-          <div className="flex w-full shrink-0 flex-row justify-center gap-3 sm:w-auto sm:justify-end">
+          <div className="flex w-full shrink-0 flex-row justify-center gap-5 sm:w-auto sm:justify-end">
             <button
               type="button"
               onClick={() => {
                 setCheckoutClientError(null);
                 setCreditsModalOpen(true);
               }}
-              className="touch-manipulation min-h-[44px] rounded-full border-[0.5px] border-[#2A6B52] bg-transparent px-6 py-1.5 text-sm font-semibold uppercase tracking-[0.14em] text-[#2A6B52] transition-colors hover:bg-[#F4F9F7] focus:outline-none focus:ring-1 focus:ring-[#2A6B52]/35"
+              className="touch-manipulation min-h-[44px] rounded-full border-2 border-[#2A6B52] bg-transparent px-6 py-1.5 text-sm font-semibold uppercase tracking-[0.14em] text-[#2A6B52] transition-colors hover:bg-[#F4F9F7] focus:outline-none focus:ring-1 focus:ring-[#2A6B52]/35"
             >
               Buy Credits
             </button>
-            <div
-              className="flex min-h-[44px] shrink-0 items-center justify-center rounded-full bg-[#2A6B52] px-6 py-1.5 text-sm font-semibold uppercase tracking-[0.16em] text-white"
+            <button
+              type="button"
+              tabIndex={-1}
               role="status"
+              className="flex min-h-[44px] shrink-0 cursor-default items-center justify-center rounded-full border-0 bg-[#2A6B52] px-6 py-1.5 text-sm font-semibold uppercase tracking-[0.16em]"
+              style={{ color: "#FFFFFF" }}
               aria-label={`${credits} credits remaining`}
             >
               {credits} credits
-            </div>
+            </button>
           </div>
         </div>
       </header>
