@@ -52,22 +52,22 @@ export default function PrivacyPolicyPage() {
             <p className="leading-relaxed">
               Depending on how you use BrightListed, we may collect:
             </p>
-            <ul className="list-inside list-disc space-y-2 leading-relaxed">
+            <ul className="list-outside list-disc space-y-2 pl-6 leading-relaxed">
               <li>
                 <strong>Photos</strong> you upload for listing generation.
               </li>
               <li>
-                <strong>Item descriptions and notes</strong> you provide (for
-                example, category selections and optional text).
+                <strong>Item descriptions and notes</strong> you provide (for example,
+                category selections and optional text).
               </li>
               <li>
-                <strong>Purchase data</strong> related to credit packs (processed
-                by our payment provider; see below).
+                <strong>Purchase data</strong> related to credit packs (processed by our
+                payment provider; see below).
               </li>
               <li>
-                <strong>Usage data</strong> such as device/browser type,
-                approximate region derived from network requests, and diagnostic
-                information needed to operate and secure the service.
+                <strong>Usage data</strong> such as device/browser type, approximate region
+                derived from network requests, and diagnostic information needed to operate
+                and secure the service.
               </li>
             </ul>
           </section>
@@ -79,12 +79,11 @@ export default function PrivacyPolicyPage() {
             <p className="leading-relaxed">
               Your photos and related inputs may be processed by{" "}
               <strong>third-party AI services</strong>, including{" "}
-              <strong>Anthropic</strong> and <strong>Photoroom</strong>, to
-              generate listing content and optional enhanced images. We design
-              our integrations so that photos are{" "}
-              <strong>not stored permanently</strong> by BrightListed after
-              processing completes; third parties retain data according to their
-              own policies and agreements.
+              <strong>Anthropic</strong> and <strong>Photoroom</strong>, to generate listing
+              content and optional enhanced images. We design our integrations so that photos
+              are <strong>not stored permanently</strong> by BrightListed after processing
+              completes; third parties retain data according to their own policies and
+              agreements.
             </p>
           </section>
 
@@ -94,9 +93,9 @@ export default function PrivacyPolicyPage() {
             </h2>
             <p className="leading-relaxed">
               Payments are processed by <strong>Stripe</strong>. We{" "}
-              <strong>do not</strong> store full payment card numbers on our
-              servers. Stripe&apos;s use of your information is governed by
-              Stripe&apos;s privacy policy and terms.
+              <strong>do not</strong> store full payment card numbers on our servers.
+              Stripe&apos;s use of your information is governed by Stripe&apos;s privacy policy
+              and terms.
             </p>
           </section>
 
@@ -105,8 +104,8 @@ export default function PrivacyPolicyPage() {
               We do not sell your personal information
             </h2>
             <p className="leading-relaxed">
-              We <strong>do not sell</strong> your personal information to third
-              parties for money or other valuable consideration.
+              We <strong>do not sell</strong> your personal information to third parties for
+              money or other valuable consideration.
             </p>
           </section>
 
@@ -115,13 +114,11 @@ export default function PrivacyPolicyPage() {
               Cookies and local storage
             </h2>
             <p className="leading-relaxed">
-              We use browser technologies such as{" "}
-              <strong>cookies</strong> and/or{" "}
-              <strong>localStorage</strong> as needed to operate the site — for
-              example, to remember your <strong>credit balance</strong> on this
-              device until proper accounts are added. You can clear site data in
-              your browser settings; doing so may reset credits shown locally
-              until synced again.
+              We use browser technologies such as <strong>cookies</strong> and/or{" "}
+              <strong>localStorage</strong> as needed to operate the site — for example, to
+              remember your <strong>credit balance</strong> on this device until proper accounts
+              are added. You can clear site data in your browser settings; doing so may reset
+              credits shown locally until synced again.
             </p>
           </section>
 
@@ -131,11 +128,10 @@ export default function PrivacyPolicyPage() {
             </h2>
             <p className="leading-relaxed">
               Utah residents may have rights under the{" "}
-              <strong>Utah Consumer Privacy Act</strong> (UCPA), including
-              rights to access, delete, and obtain certain personal data we
-              maintain, and to opt out of certain processing where applicable. To
-              exercise rights described in this policy or under Utah law, contact
-              us using the email below. We may verify your request before
+              <strong>Utah Consumer Privacy Act</strong> (UCPA), including rights to access,
+              delete, and obtain certain personal data we maintain, and to opt out of certain
+              processing where applicable. To exercise rights described in this policy or under
+              Utah law, contact us using the email below. We may verify your request before
               responding.
             </p>
           </section>

@@ -1,3 +1,13 @@
+/**
+ * Category-aware multi-output Photoroom v2/edit enhancement.
+ *
+ * FRONTEND (not implemented yet): `app/page.js` should send `category`
+ * (string) and optional `heroIndex` (number) in the POST body alongside
+ * `images`, and update the enhance-results UI to consume this route's
+ * `{ images: [{ index, isHero, outputs: [{ label, url }] }] }` shape
+ * instead of a flat array of URLs.
+ */
+
 import { NextResponse } from "next/server";
 
 export const maxDuration = 60;
@@ -10,6 +20,9 @@ const ALLOWED_MEDIA_TYPES = new Set([
   "image/gif",
   "image/webp",
 ]);
+
+const STAGING_DEFAULT =
+  "Warm inviting home interior, soft natural light, cream and sage color palette, cozy lifestyle feel, item prominently featured as hero";
 
 /**
  * @param {unknown} entry
@@ -79,19 +92,57 @@ function fileNameForMime(mediaType) {
 }
 
 /**
+ * Clothing / fashion-related categories (case-insensitive).
+ * @param {unknown} category
+ */
+function isClothing(category) {
+  const c = String(category ?? "").trim().toLowerCase();
+  if (!c) return false;
+  return /\b(clothing|apparel|shoes|accessories|bags|jewelry|fashion)\b/.test(
+    c
+  );
+}
+
+/**
+ * Lifestyle staging prompt from listing category (non-clothing heroes).
+ * Clothing-style categories rely on ghost mannequin / flat lay instead.
+ * @param {unknown} category
+ */
+function getStagingPrompt(category) {
+  const c = String(category ?? "").trim().toLowerCase();
+  if (!c) return STAGING_DEFAULT;
+
+  if (/\b(electronics|computer|tech|gaming)\b/.test(c)) {
+    return "Clean wooden desk surface, warm natural window light, soft bokeh background, lifestyle home office feel, item as hero, no text or logos in background";
+  }
+  if (/\b(home|garden|furniture|decor|kitchen)\b/.test(c)) {
+    return "Cozy well-lit living room corner, warm afternoon light, neutral cream and sage tones, minimalist styling, item prominently featured as hero";
+  }
+  if (/\b(sport|sports|outdoors|tools|automotive)\b/.test(c)) {
+    return "Bright airy backyard patio, warm sunlight, natural greenery softly blurred in background, item as hero";
+  }
+  if (/\b(toys?|kids?|baby)\b/.test(c)) {
+    return "Soft natural light playroom, warm white and wood tones, clean minimal background, item as hero";
+  }
+  return STAGING_DEFAULT;
+}
+
+/**
  * @param {string} apiKey
  * @param {string} base64Data raw base64 (no data: prefix)
  * @param {string} mediaType
- * @returns {Promise<string>} data URL of enhanced image
+ * @param {Record<string, string>} fields dotted Photoroom form keys → values
+ * @returns {Promise<string>} data URL of result image
  */
-async function photoroomWhiteBackground(apiKey, base64Data, mediaType) {
+async function photoroomEdit(apiKey, base64Data, mediaType, fields) {
   const buffer = Buffer.from(base64Data, "base64");
   const blob = new Blob([buffer], { type: mediaType });
   const form = new FormData();
   form.append("imageFile", blob, fileNameForMime(mediaType));
-  form.append("removeBackground", "true");
-  form.append("background.color", "FFFFFF");
-  form.append("padding", "0.08");
+  for (const [key, value] of Object.entries(fields)) {
+    if (value === undefined || value === null) continue;
+    form.append(key, String(value));
+  }
 
   const res = await fetch(PHOTOROOM_EDIT_URL, {
     method: "POST",
@@ -101,8 +152,7 @@ async function photoroomWhiteBackground(apiKey, base64Data, mediaType) {
     body: form,
   });
 
-  const contentType =
-    res.headers.get("content-type") || "image/png";
+  const contentType = res.headers.get("content-type") || "image/png";
 
   if (!res.ok) {
     let detail = `Photoroom returned HTTP ${res.status}`;
@@ -127,6 +177,170 @@ async function photoroomWhiteBackground(apiKey, base64Data, mediaType) {
   const outBuf = Buffer.from(await res.arrayBuffer());
   const b64 = outBuf.toString("base64");
   return `data:${contentType};base64,${b64}`;
+}
+
+/**
+ * @param {string} apiKey
+ * @param {string} base64Data
+ * @param {string} mediaType
+ */
+async function photoroomCleanBackground(apiKey, base64Data, mediaType) {
+  return photoroomEdit(apiKey, base64Data, mediaType, {
+    removeBackground: "true",
+    "background.color": "FFFFFF",
+    padding: "0.08",
+    horizontalAlignment: "center",
+    verticalAlignment: "center",
+    "shadow.mode": "ai.auto",
+  });
+}
+
+/**
+ * @param {string} apiKey
+ * @param {string} base64Data
+ * @param {string} mediaType
+ */
+async function photoroomGhostMannequin(apiKey, base64Data, mediaType) {
+  return photoroomEdit(apiKey, base64Data, mediaType, {
+    removeBackground: "true",
+    "ghostMannequin.mode": "ai.auto",
+    "background.color": "FFFFFF",
+    padding: "0.05",
+  });
+}
+
+/**
+ * @param {string} apiKey
+ * @param {string} base64Data
+ * @param {string} mediaType
+ */
+async function photoroomFlatLay(apiKey, base64Data, mediaType) {
+  return photoroomEdit(apiKey, base64Data, mediaType, {
+    removeBackground: "true",
+    "flatLay.mode": "ai.auto",
+    "background.color": "FFFFFF",
+    padding: "0.08",
+  });
+}
+
+/**
+ * @param {string} apiKey
+ * @param {string} base64Data
+ * @param {string} mediaType
+ */
+async function photoroomWrinkleRemove(apiKey, base64Data, mediaType) {
+  return photoroomEdit(apiKey, base64Data, mediaType, {
+    removeBackground: "true",
+    "beautify.mode": "auto",
+    "background.color": "FFFFFF",
+    padding: "0.08",
+  });
+}
+
+/**
+ * @param {string} apiKey
+ * @param {string} base64Data
+ * @param {string} mediaType
+ * @param {string} prompt
+ */
+async function photoroomLifestyleStaging(
+  apiKey,
+  base64Data,
+  mediaType,
+  prompt
+) {
+  return photoroomEdit(apiKey, base64Data, mediaType, {
+    removeBackground: "true",
+    "background.prompt": prompt,
+    "shadow.mode": "ai.auto",
+    padding: "0.08",
+    horizontalAlignment: "center",
+    verticalAlignment: "center",
+  });
+}
+
+/**
+ * @param {string} apiKey
+ * @param {{ data: string, media_type: string }} img
+ * @param {number} index
+ * @param {boolean} isHero
+ * @param {string} category
+ * @param {{ label: string; message: string; index: number }[]} errorsOut
+ */
+async function processOneImage(apiKey, img, index, isHero, category, errorsOut) {
+  const { data, media_type } = img;
+  const clothing = isClothing(category);
+  /** @type {{ label: string; fn: () => Promise<string> }[]} */
+  let pipeline = [];
+
+  if (isHero && clothing) {
+    pipeline = [
+      {
+        label: "ghost_mannequin",
+        fn: () => photoroomGhostMannequin(apiKey, data, media_type),
+      },
+      {
+        label: "flat_lay",
+        fn: () => photoroomFlatLay(apiKey, data, media_type),
+      },
+      {
+        label: "enhanced",
+        fn: () => photoroomWrinkleRemove(apiKey, data, media_type),
+      },
+    ];
+  } else if (isHero && !clothing) {
+    pipeline = [
+      {
+        label: "clean",
+        fn: () => photoroomCleanBackground(apiKey, data, media_type),
+      },
+      {
+        label: "staged",
+        fn: () =>
+          photoroomLifestyleStaging(
+            apiKey,
+            data,
+            media_type,
+            getStagingPrompt(category)
+          ),
+      },
+    ];
+  } else if (!isHero && clothing) {
+    pipeline = [
+      {
+        label: "clean",
+        fn: () => photoroomCleanBackground(apiKey, data, media_type),
+      },
+      {
+        label: "enhanced",
+        fn: () => photoroomWrinkleRemove(apiKey, data, media_type),
+      },
+    ];
+  } else {
+    pipeline = [
+      {
+        label: "clean",
+        fn: () => photoroomCleanBackground(apiKey, data, media_type),
+      },
+    ];
+  }
+
+  const outputs = [];
+  for (const step of pipeline) {
+    try {
+      const url = await step.fn();
+      outputs.push({ label: step.label, url });
+    } catch (err) {
+      outputs.push({ label: step.label, url: null });
+      errorsOut.push({
+        index,
+        label: step.label,
+        message: err instanceof Error ? err.message : "Enhancement failed",
+      });
+    }
+  }
+
+  return { index, isHero, outputs };
 }
 
 export async function POST(request) {
@@ -163,6 +377,21 @@ export async function POST(request) {
     );
   }
 
+  const category =
+    typeof body.category === "string" ? body.category : "";
+
+  let heroIndex = 0;
+  if (body.heroIndex !== undefined && body.heroIndex !== null) {
+    const n = Number(body.heroIndex);
+    if (Number.isFinite(n)) {
+      heroIndex = Math.trunc(n);
+    }
+  }
+  heroIndex = Math.max(
+    0,
+    Math.min(heroIndex, Math.max(0, images.length - 1))
+  );
+
   const normalized = [];
   for (let i = 0; i < images.length; i++) {
     const out = normalizeImageEntry(images[i]);
@@ -189,25 +418,22 @@ export async function POST(request) {
     );
   }
 
-  const imagesOut = [];
+  /** @type {{ index: number; label: string; message: string }[]} */
   const errors = [];
+  /** @type {{ index: number; isHero: boolean; outputs: { label: string; url: string | null }[] }[]} */
+  const imagesOut = [];
 
   for (let i = 0; i < normalized.length; i++) {
-    const img = normalized[i];
-    try {
-      const dataUrl = await photoroomWhiteBackground(
-        apiKey,
-        img.data,
-        img.media_type
-      );
-      imagesOut.push(dataUrl);
-    } catch (err) {
-      imagesOut.push(null);
-      errors.push({
-        index: i,
-        message: err instanceof Error ? err.message : "Enhancement failed",
-      });
-    }
+    const isHero = i === heroIndex;
+    const entry = await processOneImage(
+      apiKey,
+      normalized[i],
+      i,
+      isHero,
+      category,
+      errors
+    );
+    imagesOut.push(entry);
   }
 
   return NextResponse.json({

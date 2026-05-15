@@ -51,8 +51,8 @@ export default function TermsOfServicePage() {
             </h2>
             <p className="leading-relaxed">
               BrightListed operates as a trade name (DBA) of{" "}
-              <strong>Fabs &amp; Belle Co.</strong>, an S corporation organized
-              under the laws of the State of Utah.
+              <strong>Fabs &amp; Belle Co.</strong>, an S corporation organized under
+              the laws of the State of Utah.
             </p>
           </section>
 
@@ -62,12 +62,11 @@ export default function TermsOfServicePage() {
             </h2>
             <p className="leading-relaxed">
               BrightListed provides an{" "}
-              <strong>AI-powered listing generation tool</strong>. You may
-              upload photos and related information about items you wish to
-              sell; we process that input to suggest titles, descriptions,
-              pricing guidance, and optional enhanced images. Output is
-              informational only and does not constitute legal, financial, or
-              appraisal advice.
+              <strong>AI-powered listing generation tool</strong>. You may upload photos
+              and related information about items you wish to sell; we process that
+              input to suggest titles, descriptions, pricing guidance, and optional
+              enhanced images. Output is informational only and does not constitute
+              legal, financial, or appraisal advice.
             </p>
           </section>
 
@@ -78,10 +77,10 @@ export default function TermsOfServicePage() {
             <p className="leading-relaxed">
               Certain features are accessed using{" "}
               <strong>prepaid credits</strong>. Credits are{" "}
-              <strong>non-refundable</strong>. Unless we state otherwise,
-              purchased credits <strong>do not expire</strong> while we continue
-              to offer the service. We may change pricing, credit packs, or how
-              credits are consumed with reasonable notice where required by law.
+              <strong>non-refundable</strong>. Unless we state otherwise, purchased
+              credits <strong>do not expire</strong> while we continue to offer the
+              service. We may change pricing, credit packs, or how credits are
+              consumed with reasonable notice where required by law.
             </p>
           </section>
 
@@ -90,10 +89,10 @@ export default function TermsOfServicePage() {
               No guarantees
             </h2>
             <p className="leading-relaxed">
-              We do <strong>not</strong> guarantee the accuracy, completeness, or
-              fitness of any listing content, pricing estimates, or enhanced
-              images. We do <strong>not</strong> guarantee any particular sale,
-              price, or marketplace outcome.
+              We do <strong>not</strong> guarantee the accuracy, completeness, or fitness
+              of any listing content, pricing estimates, or enhanced images. We do{" "}
+              <strong>not</strong> guarantee any particular sale, price, or marketplace
+              outcome.
             </p>
           </section>
 
@@ -101,17 +100,17 @@ export default function TermsOfServicePage() {
             <h2 className="font-serif text-xl font-medium text-[#1A3A32] sm:text-2xl">
               Your responsibilities
             </h2>
-            <ul className="list-inside list-disc space-y-2 leading-relaxed">
+            <ul className="list-outside list-disc space-y-2 pl-6 leading-relaxed">
               <li>
                 You are solely responsible for the{" "}
-                <strong>accuracy</strong> of descriptions, claims, and
-                disclosures in listings you publish or share using our outputs.
+                <strong>accuracy</strong> of descriptions, claims, and disclosures in
+                listings you publish or share using our outputs.
               </li>
               <li>
-                You represent that you <strong>own</strong> the items or have
-                the <strong>legal right to sell</strong> them, and that your use
-                of BrightListed does not violate anyone else&apos;s rights or
-                applicable laws.
+                You represent that you <strong>own</strong> the items or have the{" "}
+                <strong>legal right to sell</strong> them, and that your use of
+                BrightListed does not violate anyone else&apos;s rights or applicable
+                laws.
               </li>
             </ul>
           </section>
@@ -122,9 +121,8 @@ export default function TermsOfServicePage() {
             </h2>
             <p className="leading-relaxed">
               BrightListed is provided <strong>&quot;as is&quot;</strong> and{" "}
-              <strong>&quot;as available&quot;</strong>, without warranties of any
-              kind, whether express or implied, to the fullest extent permitted
-              by law.
+              <strong>&quot;as available&quot;</strong>, without warranties of any kind,
+              whether express or implied, to the fullest extent permitted by law.
             </p>
           </section>
 
@@ -133,8 +131,7 @@ export default function TermsOfServicePage() {
               Eligibility
             </h2>
             <p className="leading-relaxed">
-              You must be at least <strong>18 years old</strong> to use
-              BrightListed.
+              You must be at least <strong>18 years old</strong> to use BrightListed.
             </p>
           </section>
 
@@ -144,8 +141,8 @@ export default function TermsOfServicePage() {
             </h2>
             <p className="leading-relaxed">
               These Terms are governed by the laws of the{" "}
-              <strong>State of Utah</strong>, without regard to conflict-of-law
-              principles, except where preempted by applicable federal law.
+              <strong>State of Utah</strong>, without regard to conflict-of-law principles,
+              except where preempted by applicable federal law.
             </p>
           </section>
 
