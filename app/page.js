@@ -237,18 +237,44 @@ function formatPerCredit(credits, priceUsd) {
   return formatUsd(priceUsd / credits);
 }
 
-const DOWNLOAD_STAGGER_MS = 550;
-
 /**
  * @param {string} dataUrl
+ * @param {string} label
  */
-function extensionFromDataUrl(dataUrl) {
-  const m = /^data:([^;]+);base64,/i.exec(dataUrl);
-  const mime = m ? m[1] : "image/png";
-  if (mime.includes("jpeg")) return "jpg";
-  if (mime.includes("webp")) return "webp";
-  return "png";
+async function shareImage(dataUrl, label) {
+  try {
+    const res = await fetch(dataUrl);
+    const blob = await res.blob();
+    const file = new File([blob], `brightlisted-${label}.png`, {
+      type: "image/png",
+    });
+
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      await navigator.share({
+        files: [file],
+        title: "BrightListed photo",
+      });
+    } else {
+      const url = URL.createObjectURL(blob);
+      window.open(url, "_blank", "noopener,noreferrer");
+      window.setTimeout(() => URL.revokeObjectURL(url), 120_000);
+    }
+  } catch (err) {
+    if (err && typeof err === "object" && err.name !== "AbortError") {
+      console.error("Share failed:", err);
+    }
+  }
 }
+
+const ENHANCE_OUTPUT_ORDER = [
+  "ghost_mannequin",
+  "flat_lay",
+  "enhanced",
+  "clean",
+  "staged",
+];
+
+const ENHANCE_SKELETON_SLOTS = 6;
 
 /**
  * @param {string} label
@@ -269,27 +295,6 @@ function humanReadableEnhanceLabel(label) {
       return String(label || "")
         .replace(/_/g, " ")
         .trim() || "Output";
-  }
-}
-
-/**
- * @param {string} dataUrl
- * @param {string} filename
- */
-async function downloadDataUrlAsFile(dataUrl, filename) {
-  const blob = await fetch(dataUrl).then((r) => r.blob());
-  const objectUrl = URL.createObjectURL(blob);
-  try {
-    const a = document.createElement("a");
-    a.href = objectUrl;
-    a.download = filename;
-    a.rel = "noopener noreferrer";
-    a.style.display = "none";
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-  } finally {
-    setTimeout(() => URL.revokeObjectURL(objectUrl), 1500);
   }
 }
 
@@ -566,7 +571,7 @@ export default function Home() {
   const [error, setError] = useState(null);
   const [enhancedImages, setEnhancedImages] = useState(null);
   const [enhanceNotice, setEnhanceNotice] = useState(null);
-  const [downloadBusy, setDownloadBusy] = useState(false);
+  const [enhancingImages, setEnhancingImages] = useState(false);
   const [analysisPhase, setAnalysisPhase] = useState(
     /** @type {'compress' | 'upload' | null} */ (null)
   );
@@ -588,6 +593,39 @@ export default function Home() {
     () => files.some((f) => f.size > MAX_UPLOAD_WARNING_BYTES),
     [files]
   );
+
+  const flattenedEnhanceCards = useMemo(() => {
+    if (!Array.isArray(enhancedImages)) return [];
+    const rank = (lbl) => {
+      const i = ENHANCE_OUTPUT_ORDER.indexOf(lbl);
+      return i === -1 ? 999 : i;
+    };
+    const cards = [];
+    for (const imgResult of enhancedImages) {
+      const photoIndex = imgResult.index;
+      const hero = Boolean(imgResult.isHero);
+      for (const output of imgResult.outputs ?? []) {
+        if (!output?.url || typeof output.url !== "string") continue;
+        cards.push({
+          key: `${photoIndex}-${output.label}`,
+          url: output.url,
+          label: output.label,
+          isHero: hero,
+          photoIndex,
+        });
+      }
+    }
+    cards.sort((a, b) => {
+      if (a.isHero !== b.isHero) return a.isHero ? -1 : 1;
+      if (a.photoIndex !== b.photoIndex) return a.photoIndex - b.photoIndex;
+      return rank(a.label) - rank(b.label);
+    });
+    return cards;
+  }, [enhancedImages]);
+
+  const showSalesReadySection =
+    Boolean(results) &&
+    (enhancingImages || flattenedEnhanceCards.length > 0);
 
   const onDrop = useCallback((acceptedFiles) => {
     setFiles((prev) => {
@@ -708,6 +746,7 @@ export default function Home() {
     setError(null);
     setEnhanceNotice(null);
     setEnhancedImages(null);
+    setEnhancingImages(false);
 
     try {
       const images = await Promise.all(
@@ -794,6 +833,7 @@ export default function Home() {
       });
 
       /** Optional: never fail the main flow if enhance errors or times out. */
+      setEnhancingImages(true);
       try {
         const enhanceRes = await fetchWithTimeout("/api/enhance-images", {
           method: "POST",
@@ -827,7 +867,7 @@ export default function Home() {
             enhanceData.errors.length > 0
           ) {
             setEnhanceNotice(
-              "Some photos could not be enhanced. Check the placeholders below."
+              "Some enhancements could not be generated."
             );
           } else {
             setEnhanceNotice(null);
@@ -847,6 +887,8 @@ export default function Home() {
             ? NETWORK_TIMEOUT_MESSAGE
             : ENHANCE_SKIPPED_MESSAGE
         );
+      } finally {
+        setEnhancingImages(false);
       }
     } catch (e) {
       const msg =
@@ -899,40 +941,6 @@ export default function Home() {
     }
     setCheckoutBusyCredits(null);
   }, []);
-
-  const downloadAllEnhanced = useCallback(async () => {
-    if (!enhancedImages?.length || downloadBusy) return;
-    setDownloadBusy(true);
-    try {
-      let n = 0;
-      for (const imgResult of enhancedImages) {
-        const outputs = imgResult.outputs ?? [];
-        for (const output of outputs) {
-          if (!output.url || typeof output.url !== "string") continue;
-          if (n > 0) {
-            await new Promise((r) => setTimeout(r, DOWNLOAD_STAGGER_MS));
-          }
-          n += 1;
-          const ext = extensionFromDataUrl(output.url);
-          const filename = `brightlisted-${imgResult.isHero ? "hero" : imgResult.index}-${output.label}.${ext}`;
-          try {
-            await downloadDataUrlAsFile(output.url, filename);
-          } catch {
-            const a = document.createElement("a");
-            a.href = output.url;
-            a.download = filename;
-            a.rel = "noopener noreferrer";
-            a.style.display = "none";
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-          }
-        }
-      }
-    } finally {
-      setDownloadBusy(false);
-    }
-  }, [enhancedImages, downloadBusy]);
 
   return (
     <div className="flex min-h-dvh flex-col bg-[#F4F9F7] font-sans text-[#1A3A32] antialiased">
@@ -1412,7 +1420,11 @@ export default function Home() {
               </div>
             )}
 
-            {results && enhanceNotice && !enhancedImages?.length && (
+            {results &&
+              enhanceNotice &&
+              Array.isArray(enhancedImages) &&
+              enhancedImages.length === 0 &&
+              !enhancingImages && (
               <div className="border-t-[0.5px] border-[#E8EDE9] bg-[#F0EDE6] px-6 py-5 sm:px-8">
                 <p
                   className="text-sm leading-relaxed text-[#4A5568]"
@@ -1423,113 +1435,82 @@ export default function Home() {
               </div>
             )}
 
-            {results && enhancedImages && enhancedImages.length > 0 && (
+            {showSalesReadySection && (
               <div className="border-t-[0.5px] border-[#E8EDE9] px-6 py-8 sm:px-8 sm:py-9">
-                <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                  <div className="flex min-w-0 flex-1 items-center gap-3">
-                    <span className="shrink-0 text-sm font-medium uppercase tracking-[0.18em] text-[#4A5568] sm:text-base">
-                      Sales-ready images
-                    </span>
-                    <span className="h-px min-w-[1rem] flex-1 bg-[#E8EDE9]" aria-hidden />
-                  </div>
-                  {enhancedImages.some((r) => r.outputs?.some((o) => o.url)) && (
-                    <button
-                      type="button"
-                      disabled={downloadBusy}
-                      onClick={() => void downloadAllEnhanced()}
-                      className="shrink-0 touch-manipulation min-h-11 rounded-[12px] bg-[#2A6B52] px-5 py-3 text-sm font-semibold uppercase tracking-[0.16em] text-white transition-opacity hover:opacity-90 focus:outline-none focus:ring-1 focus:ring-[#2A6B52]/45 disabled:cursor-wait disabled:opacity-60"
-                    >
-                      {downloadBusy ? "Downloading…" : "Download all"}
-                    </button>
-                  )}
+                <div className="flex min-w-0 items-center gap-3">
+                  <span className="shrink-0 text-sm font-medium uppercase tracking-[0.18em] text-[#4A5568] sm:text-base">
+                    Sales-ready images
+                  </span>
+                  <span
+                    className="h-px min-w-[1rem] flex-1 bg-[#E8EDE9]"
+                    aria-hidden
+                  />
                 </div>
-                {enhanceNotice && (
+                <p className="mt-3 max-w-xl text-xs font-medium uppercase tracking-[0.18em] text-[#4A5568] sm:text-sm">
+                  Tap Share on any image to save or send.
+                </p>
+                {enhanceNotice && !enhancingImages ? (
                   <p className="mt-4 text-sm leading-relaxed text-[#4A5568]">
                     {enhanceNotice}
                   </p>
-                )}
-                <div className="mt-8 space-y-10">
-                  {[...enhancedImages]
-                    .sort((a, b) => a.index - b.index)
-                    .map((imgResult) => (
-                      <section
-                        key={`enhanced-photo-${imgResult.index}`}
-                        className="space-y-4"
+                ) : null}
+                {enhancingImages ? (
+                  <ul className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4">
+                    {Array.from({ length: ENHANCE_SKELETON_SLOTS }, (_, i) => (
+                      <li
+                        key={`enh-skel-${i}`}
+                        className="flex flex-col overflow-hidden rounded-lg border border-[#E8EDE9] bg-[#FFFFFF]"
                       >
-                        <div className="flex flex-wrap items-center gap-2">
-                          <span className="text-sm font-semibold text-[#4A5568]">
-                            Photo {imgResult.index + 1}
-                          </span>
-                          {imgResult.isHero ? (
-                            <span className="rounded-full border-[0.5px] border-[#8FCFB0]/80 bg-[#F4F9F7] px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-[#2A6B52]">
-                              HERO
-                            </span>
-                          ) : null}
+                        <div className="aspect-square animate-pulse bg-gradient-to-br from-[#E8EDE9]/90 via-[#F4F9F7] to-[#E8EDE9]/60" />
+                        <div className="flex flex-col gap-2 border-t border-[#E8EDE9]/80 p-3">
+                          <div className="mx-auto h-3 w-20 animate-pulse rounded-full bg-[#E8EDE9]" />
+                          <div className="h-11 animate-pulse rounded-lg bg-[#E8EDE9]/70" />
                         </div>
-                        <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4">
-                          {(imgResult.outputs ?? []).map((output) => (
-                            <li
-                              key={`${imgResult.index}-${output.label}`}
-                              className="flex flex-col overflow-hidden rounded-[12px] border-[0.5px] border-[#E8EDE9] bg-[#FFFFFF] shadow-sm"
-                            >
-                              <div className="aspect-square bg-[#F4F9F7]">
-                                {output.url ? (
-                                  <>
-                                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                                    <img
-                                      src={output.url}
-                                      alt={`${humanReadableEnhanceLabel(output.label)} — photo ${imgResult.index + 1}`}
-                                      className="h-full w-full object-contain"
-                                    />
-                                  </>
-                                ) : (
-                                  <div className="flex h-full flex-col items-center justify-center gap-2 px-3 text-center">
-                                    <p className="text-xs font-medium text-[#4A5568]">
-                                      Could not generate
-                                    </p>
-                                  </div>
-                                )}
-                              </div>
-                              <div className="flex flex-col gap-2 border-t border-[#E8EDE9]/80 bg-[#FFFFFF] p-3">
-                                <p className="text-center text-xs font-semibold leading-snug text-[#1A3A32]">
-                                  {humanReadableEnhanceLabel(output.label)}
-                                </p>
-                                <button
-                                  type="button"
-                                  disabled={downloadBusy || !output.url}
-                                  onClick={() => {
-                                    if (!output.url) return;
-                                    void (async () => {
-                                      const ext = extensionFromDataUrl(output.url);
-                                      const filename = `brightlisted-${imgResult.isHero ? "hero" : imgResult.index}-${output.label}.${ext}`;
-                                      try {
-                                        await downloadDataUrlAsFile(
-                                          output.url,
-                                          filename
-                                        );
-                                      } catch {
-                                        const a = document.createElement("a");
-                                        a.href = output.url;
-                                        a.download = filename;
-                                        a.rel = "noopener noreferrer";
-                                        a.style.display = "none";
-                                        document.body.appendChild(a);
-                                        a.click();
-                                        document.body.removeChild(a);
-                                      }
-                                    })();
-                                  }}
-                                  className="touch-manipulation min-h-9 w-full rounded-full border-[0.5px] border-[#2A6B52] bg-[#FFFFFF] px-3 py-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-[#2A6B52] transition-colors hover:bg-[#F4F9F7] focus:outline-none focus:ring-1 focus:ring-[#2A6B52]/35 disabled:cursor-not-allowed disabled:opacity-40"
-                                >
-                                  Download
-                                </button>
-                              </div>
-                            </li>
-                          ))}
-                        </ul>
-                      </section>
+                      </li>
                     ))}
-                </div>
+                  </ul>
+                ) : flattenedEnhanceCards.length > 0 ? (
+                  <ul className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4">
+                    {flattenedEnhanceCards.map((card) => {
+                      const showHeroBadge =
+                        card.isHero &&
+                        (card.label === "ghost_mannequin" ||
+                          card.label === "flat_lay");
+                      return (
+                        <li
+                          key={card.key}
+                          className="flex flex-col overflow-hidden rounded-lg border border-[#E8EDE9] bg-[#FFFFFF]"
+                        >
+                          <div className="relative aspect-square bg-[#F4F9F7]">
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img
+                              src={card.url}
+                              alt={humanReadableEnhanceLabel(card.label)}
+                              className="h-full w-full object-contain"
+                            />
+                            {showHeroBadge ? (
+                              <span className="absolute right-2 top-2 rounded-full border-[0.5px] border-[#8FCFB0]/80 bg-[#2A6B52]/95 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.1em] text-white shadow-sm">
+                                HERO
+                              </span>
+                            ) : null}
+                          </div>
+                          <div className="flex flex-col gap-2 border-t border-[#E8EDE9]/80 p-3">
+                            <p className="text-center text-[10px] font-semibold uppercase tracking-[0.22em] text-[#1A3A32]">
+                              {humanReadableEnhanceLabel(card.label)}
+                            </p>
+                            <button
+                              type="button"
+                              className="touch-manipulation flex min-h-11 w-full items-center justify-center rounded-lg border-[0.5px] border-[#2A6B52] bg-[#FFFFFF] px-3 text-xs font-semibold uppercase tracking-[0.14em] text-[#2A6B52] transition-colors hover:bg-[#F4F9F7] focus:outline-none focus:ring-1 focus:ring-[#2A6B52]/35"
+                              onClick={() => void shareImage(card.url, card.label)}
+                            >
+                              Share
+                            </button>
+                          </div>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                ) : null}
               </div>
             )}
           </div>

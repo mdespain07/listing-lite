@@ -228,21 +228,6 @@ async function photoroomFlatLay(apiKey, base64Data, mediaType) {
  * @param {string} base64Data
  * @param {string} mediaType
  */
-async function photoroomWrinkleRemove(apiKey, base64Data, mediaType) {
-  return photoroomEdit(apiKey, base64Data, mediaType, {
-    removeBackground: "true",
-    "beautify.mode": "auto",
-    "background.color": "FFFFFF",
-    padding: "0.08",
-  });
-}
-
-/**
- * @param {string} apiKey
- * @param {string} base64Data
- * @param {string} mediaType
- * @param {string} prompt
- */
 async function photoroomLifestyleStaging(
   apiKey,
   base64Data,
@@ -283,10 +268,6 @@ async function processOneImage(apiKey, img, index, isHero, category, errorsOut) 
         label: "flat_lay",
         fn: () => photoroomFlatLay(apiKey, data, media_type),
       },
-      {
-        label: "enhanced",
-        fn: () => photoroomWrinkleRemove(apiKey, data, media_type),
-      },
     ];
   } else if (isHero && !clothing) {
     pipeline = [
@@ -310,10 +291,6 @@ async function processOneImage(apiKey, img, index, isHero, category, errorsOut) 
       {
         label: "clean",
         fn: () => photoroomCleanBackground(apiKey, data, media_type),
-      },
-      {
-        label: "enhanced",
-        fn: () => photoroomWrinkleRemove(apiKey, data, media_type),
       },
     ];
   } else {
