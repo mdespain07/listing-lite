@@ -1170,7 +1170,7 @@ export default function Home() {
                 </select>
               </div>
 
-              <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 xl:grid-cols-4 sm:gap-x-6 sm:gap-y-8">
+              <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 sm:gap-6">
                 <div className="min-w-0">
                   <p className="mb-2 text-sm font-medium uppercase leading-snug tracking-[0.16em] text-[#4A5568] sm:text-base">
                     Original box or packaging included?
