@@ -117,14 +117,14 @@ const AGE_OPTIONS = [
  */
 function SegmentedControl({ selected, onChange, options }) {
   return (
-    <div className="flex flex-wrap gap-1.5">
+    <div className="flex flex-wrap gap-2">
       {options.map(({ value: v, label }) => (
         <button
           key={v}
           type="button"
           onClick={() => onChange(v)}
           className={[
-            "touch-manipulation rounded-[8px] border-[0.5px] px-2.5 py-1.5 text-center text-[11px] font-medium leading-tight transition-colors",
+            "touch-manipulation min-h-11 rounded-[8px] border-[0.5px] px-4 py-2 text-center text-sm font-medium leading-tight transition-colors",
             selected === v
               ? "border-[#2A6B52] bg-[#2A6B52] text-[#F0EDE6]"
               : "border-[#E8EDE9] bg-[#FFFFFF] text-[#1A3A32] hover:bg-[#F4F9F7]/80",
@@ -330,7 +330,7 @@ function Spinner({ className = "h-9 w-9" }) {
 function SectionLabel({ children }) {
   return (
     <div className="mb-3 flex min-w-0 items-center gap-3">
-      <span className="shrink-0 text-[10px] font-medium uppercase leading-none tracking-[0.18em] text-[#7A8F88]">
+      <span className="shrink-0 text-sm font-medium uppercase leading-none tracking-[0.18em] text-[#4A5568] sm:text-base">
         {children}
       </span>
       <span
@@ -360,13 +360,13 @@ function CopyableField({ text, label }) {
   return (
     <div>
       <div className="mb-2.5 flex items-center justify-between gap-2">
-        <span className="text-[10px] font-medium uppercase tracking-[0.18em] text-[#7A8F88]">
+        <span className="text-sm font-medium uppercase tracking-[0.18em] text-[#4A5568] sm:text-base">
           {label}
         </span>
         <button
           type="button"
           onClick={copy}
-          className="touch-manipulation rounded-[8px] border-[0.5px] border-[#E8EDE9] bg-white px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-[#1A3A32] transition-colors hover:bg-[#F4F9F7] focus:outline-none focus:ring-1 focus:ring-[#2A6B52]/35"
+          className="touch-manipulation min-h-11 rounded-[8px] border-[0.5px] border-[#E8EDE9] bg-white px-4 py-2 text-xs font-semibold uppercase tracking-[0.14em] text-[#1A3A32] transition-colors hover:bg-[#F4F9F7] focus:outline-none focus:ring-1 focus:ring-[#2A6B52]/35"
         >
           {copied ? "Copied" : "Copy"}
         </button>
@@ -434,7 +434,7 @@ function BuyCreditsModal({ open, onClose, onSelectCredits, busyCredits, error })
         <div className="shrink-0 border-b-[0.5px] border-[#E8EDE9] bg-gradient-to-b from-[#F4F9F7] to-[#FFFFFF] px-6 pb-5 pt-6 sm:px-8 sm:pb-6 sm:pt-8">
           <div className="flex items-start justify-between gap-4">
             <div className="min-w-0">
-              <p className="text-[10px] font-medium uppercase tracking-[0.22em] text-[#7A8F88]">
+              <p className="text-xs font-medium uppercase tracking-[0.22em] text-[#4A5568] sm:text-sm">
                 BrightListed
               </p>
               <h2
@@ -443,7 +443,7 @@ function BuyCreditsModal({ open, onClose, onSelectCredits, busyCredits, error })
               >
                 Add listing credits
               </h2>
-              <p className="mt-2 max-w-md text-sm leading-relaxed text-[#7A8F88]">
+              <p className="mt-2 max-w-md text-sm leading-relaxed text-[#4A5568]">
                 Choose a pack. You&apos;ll finish payment on Stripe&apos;s secure
                 checkout, then return here with credits ready to use.
               </p>
@@ -451,7 +451,7 @@ function BuyCreditsModal({ open, onClose, onSelectCredits, busyCredits, error })
             <button
               type="button"
               onClick={onClose}
-              className="touch-manipulation rounded-full border-[0.5px] border-[#E8EDE9] bg-white p-2.5 text-[#1A3A32] transition-colors hover:bg-[#F4F9F7] focus:outline-none focus:ring-1 focus:ring-[#2A6B52]/35"
+              className="touch-manipulation flex min-h-11 min-w-11 shrink-0 items-center justify-center rounded-full border-[0.5px] border-[#E8EDE9] bg-white p-2.5 text-[#1A3A32] transition-colors hover:bg-[#F4F9F7] focus:outline-none focus:ring-1 focus:ring-[#2A6B52]/35"
               aria-label="Close"
             >
               <svg
@@ -491,7 +491,7 @@ function BuyCreditsModal({ open, onClose, onSelectCredits, busyCredits, error })
                   disabled={busyCredits !== null}
                   onClick={() => onSelectCredits(pkg.credits)}
                   className={[
-                    "relative touch-manipulation rounded-[14px] border-[0.5px] p-4 text-left transition-all sm:p-5",
+                    "relative touch-manipulation min-h-[44px] rounded-[14px] border-[0.5px] p-4 text-left transition-all sm:p-5",
                     pkg.popular
                       ? "border-[#E8C97A]/90 bg-gradient-to-b from-[#FFFBF0] to-[#FFFFFF] shadow-[0_0_0_1px_rgba(232,201,122,0.35)]"
                       : "border-[#E8EDE9] bg-[#FFFFFF] hover:border-[#8FCFB0]/70 hover:bg-[#F4F9F7]/50",
@@ -511,11 +511,11 @@ function BuyCreditsModal({ open, onClose, onSelectCredits, busyCredits, error })
                   <p className="mt-3 font-serif text-2xl font-medium tracking-tight text-[#1A3A32]">
                     {formatUsd(pkg.priceUsd)}
                   </p>
-                  <p className="mt-2 text-[11px] leading-snug text-[#7A8F88]">
+                  <p className="mt-2 text-sm leading-snug text-[#4A5568]">
                     {formatPerCredit(pkg.credits, pkg.priceUsd)} per credit
                   </p>
                   {busy && (
-                    <span className="mt-3 inline-flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-[#2A6B52]">
+                    <span className="mt-3 inline-flex min-h-11 items-center gap-2 text-xs font-semibold uppercase tracking-[0.14em] text-[#2A6B52]">
                       <Spinner className="h-4 w-4" />
                       Redirecting…
                     </span>
@@ -524,7 +524,7 @@ function BuyCreditsModal({ open, onClose, onSelectCredits, busyCredits, error })
               );
             })}
           </div>
-          <p className="mt-6 text-center text-[11px] leading-relaxed text-[#7A8F88]">
+          <p className="mt-6 text-center text-sm leading-relaxed text-[#4A5568]">
             One credit runs a full analysis — title, pricing, description, and
             enhanced photos when available.
           </p>
@@ -911,25 +911,27 @@ export default function Home() {
   return (
     <div className="flex min-h-dvh flex-col bg-[#F4F9F7] font-sans text-[#1A3A32] antialiased">
       <header className="border-b border-[#E8EDE9] bg-[#FFFFFF]">
-        <div className="mx-auto flex max-w-3xl items-center justify-between gap-4 px-4 py-4 sm:px-6 sm:py-5">
-          <img
-            src="/logo.svg"
-            alt="BrightListed"
-            className="h-10 w-auto shrink-0 sm:h-12"
-          />
-          <div className="flex shrink-0 items-center gap-2 sm:gap-3">
+        <div className="mx-auto flex max-w-3xl flex-col gap-4 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:gap-4 sm:px-6 sm:py-5">
+          <div className="flex w-full justify-start">
+            <img
+              src="/logo.svg"
+              alt="BrightListed"
+              className="h-12 w-auto shrink-0 sm:h-14"
+            />
+          </div>
+          <div className="flex w-full shrink-0 flex-row justify-end gap-3 sm:w-auto">
             <button
               type="button"
               onClick={() => {
                 setCheckoutClientError(null);
                 setCreditsModalOpen(true);
               }}
-              className="touch-manipulation rounded-full border-[0.5px] border-[#2A6B52] bg-[#FFFFFF] px-3.5 py-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-[#2A6B52] transition-colors hover:bg-[#F4F9F7] focus:outline-none focus:ring-1 focus:ring-[#2A6B52]/35 sm:px-4"
+              className="touch-manipulation min-h-[44px] rounded-full border-[0.5px] border-[#2A6B52] bg-transparent px-5 py-2 text-base font-semibold uppercase tracking-[0.14em] text-[#2A6B52] transition-colors hover:bg-[#F4F9F7] focus:outline-none focus:ring-1 focus:ring-[#2A6B52]/35"
             >
               Buy Credits
             </button>
             <div
-              className="flex shrink-0 items-center rounded-full bg-[#2A6B52] px-4 py-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-[#F0EDE6]"
+              className="flex min-h-[44px] shrink-0 items-center justify-center rounded-full bg-[#2A6B52] px-5 py-2 text-base font-semibold uppercase tracking-[0.16em] text-[#F0EDE6]"
               role="status"
               aria-label={`${credits} credits remaining`}
             >
@@ -956,7 +958,7 @@ export default function Home() {
             <button
               type="button"
               onClick={() => setPurchaseBanner(null)}
-              className="shrink-0 touch-manipulation rounded-full border-[0.5px] border-[#E8EDE9] bg-white px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-[#7A8F88] hover:bg-[#FFFFFF]"
+              className="shrink-0 touch-manipulation min-h-[44px] rounded-full border-[0.5px] border-[#E8EDE9] bg-white px-5 py-2 text-sm font-semibold uppercase tracking-[0.12em] text-[#4A5568] hover:bg-[#FFFFFF]"
             >
               Dismiss
             </button>
@@ -969,14 +971,14 @@ export default function Home() {
           role="status"
         >
           <div className="mx-auto flex max-w-3xl items-start justify-between gap-3">
-            <p className="text-sm leading-relaxed text-[#7A8F88]">
+            <p className="text-sm leading-relaxed text-[#4A5568]">
               No worries — checkout was cancelled. Your credits are unchanged
               whenever you&apos;re ready.
             </p>
             <button
               type="button"
               onClick={() => setPurchaseBanner(null)}
-              className="shrink-0 touch-manipulation rounded-full border-[0.5px] border-[#E8EDE9] bg-[#F4F9F7] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-[#7A8F88]"
+              className="shrink-0 touch-manipulation min-h-[44px] rounded-full border-[0.5px] border-[#E8EDE9] bg-[#F4F9F7] px-5 py-2 text-sm font-semibold uppercase tracking-[0.12em] text-[#4A5568]"
             >
               OK
             </button>
@@ -986,13 +988,13 @@ export default function Home() {
 
       <section className="border-b border-[#E8EDE9] bg-[#FFFFFF] px-4 py-9 sm:px-6 sm:py-11">
         <div className="mx-auto max-w-3xl">
-          <p className="text-[10px] font-medium uppercase tracking-[0.22em] text-[#7A8F88]">
+          <p className="text-xs font-medium uppercase tracking-[0.22em] text-[#4A5568] sm:text-sm">
             LISTINGS IN A SNAP
           </p>
           <h1 className="font-serif mt-4 max-w-2xl text-balance text-[2rem] font-medium leading-[1.15] tracking-[0.01em] text-[#1A3A32] sm:text-[2.5rem] sm:leading-tight">
             From photos to a polished listing.
           </h1>
-          <p className="mt-4 max-w-lg text-sm leading-relaxed text-[#7A8F88] sm:text-[15px]">
+          <p className="mt-4 max-w-lg text-sm leading-relaxed text-[#4A5568] sm:text-[15px]">
             Upload photos of any item and get an AI-powered listing, accurate
             pricing, and sales-ready images — in a snap.
           </p>
@@ -1034,7 +1036,7 @@ export default function Home() {
                   </svg>
                 </div>
                 {atPhotoLimit ? (
-                  <p className="pointer-events-none text-center text-sm font-medium text-[#7A8F88]">
+                  <p className="pointer-events-none text-center text-sm font-medium text-[#4A5568]">
                     Maximum {MAX_IMAGES} photos reached
                   </p>
                 ) : (
@@ -1044,7 +1046,7 @@ export default function Home() {
                         ? "Release to upload"
                         : "Upload product photos"}
                     </p>
-                    <p className="pointer-events-none mt-3 max-w-sm text-center text-sm leading-relaxed text-[#7A8F88]">
+                    <p className="pointer-events-none mt-3 max-w-sm text-center text-sm leading-relaxed text-[#4A5568]">
                       {isDragActive
                         ? "Add them to your listing."
                         : "Tap to add photos, or drag and drop on desktop. PNG, JPG, or WebP — up to five images."}
@@ -1088,7 +1090,7 @@ export default function Home() {
                       <button
                         type="button"
                         onClick={() => removeAt(index)}
-                        className="absolute right-1 top-1 z-20 flex min-h-11 min-w-11 touch-manipulation items-center justify-center rounded-full bg-[#2A6B52] text-[#F0EDE6] opacity-100 shadow-md transition-opacity hover:opacity-90 focus:opacity-100 focus:outline-none focus:ring-1 focus:ring-[#8FCFB0] sm:right-2 sm:top-2 sm:h-8 sm:w-8 sm:min-h-0 sm:min-w-0 sm:opacity-0 sm:group-hover:opacity-100"
+                        className="absolute right-1 top-1 z-20 flex min-h-11 min-w-11 touch-manipulation items-center justify-center rounded-full bg-[#2A6B52] text-[#F0EDE6] opacity-100 shadow-md transition-opacity hover:opacity-90 focus:opacity-100 focus:outline-none focus:ring-1 focus:ring-[#8FCFB0] sm:right-2 sm:top-2 sm:opacity-0 sm:group-hover:opacity-100"
                         aria-label={`Remove image ${index + 1}`}
                       >
                         <svg
@@ -1131,21 +1133,15 @@ export default function Home() {
                 onChange={(e) => setNotes(e.target.value)}
                 rows={4}
                 placeholder='e.g. "Small crack on the base", "Original box included", "Battery holds ~80% charge"'
-                className="w-full resize-y rounded-[12px] border-[0.5px] border-[#E8EDE9] bg-[#FFFFFF] px-4 py-3.5 text-[15px] leading-relaxed text-[#1A3A32] placeholder:text-[#7A8F88] focus:outline-none focus:ring-1 focus:ring-[#2A6B52]/35"
+                className="w-full resize-y rounded-[12px] border-[0.5px] border-[#E8EDE9] bg-[#FFFFFF] px-4 py-3.5 text-[15px] leading-relaxed text-[#1A3A32] placeholder:text-[#4A5568] focus:outline-none focus:ring-1 focus:ring-[#2A6B52]/35"
               />
             </div>
 
             <div className="space-y-6">
-              <SectionLabel>Listing context (optional)</SectionLabel>
-              <p className="-mt-2 text-[13px] leading-relaxed text-[#7A8F88]">
-                Quick hints for the analysis. Everything is still verified against
-                your photos.
-              </p>
-
               <div>
                 <label
                   htmlFor="listing-category"
-                  className="mb-2 block text-[10px] font-medium uppercase tracking-[0.18em] text-[#7A8F88]"
+                  className="mb-2 block text-sm font-medium uppercase tracking-[0.18em] text-[#4A5568] sm:text-base"
                 >
                   Category
                 </label>
@@ -1153,9 +1149,9 @@ export default function Home() {
                   id="listing-category"
                   value={category}
                   onChange={(e) => setCategory(e.target.value)}
-                  className="w-full cursor-pointer touch-manipulation appearance-none rounded-[12px] border-[0.5px] border-[#E8EDE9] bg-[#FFFFFF] px-4 py-3.5 text-[15px] leading-relaxed text-[#1A3A32] focus:outline-none focus:ring-1 focus:ring-[#2A6B52]/35"
+                  className="min-h-[44px] w-full cursor-pointer touch-manipulation appearance-none rounded-[12px] border-[0.5px] border-[#E8EDE9] bg-[#FFFFFF] px-4 py-3.5 text-[15px] leading-relaxed text-[#1A3A32] focus:outline-none focus:ring-1 focus:ring-[#2A6B52]/35"
                   style={{
-                    backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%237A8F88'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E")`,
+                    backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%234A5568'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E")`,
                     backgroundRepeat: "no-repeat",
                     backgroundPosition: "right 0.75rem center",
                     backgroundSize: "1.25rem",
@@ -1173,7 +1169,7 @@ export default function Home() {
 
               <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-4 sm:gap-5">
                 <div className="min-w-0">
-                  <p className="mb-2 text-[10px] font-medium uppercase leading-snug tracking-[0.16em] text-[#7A8F88]">
+                  <p className="mb-2 text-sm font-medium uppercase leading-snug tracking-[0.16em] text-[#4A5568] sm:text-base">
                     Original box or packaging included?
                   </p>
                   <SegmentedControl
@@ -1183,7 +1179,7 @@ export default function Home() {
                   />
                 </div>
                 <div className="min-w-0">
-                  <p className="mb-2 text-[10px] font-medium uppercase leading-snug tracking-[0.16em] text-[#7A8F88]">
+                  <p className="mb-2 text-sm font-medium uppercase leading-snug tracking-[0.16em] text-[#4A5568] sm:text-base">
                     Tags still attached?
                   </p>
                   <SegmentedControl
@@ -1193,7 +1189,7 @@ export default function Home() {
                   />
                 </div>
                 <div className="min-w-0">
-                  <p className="mb-2 text-[10px] font-medium uppercase leading-snug tracking-[0.16em] text-[#7A8F88]">
+                  <p className="mb-2 text-sm font-medium uppercase leading-snug tracking-[0.16em] text-[#4A5568] sm:text-base">
                     All parts / accessories included?
                   </p>
                   <SegmentedControl
@@ -1203,7 +1199,7 @@ export default function Home() {
                   />
                 </div>
                 <div className="min-w-0">
-                  <p className="mb-2 text-[10px] font-medium uppercase leading-snug tracking-[0.16em] text-[#7A8F88]">
+                  <p className="mb-2 text-sm font-medium uppercase leading-snug tracking-[0.16em] text-[#4A5568] sm:text-base">
                     How old is this item?
                   </p>
                   <SegmentedControl
@@ -1220,7 +1216,7 @@ export default function Home() {
                 type="button"
                 disabled={!canAnalyze}
                 onClick={handleAnalyze}
-                className="w-full touch-manipulation rounded-[12px] bg-[#2A6B52] py-4 text-center text-[11px] font-semibold uppercase tracking-[0.2em] text-[#F0EDE6] transition-opacity hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-[#2A6B52]/50 focus:ring-offset-2 focus:ring-offset-[#F4F9F7] disabled:cursor-not-allowed disabled:opacity-40"
+                className="w-full touch-manipulation min-h-[44px] rounded-[12px] bg-[#2A6B52] px-4 py-3 text-center text-sm font-semibold uppercase tracking-[0.2em] text-[#F0EDE6] transition-opacity hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-[#2A6B52]/50 focus:ring-offset-2 focus:ring-offset-[#F4F9F7] disabled:cursor-not-allowed disabled:opacity-40"
               >
                 {analyzing ? "Analyzing…" : "Analyze My Item"}
               </button>
@@ -1238,7 +1234,7 @@ export default function Home() {
                         ? "Optimizing photos…"
                         : "Analyzing & enhancing…"}
                     </p>
-                    <p className="max-w-sm text-sm leading-relaxed text-[#7A8F88]">
+                    <p className="max-w-sm text-sm leading-relaxed text-[#4A5568]">
                       {analysisPhase === "compress"
                         ? "Resizing and compressing images so your phone can upload them reliably."
                         : "This can take a moment. Keep this tab open."}
@@ -1247,7 +1243,7 @@ export default function Home() {
                 </div>
               )}
               {!canAnalyze && !analyzing && files.length < 1 && (
-                <p className="mt-3 text-center text-sm text-[#7A8F88]">
+                <p className="mt-3 text-center text-sm text-[#4A5568]">
                   Upload at least one photo to continue
                 </p>
               )}
@@ -1268,7 +1264,7 @@ export default function Home() {
             <div className="flex min-w-0 items-center gap-3">
               <span
                 id="results-heading"
-                className="shrink-0 text-[10px] font-medium uppercase leading-none tracking-[0.18em] text-[#7A8F88]"
+                className="shrink-0 text-sm font-medium uppercase leading-none tracking-[0.18em] text-[#4A5568] sm:text-base"
               >
                 Analysis results
               </span>
@@ -1287,7 +1283,7 @@ export default function Home() {
             )}
 
             {!results && !error && !analyzing && (
-              <p className="mx-auto max-w-md text-center text-[15px] leading-relaxed text-[#7A8F88]">
+              <p className="mx-auto max-w-md text-center text-[15px] leading-relaxed text-[#4A5568]">
                 Your title, description, and suggested details will appear here
                 after you run an analysis.
               </p>
@@ -1296,7 +1292,7 @@ export default function Home() {
             {results && (
               <div className="space-y-0">
                 <div className="bg-[#1A3A32] px-6 py-8 sm:px-8 sm:py-10">
-                  <p className="text-[10px] font-medium uppercase tracking-[0.2em] text-[#8FCFB0]">
+                  <p className="text-xs font-medium uppercase tracking-[0.2em] text-[#8FCFB0] sm:text-sm">
                     Identified item
                   </p>
                   <h3 className="font-serif mt-4 text-balance text-3xl font-medium leading-tight tracking-[0.02em] text-[#F0EDE6] sm:text-[2.25rem]">
@@ -1310,19 +1306,19 @@ export default function Home() {
                 <div className="space-y-6 border-t-[0.5px] border-[#E8EDE9] bg-[#FFFFFF] px-6 py-8 sm:px-8 sm:py-9">
                   <div className="flex flex-wrap items-start gap-3">
                     <span
-                      className={`inline-flex items-center rounded-full border-[0.5px] px-3.5 py-1.5 text-xs font-semibold uppercase tracking-wide ${conditionBadgeClass(String(results.condition ?? ""))}`}
+                      className={`inline-flex min-h-11 items-center rounded-full border-[0.5px] px-4 py-2 text-sm font-semibold uppercase tracking-wide ${conditionBadgeClass(String(results.condition ?? ""))}`}
                     >
                       {String(results.condition ?? "—")}
                     </span>
                   </div>
-                  <p className="text-[15px] leading-relaxed text-[#7A8F88]">
+                  <p className="text-[15px] leading-relaxed text-[#4A5568]">
                     {String(results.conditionExplanation ?? "")}
                   </p>
 
                   {String(results.modelDetails ?? "").trim() !== "" && (
                     <div>
                       <div className="mb-3 flex min-w-0 items-center gap-3">
-                        <span className="shrink-0 text-[10px] font-medium uppercase tracking-[0.18em] text-[#7A8F88]">
+                        <span className="shrink-0 text-sm font-medium uppercase tracking-[0.18em] text-[#4A5568] sm:text-base">
                           Model details
                         </span>
                         <span className="h-px min-w-[1rem] flex-1 bg-[#E8EDE9]" aria-hidden />
@@ -1336,7 +1332,7 @@ export default function Home() {
                   {String(results.visibleAccessories ?? "").trim() !== "" && (
                     <div>
                       <div className="mb-3 flex min-w-0 items-center gap-3">
-                        <span className="shrink-0 text-[10px] font-medium uppercase tracking-[0.18em] text-[#7A8F88]">
+                        <span className="shrink-0 text-sm font-medium uppercase tracking-[0.18em] text-[#4A5568] sm:text-base">
                           Visible in photos
                         </span>
                         <span className="h-px min-w-[1rem] flex-1 bg-[#E8EDE9]" aria-hidden />
@@ -1354,8 +1350,8 @@ export default function Home() {
                   )}
 
                   {String(results.caveat ?? "").trim() !== "" && (
-                    <p className="rounded-[12px] border-[0.5px] border-[#E8EDE9] bg-[#F0EDE6] px-4 py-3.5 text-sm leading-relaxed text-[#7A8F88]">
-                      <span className="font-semibold text-[#7A8F88]">
+                    <p className="rounded-[12px] border-[0.5px] border-[#E8EDE9] bg-[#F0EDE6] px-4 py-3.5 text-sm leading-relaxed text-[#4A5568]">
+                      <span className="font-semibold text-[#4A5568]">
                         Note:{" "}
                       </span>
                       {String(results.caveat ?? "")}
@@ -1364,7 +1360,7 @@ export default function Home() {
 
                   <div>
                     <div className="mb-3 flex min-w-0 items-center gap-3">
-                      <span className="shrink-0 text-[10px] font-medium uppercase tracking-[0.18em] text-[#7A8F88]">
+                      <span className="shrink-0 text-sm font-medium uppercase tracking-[0.18em] text-[#4A5568] sm:text-base">
                         Estimated price range
                       </span>
                       <span className="h-px min-w-[1rem] flex-1 bg-[#E8EDE9]" aria-hidden />
@@ -1390,7 +1386,7 @@ export default function Home() {
             {results && enhanceNotice && !enhancedImages?.length && (
               <div className="border-t-[0.5px] border-[#E8EDE9] bg-[#F0EDE6] px-6 py-5 sm:px-8">
                 <p
-                  className="text-sm leading-relaxed text-[#7A8F88]"
+                  className="text-sm leading-relaxed text-[#4A5568]"
                   role="status"
                 >
                   {enhanceNotice}
@@ -1402,7 +1398,7 @@ export default function Home() {
               <div className="border-t-[0.5px] border-[#E8EDE9] px-6 py-8 sm:px-8 sm:py-9">
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                   <div className="flex min-w-0 flex-1 items-center gap-3">
-                    <span className="shrink-0 text-[10px] font-medium uppercase tracking-[0.18em] text-[#7A8F88]">
+                    <span className="shrink-0 text-sm font-medium uppercase tracking-[0.18em] text-[#4A5568] sm:text-base">
                       Sales-ready images
                     </span>
                     <span className="h-px min-w-[1rem] flex-1 bg-[#E8EDE9]" aria-hidden />
@@ -1412,14 +1408,14 @@ export default function Home() {
                       type="button"
                       disabled={downloadBusy}
                       onClick={() => void downloadAllEnhanced()}
-                      className="shrink-0 touch-manipulation rounded-[12px] bg-[#2A6B52] px-4 py-2.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-[#F0EDE6] transition-opacity hover:opacity-90 focus:outline-none focus:ring-1 focus:ring-[#2A6B52]/45 disabled:cursor-wait disabled:opacity-60"
+                      className="shrink-0 touch-manipulation min-h-11 rounded-[12px] bg-[#2A6B52] px-5 py-3 text-sm font-semibold uppercase tracking-[0.16em] text-[#F0EDE6] transition-opacity hover:opacity-90 focus:outline-none focus:ring-1 focus:ring-[#2A6B52]/45 disabled:cursor-wait disabled:opacity-60"
                     >
                       {downloadBusy ? "Downloading…" : "Download all"}
                     </button>
                   )}
                 </div>
                 {enhanceNotice && (
-                  <p className="mt-4 text-sm leading-relaxed text-[#7A8F88]">
+                  <p className="mt-4 text-sm leading-relaxed text-[#4A5568]">
                     {enhanceNotice}
                   </p>
                 )}
@@ -1440,7 +1436,7 @@ export default function Home() {
                     ) : (
                       <li
                         key={`enhanced-fail-${i}`}
-                        className="flex aspect-square items-center justify-center rounded-[12px] border border-dashed border-[#E8EDE9] bg-[#F4F9F7] px-3 text-center text-xs leading-snug text-[#7A8F88]"
+                        className="flex aspect-square items-center justify-center rounded-[12px] border border-dashed border-[#E8EDE9] bg-[#F4F9F7] px-3 text-center text-xs leading-snug text-[#4A5568]"
                       >
                         Couldn&apos;t enhance this photo
                       </li>
@@ -1470,7 +1466,7 @@ export default function Home() {
                   ? "Optimizing photos…"
                   : "Analyzing your item…"}
               </p>
-              <p className="mt-1 text-sm leading-snug text-[#7A8F88]">
+              <p className="mt-1 text-sm leading-snug text-[#4A5568]">
                 {analysisPhase === "compress"
                   ? "Shrinking images for upload."
                   : "Generating listing details and enhanced images."}
@@ -1493,7 +1489,7 @@ export default function Home() {
       />
 
       <footer className="mt-auto border-t-[0.5px] border-[#E8EDE9] bg-[#F4F9F7] py-8 text-center">
-        <p className="text-[10px] font-medium uppercase tracking-[0.22em] text-[#7A8F88]">
+        <p className="text-xs font-medium uppercase tracking-[0.22em] text-[#4A5568] sm:text-sm">
           BRIGHTLISTED · LISTINGS IN A SNAP
         </p>
       </footer>
