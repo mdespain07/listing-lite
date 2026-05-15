@@ -126,7 +126,7 @@ function SegmentedControl({ selected, onChange, options }) {
           className={[
             "touch-manipulation min-h-11 rounded-[8px] border-[0.5px] px-4 py-2 text-center text-sm font-medium leading-tight transition-colors",
             selected === v
-              ? "border-[#2A6B52] bg-[#2A6B52] text-[#F0EDE6]"
+              ? "border-[#2A6B52] bg-[#2A6B52] text-white"
               : "border-[#E8EDE9] bg-[#FFFFFF] text-[#1A3A32] hover:bg-[#F4F9F7]/80",
           ].join(" ")}
         >
@@ -499,7 +499,7 @@ function BuyCreditsModal({ open, onClose, onSelectCredits, busyCredits, error })
                   ].join(" ")}
                 >
                   {pkg.popular && (
-                    <span className="absolute -right-0.5 -top-0.5 rounded-bl-[10px] rounded-tr-[13px] bg-[#2A6B52] px-2.5 py-1 text-[9px] font-semibold uppercase tracking-[0.14em] text-[#F0EDE6]">
+                    <span className="absolute -right-0.5 -top-0.5 rounded-bl-[10px] rounded-tr-[13px] bg-[#2A6B52] px-2.5 py-1 text-[9px] font-semibold uppercase tracking-[0.14em] text-white">
                       Most popular
                     </span>
                   )}
@@ -912,26 +912,26 @@ export default function Home() {
     <div className="flex min-h-dvh flex-col bg-[#F4F9F7] font-sans text-[#1A3A32] antialiased">
       <header className="border-b border-[#E8EDE9] bg-[#FFFFFF]">
         <div className="mx-auto flex max-w-3xl flex-col gap-4 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:gap-4 sm:px-6 sm:py-5">
-          <div className="flex w-full justify-start">
+          <div className="flex w-full justify-center sm:justify-start">
             <img
               src="/logo.svg"
               alt="BrightListed"
-              className="h-12 w-auto shrink-0 sm:h-14"
+              className="h-14 w-auto shrink-0 sm:h-16"
             />
           </div>
-          <div className="flex w-full shrink-0 flex-row justify-end gap-3 sm:w-auto">
+          <div className="flex w-full shrink-0 flex-row justify-center gap-3 sm:w-auto sm:justify-end">
             <button
               type="button"
               onClick={() => {
                 setCheckoutClientError(null);
                 setCreditsModalOpen(true);
               }}
-              className="touch-manipulation min-h-[44px] rounded-full border-[0.5px] border-[#2A6B52] bg-transparent px-5 py-2 text-base font-semibold uppercase tracking-[0.14em] text-[#2A6B52] transition-colors hover:bg-[#F4F9F7] focus:outline-none focus:ring-1 focus:ring-[#2A6B52]/35"
+              className="touch-manipulation min-h-[44px] rounded-full border-[0.5px] border-[#2A6B52] bg-transparent px-4 py-1.5 text-base font-semibold uppercase tracking-[0.14em] text-[#2A6B52] transition-colors hover:bg-[#F4F9F7] focus:outline-none focus:ring-1 focus:ring-[#2A6B52]/35"
             >
               Buy Credits
             </button>
             <div
-              className="flex min-h-[44px] shrink-0 items-center justify-center rounded-full bg-[#2A6B52] px-5 py-2 text-base font-semibold uppercase tracking-[0.16em] text-[#F0EDE6]"
+              className="flex min-h-[44px] shrink-0 items-center justify-center rounded-full bg-[#2A6B52] px-4 py-1.5 text-base font-semibold uppercase tracking-[0.16em] text-white"
               role="status"
               aria-label={`${credits} credits remaining`}
             >
@@ -1021,7 +1021,7 @@ export default function Home() {
               >
                 <div className="pointer-events-none mb-5 flex h-14 w-14 items-center justify-center rounded-full bg-[#2A6B52] shadow-md">
                   <svg
-                    className="h-7 w-7 text-[#F0EDE6]"
+                    className="h-7 w-7 text-white"
                     fill="none"
                     viewBox="0 0 24 24"
                     stroke="currentColor"
@@ -1090,7 +1090,7 @@ export default function Home() {
                       <button
                         type="button"
                         onClick={() => removeAt(index)}
-                        className="absolute right-1 top-1 z-20 flex min-h-11 min-w-11 touch-manipulation items-center justify-center rounded-full bg-[#2A6B52] text-[#F0EDE6] opacity-100 shadow-md transition-opacity hover:opacity-90 focus:opacity-100 focus:outline-none focus:ring-1 focus:ring-[#8FCFB0] sm:right-2 sm:top-2 sm:opacity-0 sm:group-hover:opacity-100"
+                        className="absolute right-1 top-1 z-20 flex min-h-11 min-w-11 touch-manipulation items-center justify-center rounded-full bg-[#2A6B52] text-white opacity-100 shadow-md transition-opacity hover:opacity-90 focus:opacity-100 focus:outline-none focus:ring-1 focus:ring-[#8FCFB0] sm:right-2 sm:top-2 sm:opacity-0 sm:group-hover:opacity-100"
                         aria-label={`Remove image ${index + 1}`}
                       >
                         <svg
@@ -1167,7 +1167,7 @@ export default function Home() {
                 </select>
               </div>
 
-              <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-4 sm:gap-5">
+              <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 xl:grid-cols-4 sm:gap-x-6 sm:gap-y-8">
                 <div className="min-w-0">
                   <p className="mb-2 text-sm font-medium uppercase leading-snug tracking-[0.16em] text-[#4A5568] sm:text-base">
                     Original box or packaging included?
@@ -1216,7 +1216,7 @@ export default function Home() {
                 type="button"
                 disabled={!canAnalyze}
                 onClick={handleAnalyze}
-                className="w-full touch-manipulation min-h-[44px] rounded-[12px] bg-[#2A6B52] px-4 py-3 text-center text-sm font-semibold uppercase tracking-[0.2em] text-[#F0EDE6] transition-opacity hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-[#2A6B52]/50 focus:ring-offset-2 focus:ring-offset-[#F4F9F7] disabled:cursor-not-allowed disabled:opacity-40"
+                className="w-full touch-manipulation min-h-[44px] rounded-[12px] bg-[#2A6B52] px-4 py-3 text-center text-sm font-semibold uppercase tracking-[0.2em] text-white transition-opacity hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-[#2A6B52]/50 focus:ring-offset-2 focus:ring-offset-[#F4F9F7] disabled:cursor-not-allowed disabled:opacity-40"
               >
                 {analyzing ? "Analyzing…" : "Analyze My Item"}
               </button>
@@ -1408,7 +1408,7 @@ export default function Home() {
                       type="button"
                       disabled={downloadBusy}
                       onClick={() => void downloadAllEnhanced()}
-                      className="shrink-0 touch-manipulation min-h-11 rounded-[12px] bg-[#2A6B52] px-5 py-3 text-sm font-semibold uppercase tracking-[0.16em] text-[#F0EDE6] transition-opacity hover:opacity-90 focus:outline-none focus:ring-1 focus:ring-[#2A6B52]/45 disabled:cursor-wait disabled:opacity-60"
+                      className="shrink-0 touch-manipulation min-h-11 rounded-[12px] bg-[#2A6B52] px-5 py-3 text-sm font-semibold uppercase tracking-[0.16em] text-white transition-opacity hover:opacity-90 focus:outline-none focus:ring-1 focus:ring-[#2A6B52]/45 disabled:cursor-wait disabled:opacity-60"
                     >
                       {downloadBusy ? "Downloading…" : "Download all"}
                     </button>
