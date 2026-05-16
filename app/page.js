@@ -1390,7 +1390,7 @@ export default function Home() {
           <p className="text-xs font-medium uppercase tracking-[0.22em] text-[#4A5568] sm:text-sm ml-0">
             LISTINGS IN A SNAP
           </p>
-          <h1 className="font-serif mt-4 max-w-2xl text-balance text-[2rem] font-medium leading-[1.15] tracking-[0.01em] text-[#1A3A32] sm:text-[2.5rem] sm:leading-tight">
+          <h1 className="font-serif mt-4 max-w-2xl text-balance text-[2rem] font-medium leading-[1.15] tracking-[0.01em] text-[#1A3A32] sm:text-[4rem] sm:leading-tight">
             From photos to a polished listing.
           </h1>
           <p className="mt-4 max-w-lg text-sm leading-relaxed text-[#4A5568] sm:text-[15px]">
