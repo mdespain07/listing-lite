@@ -1843,9 +1843,24 @@ export default function Home() {
         error={checkoutClientError}
       />
 
-      <footer className="mt-auto border-t-[0.5px] border-[#E8EDE9] bg-[#F4F9F7] py-8 text-center">
-        <p className="text-xs font-medium uppercase tracking-[0.22em] text-[#4A5568] sm:text-sm">
-          BRIGHTLISTED · LISTINGS IN A SNAP
+      <footer className="space-y-2 py-6 text-center">
+        <p className="text-[11px] font-medium uppercase tracking-[0.2em] text-[#7A8F88]">
+          BrightListed · Listings in a Snap
+        </p>
+        <p className="text-[11px] text-[#7A8F88]">
+          <a
+            href="/terms"
+            className="underline-offset-2 transition-colors duration-150 hover:text-[#2A6B52] hover:underline"
+          >
+            Terms of Service
+          </a>
+          <span className="mx-2">·</span>
+          <a
+            href="/privacy"
+            className="underline-offset-2 transition-colors duration-150 hover:text-[#2A6B52] hover:underline"
+          >
+            Privacy Policy
+          </a>
         </p>
       </footer>
     </div>
