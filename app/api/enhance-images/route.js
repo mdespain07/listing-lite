@@ -127,6 +127,20 @@ function getStagingPrompt(category) {
   return STAGING_DEFAULT;
 }
 
+class PhotoroomHttpError extends Error {
+  /**
+   * @param {string} message
+   * @param {number} status
+   * @param {string} body
+   */
+  constructor(message, status, body) {
+    super(message);
+    this.name = "PhotoroomHttpError";
+    this.status = status;
+    this.body = body;
+  }
+}
+
 /**
  * @param {string} apiKey
  * @param {string} base64Data raw base64 (no data: prefix)
@@ -167,7 +181,7 @@ async function photoroomEdit(apiKey, base64Data, mediaType, fields) {
     } catch {
       if (errText && errText.length < 500) detail = errText;
     }
-    throw new Error(detail);
+    throw new PhotoroomHttpError(detail, res.status, errText);
   }
 
   if (!contentType.startsWith("image/")) {
@@ -185,14 +199,29 @@ async function photoroomEdit(apiKey, base64Data, mediaType, fields) {
  * @param {string} mediaType
  */
 async function photoroomCleanBackground(apiKey, base64Data, mediaType) {
-  return photoroomEdit(apiKey, base64Data, mediaType, {
-    removeBackground: "true",
-    "background.color": "FFFFFF",
-    padding: "0.08",
-    horizontalAlignment: "center",
-    verticalAlignment: "center",
-    "shadow.mode": "ai.auto",
-  });
+  try {
+    return await photoroomEdit(apiKey, base64Data, mediaType, {
+      removeBackground: "true",
+      "background.color": "FFFFFF",
+      padding: "0.08",
+      horizontalAlignment: "center",
+      verticalAlignment: "center",
+      "shadow.mode": "ai.auto",
+    });
+  } catch (err) {
+    if (err instanceof PhotoroomHttpError) {
+      console.error(`Photoroom photoroomCleanBackground failed:`, {
+        status: err.status,
+        body: err.body,
+      });
+    } else {
+      console.error(`Photoroom photoroomCleanBackground failed:`, {
+        status: undefined,
+        body: err instanceof Error ? err.message : String(err),
+      });
+    }
+    throw err;
+  }
 }
 
 /**
@@ -201,12 +230,27 @@ async function photoroomCleanBackground(apiKey, base64Data, mediaType) {
  * @param {string} mediaType
  */
 async function photoroomGhostMannequin(apiKey, base64Data, mediaType) {
-  return photoroomEdit(apiKey, base64Data, mediaType, {
-    removeBackground: "true",
-    "ghostMannequin.mode": "ai.auto",
-    "background.color": "FFFFFF",
-    padding: "0.05",
-  });
+  try {
+    return await photoroomEdit(apiKey, base64Data, mediaType, {
+      removeBackground: "true",
+      "ghostMannequin.mode": "ai.auto",
+      "background.color": "FFFFFF",
+      padding: "0.05",
+    });
+  } catch (err) {
+    if (err instanceof PhotoroomHttpError) {
+      console.error(`Photoroom photoroomGhostMannequin failed:`, {
+        status: err.status,
+        body: err.body,
+      });
+    } else {
+      console.error(`Photoroom photoroomGhostMannequin failed:`, {
+        status: undefined,
+        body: err instanceof Error ? err.message : String(err),
+      });
+    }
+    throw err;
+  }
 }
 
 /**
@@ -215,12 +259,27 @@ async function photoroomGhostMannequin(apiKey, base64Data, mediaType) {
  * @param {string} mediaType
  */
 async function photoroomFlatLay(apiKey, base64Data, mediaType) {
-  return photoroomEdit(apiKey, base64Data, mediaType, {
-    removeBackground: "true",
-    "flatLay.mode": "ai.auto",
-    "background.color": "FFFFFF",
-    padding: "0.08",
-  });
+  try {
+    return await photoroomEdit(apiKey, base64Data, mediaType, {
+      removeBackground: "true",
+      "flatLay.mode": "ai.auto",
+      "background.color": "FFFFFF",
+      padding: "0.08",
+    });
+  } catch (err) {
+    if (err instanceof PhotoroomHttpError) {
+      console.error(`Photoroom photoroomFlatLay failed:`, {
+        status: err.status,
+        body: err.body,
+      });
+    } else {
+      console.error(`Photoroom photoroomFlatLay failed:`, {
+        status: undefined,
+        body: err instanceof Error ? err.message : String(err),
+      });
+    }
+    throw err;
+  }
 }
 
 /**
@@ -234,14 +293,29 @@ async function photoroomLifestyleStaging(
   mediaType,
   prompt
 ) {
-  return photoroomEdit(apiKey, base64Data, mediaType, {
-    removeBackground: "true",
-    "background.prompt": prompt,
-    "shadow.mode": "ai.auto",
-    padding: "0.08",
-    horizontalAlignment: "center",
-    verticalAlignment: "center",
-  });
+  try {
+    return await photoroomEdit(apiKey, base64Data, mediaType, {
+      removeBackground: "true",
+      "background.prompt": prompt,
+      "shadow.mode": "ai.auto",
+      padding: "0.08",
+      horizontalAlignment: "center",
+      verticalAlignment: "center",
+    });
+  } catch (err) {
+    if (err instanceof PhotoroomHttpError) {
+      console.error(`Photoroom photoroomLifestyleStaging failed:`, {
+        status: err.status,
+        body: err.body,
+      });
+    } else {
+      console.error(`Photoroom photoroomLifestyleStaging failed:`, {
+        status: undefined,
+        body: err instanceof Error ? err.message : String(err),
+      });
+    }
+    throw err;
+  }
 }
 
 /**
@@ -255,66 +329,81 @@ async function photoroomLifestyleStaging(
 async function processOneImage(apiKey, img, index, isHero, category, errorsOut) {
   const { data, media_type } = img;
   const clothing = isClothing(category);
-  /** @type {{ label: string; fn: () => Promise<string> }[]} */
-  let pipeline = [];
+
+  /** @type {{ label: string; url: string | null }[]} */
+  let outputs;
 
   if (isHero && clothing) {
-    pipeline = [
-      {
-        label: "ghost_mannequin",
-        fn: () => photoroomGhostMannequin(apiKey, data, media_type),
-      },
-      {
-        label: "flat_lay",
-        fn: () => photoroomFlatLay(apiKey, data, media_type),
-      },
+    const [ghostUrl, flatLayUrl] = await Promise.all([
+      photoroomGhostMannequin(apiKey, data, media_type).catch((e) => {
+        errorsOut.push({
+          index,
+          label: "ghost_mannequin",
+          message: e instanceof Error ? e.message : "Enhancement failed",
+        });
+        return null;
+      }),
+      photoroomFlatLay(apiKey, data, media_type).catch((e) => {
+        errorsOut.push({
+          index,
+          label: "flat_lay",
+          message: e instanceof Error ? e.message : "Enhancement failed",
+        });
+        return null;
+      }),
+    ]);
+    outputs = [
+      { label: "ghost_mannequin", url: ghostUrl },
+      { label: "flat_lay", url: flatLayUrl },
     ];
   } else if (isHero && !clothing) {
-    pipeline = [
-      {
-        label: "clean",
-        fn: () => photoroomCleanBackground(apiKey, data, media_type),
-      },
-      {
-        label: "staged",
-        fn: () =>
-          photoroomLifestyleStaging(
-            apiKey,
-            data,
-            media_type,
-            getStagingPrompt(category)
-          ),
-      },
-    ];
-  } else if (!isHero && clothing) {
-    pipeline = [
-      {
-        label: "clean",
-        fn: () => photoroomCleanBackground(apiKey, data, media_type),
-      },
+    const [cleanUrl, stagedUrl] = await Promise.all([
+      photoroomCleanBackground(apiKey, data, media_type).catch((e) => {
+        errorsOut.push({
+          index,
+          label: "clean",
+          message: e instanceof Error ? e.message : "Enhancement failed",
+        });
+        return null;
+      }),
+      photoroomLifestyleStaging(
+        apiKey,
+        data,
+        media_type,
+        getStagingPrompt(category)
+      ).catch((e) => {
+        errorsOut.push({
+          index,
+          label: "staged",
+          message: e instanceof Error ? e.message : "Enhancement failed",
+        });
+        return null;
+      }),
+    ]);
+    outputs = [
+      { label: "clean", url: cleanUrl },
+      { label: "staged", url: stagedUrl },
     ];
   } else {
-    pipeline = [
-      {
-        label: "clean",
-        fn: () => photoroomCleanBackground(apiKey, data, media_type),
-      },
-    ];
-  }
-
-  const outputs = [];
-  for (const step of pipeline) {
-    try {
-      const url = await step.fn();
-      outputs.push({ label: step.label, url });
-    } catch (err) {
-      outputs.push({ label: step.label, url: null });
-      errorsOut.push({
-        index,
-        label: step.label,
-        message: err instanceof Error ? err.message : "Enhancement failed",
-      });
-    }
+    // Non-hero images: clean background only
+    outputs = [];
+    const [cleanUrl] = await Promise.all([
+      photoroomCleanBackground(apiKey, img.data, img.media_type).catch(
+        (e) => {
+          errorsOut.push({
+            index,
+            label: "clean",
+            message: e.message,
+          });
+          console.error("Photoroom failed:", {
+            status: undefined,
+            body: e.message,
+          });
+          return null;
+        }
+      ),
+    ]);
+    if (cleanUrl) outputs.push({ label: "clean", url: cleanUrl });
   }
 
   return { index, isHero, outputs };
