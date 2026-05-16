@@ -849,6 +849,10 @@ export default function Home() {
 
   const handleAnalyze = async () => {
     if (files.length < 1 || credits < 1) return;
+    if (!currentUser) {
+      setAuthModalOpen(true);
+      return;
+    }
     setAnalyzing(true);
     setAnalysisPhase("compress");
     setError(null);
@@ -1370,15 +1374,13 @@ export default function Home() {
         </div>
       )}
 
-      <div className="border-b border-[#E8EDE9] bg-[#FFFFFF]">
-        <div className="mx-auto max-w-5xl px-4 py-2.5 sm:px-6">
-          <a
-            href="/how-it-works"
-            className="inline-flex items-center gap-2 rounded-full bg-[#2A6B52] px-5 py-1.5 text-xs font-semibold uppercase tracking-[0.2em] text-white/90 hover:text-white hover:bg-[#1A3A32] transition-colors"
-          >
-            How It Works →
-          </a>
-        </div>
+      <div className="border-b border-[#E8EDE9] bg-[#2A6B52]">
+        <a
+          href="/how-it-works"
+          className="block w-full py-2.5 text-center text-xs font-semibold uppercase tracking-[0.2em] text-white/90 hover:text-white hover:bg-[#1A3A32] transition-colors"
+        >
+          How It Works →
+        </a>
       </div>
 
       <section className="border-b border-[#E8EDE9] bg-[#FFFFFF] px-4 py-9 sm:px-6 sm:py-11">
