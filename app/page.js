@@ -1211,7 +1211,7 @@ export default function Home() {
   return (
     <div className="flex min-h-dvh flex-col bg-[#F4F9F7] font-sans text-[#1A3A32] antialiased">
       <header className="border-b border-[#E8EDE9] bg-[#FFFFFF]">
-        <div className="mx-auto flex max-w-3xl flex-col gap-4 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:gap-4 sm:px-6 sm:py-5">
+        <div className="mx-auto flex max-w-5xl flex-col gap-4 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:gap-4 sm:px-6 sm:py-5">
           <div className="flex w-full justify-center sm:justify-start">
             <img
               src="/logo.svg"
@@ -1224,7 +1224,7 @@ export default function Home() {
               <button
                 type="button"
                 onClick={() => setAuthModalOpen(true)}
-                className="touch-manipulation min-h-[44px] rounded-full border-2 border-[#7A8F88] bg-transparent px-5 py-1.5 text-sm font-semibold uppercase tracking-[0.14em] text-[#7A8F88] transition-colors hover:bg-[#F4F9F7] focus:outline-none focus:ring-1 focus:ring-[#2A6B52]/35"
+                className="touch-manipulation min-h-[44px] rounded-full border-2 border-[#7A8F88] bg-transparent px-5 py-1.5 text-sm sm:text-xs sm:px-4 sm:py-1 font-semibold uppercase tracking-[0.14em] text-[#7A8F88] transition-colors hover:bg-[#F4F9F7] focus:outline-none focus:ring-1 focus:ring-[#2A6B52]/35"
               >
                 Sign In
               </button>
@@ -1235,7 +1235,7 @@ export default function Home() {
                 setCheckoutClientError(null);
                 setCreditsModalOpen(true);
               }}
-              className="touch-manipulation min-h-[44px] self-start rounded-full border-2 border-[#2A6B52] bg-transparent px-6 py-1.5 text-sm font-semibold uppercase tracking-[0.14em] text-[#2A6B52] transition-colors hover:bg-[#F4F9F7] focus:outline-none focus:ring-1 focus:ring-[#2A6B52]/35"
+              className="touch-manipulation min-h-[44px] self-start rounded-full border-2 border-[#2A6B52] bg-transparent px-6 py-1.5 text-sm sm:text-xs sm:px-4 sm:py-1 font-semibold uppercase tracking-[0.14em] text-[#2A6B52] transition-colors hover:bg-[#F4F9F7] focus:outline-none focus:ring-1 focus:ring-[#2A6B52]/35"
             >
               Buy Credits
             </button>
@@ -1269,7 +1269,7 @@ export default function Home() {
           className="border-b border-[#8FCFB0]/50 bg-gradient-to-r from-[#F4F9F7] via-[#E8F5EE] to-[#F4F9F7] px-4 py-3.5 sm:px-6"
           role="status"
         >
-          <div className="mx-auto flex max-w-3xl items-start justify-between gap-3">
+          <div className="mx-auto flex max-w-5xl items-start justify-between gap-3">
             <p className="min-w-0 text-sm leading-relaxed text-[#1A3A32]">
               <span className="font-serif font-medium text-[#2A6B52]">
                 Thank you.
@@ -1293,7 +1293,7 @@ export default function Home() {
           className="border-b border-[#E8EDE9] bg-[#FFFFFF] px-4 py-3 sm:px-6"
           role="status"
         >
-          <div className="mx-auto flex max-w-3xl items-start justify-between gap-3">
+          <div className="mx-auto flex max-w-5xl items-start justify-between gap-3">
             <p className="text-sm leading-relaxed text-[#4A5568]">
               No worries — checkout was cancelled. Your credits are unchanged
               whenever you&apos;re ready.
@@ -1310,7 +1310,7 @@ export default function Home() {
       )}
 
       <section className="border-b border-[#E8EDE9] bg-[#FFFFFF] px-4 py-9 sm:px-6 sm:py-11">
-        <div className="mx-auto max-w-3xl">
+        <div className="mx-auto max-w-5xl">
           <p className="text-xs font-medium uppercase tracking-[0.22em] text-[#4A5568] sm:text-sm">
             LISTINGS IN A SNAP
           </p>
@@ -1325,7 +1325,7 @@ export default function Home() {
       </section>
 
       <main
-        className={`mx-auto w-full max-w-3xl flex-1 px-4 py-10 sm:px-6 sm:py-12 ${analyzing ? "max-sm:pb-32" : ""}`}
+        className={`mx-auto w-full max-w-5xl flex-1 px-4 py-10 sm:px-6 sm:py-12 ${analyzing ? "max-sm:pb-32" : ""}`}
       >
         <div className="rounded-[12px] border-[0.5px] border-[#E8EDE9] bg-[#FFFFFF] p-5 sm:p-9">
           <div className="space-y-9">
