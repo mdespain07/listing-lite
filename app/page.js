@@ -900,10 +900,20 @@ export default function Home() {
       const enhanceBody = JSON.stringify({
         images,
         category: enhanceCategory,
-        heroIndex:
-          typeof analyzeData.heroIndex === "number"
-            ? analyzeData.heroIndex
-            : 0,
+        heroIndex: (() => {
+          if (files.length <= 1) return 0;
+          // Pick the largest file by size — full-length shots are
+          // almost always larger than closeups
+          let largestIndex = 0;
+          let largestSize = 0;
+          for (let i = 0; i < files.length; i++) {
+            if (files[i].size > largestSize) {
+              largestSize = files[i].size;
+              largestIndex = i;
+            }
+          }
+          return largestIndex;
+        })(),
         itemName: String(analyzeData.itemName ?? ""),
       });
 
