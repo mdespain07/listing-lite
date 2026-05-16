@@ -41,8 +41,8 @@ condition (one of the four labels above),
 conditionExplanation (brief, photo-grounded),
 priceLow, priceHigh (numbers),
 listingTitle (under 80 characters, factual, includes color only if clearly visible),
-listingDescription (100-200 words, factual, photo-grounded, no hype, omits fabric if not visible on label),
-modelDetails (string: model name/number if identifiable from photos; note what could NOT be determined),
+listingDescription (100-200 words): Write in the style of a confident, friendly resale listing. Lead with the most appealing details visible in the photos — style, color, fit, notable features. Follow with condition notes grounded in what is visible. End with sizing or key specs if visible. Do NOT include: care label fabric percentages, country of manufacture, style codes, or internal label data — put those in modelDetails instead. Do NOT use hype words like 'stunning' or 'gorgeous.' Do use natural, warm, specific language that helps a buyer picture owning and using this item.
+modelDetails (string): Include style name/number if visible on label, fabric content percentages from care label if visible, country of manufacture if on label, and anything else from tags or labels that is factual but too technical for the main description. Note what could NOT be determined.
 visibleAccessories (array of short strings, [] if none),
 caveat (one honest sentence on what could not be determined from the photos alone).`;
 

@@ -563,6 +563,17 @@ function BuyCreditsModal({ open, onClose, onSelectCredits, busyCredits, error })
   );
 }
 
+function appendHomeEnvironmentSuffix(description, smokeFree, petFree) {
+  let suffix = "";
+  if (smokeFree && petFree) suffix = "From a smoke-free, pet-free home.";
+  else if (smokeFree) suffix = "From a smoke-free home.";
+  else if (petFree) suffix = "From a pet-free home.";
+  if (!suffix) return description;
+  const d = String(description ?? "").trimEnd();
+  if (!d) return suffix;
+  return `${d} ${suffix}`;
+}
+
 export default function Home() {
   const [files, setFiles] = useState([]);
   const [notes, setNotes] = useState("");
@@ -571,6 +582,8 @@ export default function Home() {
   const [tagsAttached, setTagsAttached] = useState("no");
   const [partsComplete, setPartsComplete] = useState("unsure");
   const [approximateAge, setApproximateAge] = useState("unknown");
+  const [smokeFreeHome, setSmokeFreeHome] = useState(false);
+  const [petFreeHome, setPetFreeHome] = useState(false);
   const [credits, setCredits] = useState(INITIAL_CREDITS);
   const [analyzing, setAnalyzing] = useState(false);
   const [results, setResults] = useState(null);
@@ -834,7 +847,14 @@ export default function Home() {
         return;
       }
 
-      setResults(analyzeData);
+      setResults({
+        ...analyzeData,
+        listingDescription: appendHomeEnvironmentSuffix(
+          String(analyzeData.listingDescription ?? ""),
+          smokeFreeHome,
+          petFreeHome
+        ),
+      });
       requestAnimationFrame(() => {
         resultsSectionRef.current?.scrollIntoView({
           behavior: "smooth",
@@ -951,6 +971,8 @@ export default function Home() {
     setTagsAttached("no");
     setPartsComplete("unsure");
     setApproximateAge("unknown");
+    setSmokeFreeHome(false);
+    setPetFreeHome(false);
     setError(null);
     setListingCorrection("");
     setCorrectionBusy(false);
@@ -1025,8 +1047,10 @@ export default function Home() {
               listingTitle: String(
                 analyzeData.listingTitle ?? prev.listingTitle
               ),
-              listingDescription: String(
-                analyzeData.listingDescription ?? prev.listingDescription
+              listingDescription: appendHomeEnvironmentSuffix(
+                String(analyzeData.listingDescription ?? ""),
+                smokeFreeHome,
+                petFreeHome
               ),
             }
           : prev
@@ -1389,6 +1413,35 @@ export default function Home() {
                   />
                 </div>
               </div>
+            </div>
+
+            <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:gap-x-10">
+              <label
+                htmlFor="smoke-free-home"
+                className="flex min-h-11 cursor-pointer items-center gap-3 text-sm leading-snug text-[#5C6F66]"
+              >
+                <input
+                  id="smoke-free-home"
+                  type="checkbox"
+                  checked={smokeFreeHome}
+                  onChange={(e) => setSmokeFreeHome(e.target.checked)}
+                  className="h-5 w-5 shrink-0 rounded border-[#C5D4CC] accent-[#2A6B52] focus:outline-none focus:ring-2 focus:ring-[#2A6B52]/30 focus:ring-offset-2 focus:ring-offset-[#FFFFFF]"
+                />
+                Smoke-free home
+              </label>
+              <label
+                htmlFor="pet-free-home"
+                className="flex min-h-11 cursor-pointer items-center gap-3 text-sm leading-snug text-[#5C6F66]"
+              >
+                <input
+                  id="pet-free-home"
+                  type="checkbox"
+                  checked={petFreeHome}
+                  onChange={(e) => setPetFreeHome(e.target.checked)}
+                  className="h-5 w-5 shrink-0 rounded border-[#C5D4CC] accent-[#2A6B52] focus:outline-none focus:ring-2 focus:ring-[#2A6B52]/30 focus:ring-offset-2 focus:ring-offset-[#FFFFFF]"
+                />
+                Pet-free home
+              </label>
             </div>
 
             <div>
