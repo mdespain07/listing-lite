@@ -1162,14 +1162,23 @@ export default function Home() {
     if (!currentUser) {
       setCreditsModalOpen(false);
       setAuthModalOpen(true);
+      setCheckoutBusyCredits(null);
       return;
     }
+
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session?.user?.id) {
+      setCheckoutClientError("Please sign in to purchase credits.");
+      setCheckoutBusyCredits(null);
+      return;
+    }
+
     setCheckoutBusyCredits(packageCredits);
     try {
       const res = await fetch("/api/create-checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ credits: packageCredits, user_id: currentUser?.id ?? "" }),
+        body: JSON.stringify({ credits: packageCredits, user_id: session.user.id }),
       });
       let data = {};
       try {
