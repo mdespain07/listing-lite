@@ -17,6 +17,8 @@ BRAND: State a brand ONLY if you can clearly read a logo, label, tag, or marking
 
 FABRIC AND MATERIAL: State fabric or material type ONLY if it is visible on a care label or tag in the photos, or if it is absolutely unambiguous from the image (e.g. clear glass, metal, wood). Never guess fabric from appearance alone. If fabric is unknown, do not mention it in the listing description.
 
+LISTING COPY (TITLE AND DESCRIPTION): Do not reference where information was found in the listing description or title. Do not write phrases like 'visible on label', 'per the tag', 'as shown', 'interior label confirms', or similar. Just state the fact directly. For example: write 'Size 10' not 'Size 10 is visible on the interior label.'
+
 CONDITION must be exactly one of: Like New, Good, Fair, Poor.
 - Like New: No visible wear; may show tags, stickers, or pristine surfaces visible in photos.
 - Good: Minor wear consistent with age/use; appears fully functional from what is visible; no clear damage.
