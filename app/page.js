@@ -1206,7 +1206,7 @@ export default function Home() {
       );
     }
     setCheckoutBusyCredits(null);
-  }, []);
+  }, [currentUser]);
 
   return (
     <div className="flex min-h-dvh flex-col bg-[#F4F9F7] font-sans text-[#1A3A32] antialiased">
