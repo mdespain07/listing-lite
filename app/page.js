@@ -9,6 +9,8 @@ import {
   startTransition,
 } from "react";
 import { useDropzone } from "react-dropzone";
+import AuthModal from "./components/auth-modal";
+import { supabase } from "../lib/supabase";
 
 const MAX_IMAGES = 5;
 const INITIAL_CREDITS = 3;
@@ -630,6 +632,8 @@ export default function Home() {
       null
     )
   );
+  const [authModalOpen, setAuthModalOpen] = useState(false);
+  const [currentUser, setCurrentUser] = useState(null);
 
   const hasOversizeUpload = useMemo(
     () => files.some((f) => f.size > MAX_UPLOAD_WARNING_BYTES),
@@ -789,10 +793,45 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
+    if (!currentUser) return;
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
+      if (!session) return;
+      try {
+        const res = await fetch("/api/credits", {
+          headers: { Authorization: `Bearer ${session.access_token}` },
+        });
+        if (!res.ok) return;
+        const data = await res.json();
+        if (typeof data.balance === "number") {
+          setCredits(data.balance);
+          localStorage.setItem(CREDITS_STORAGE_KEY, String(data.balance));
+        }
+      } catch {
+        // silently fall back to localStorage value
+      }
+    });
+  }, [currentUser]);
+
+  useEffect(() => {
     if (!purchaseBanner) return;
     const id = window.setTimeout(() => setPurchaseBanner(null), 8000);
     return () => window.clearTimeout(id);
   }, [purchaseBanner]);
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setCurrentUser(session?.user ?? null);
+    });
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setCurrentUser(session?.user ?? null);
+      if (!session) {
+        const raw = localStorage.getItem(CREDITS_STORAGE_KEY);
+        const n = Number.parseInt(raw ?? "0", 10);
+        setCredits(Number.isNaN(n) ? 0 : n);
+      }
+    });
+    return () => subscription.unsubscribe();
+  }, []);
 
   const canAnalyze =
     files.length >= 1 && credits >= 1 && !analyzing;
@@ -878,15 +917,32 @@ export default function Home() {
           block: "start",
         });
       });
-      setCredits((c) => {
-        const nextCredits = Math.max(0, c - 1);
-        if (typeof window !== "undefined") {
-          localStorage.setItem(
-            CREDITS_STORAGE_KEY,
-            String(nextCredits)
-          );
+      setCredits((c) => Math.max(0, c - 1));
+      supabase.auth.getSession().then(async ({ data: { session } }) => {
+        if (!session) {
+          // not logged in — fall back to localStorage
+          setCredits((c) => {
+            if (typeof window !== "undefined") {
+              localStorage.setItem(CREDITS_STORAGE_KEY, String(c));
+            }
+            return c;
+          });
+          return;
         }
-        return nextCredits;
+        try {
+          const res = await fetch("/api/credits", {
+            method: "POST",
+            headers: { Authorization: `Bearer ${session.access_token}` },
+          });
+          if (!res.ok) return;
+          const data = await res.json();
+          if (typeof data.balance === "number") {
+            setCredits(data.balance);
+            localStorage.setItem(CREDITS_STORAGE_KEY, String(data.balance));
+          }
+        } catch {
+          // silently fall back — credit already decremented in UI
+        }
       });
 
       const enhanceCategory = String(
@@ -1150,6 +1206,23 @@ export default function Home() {
             />
           </div>
           <div className="flex w-full shrink-0 flex-row justify-center gap-5 sm:w-auto sm:justify-end">
+            {currentUser ? (
+              <button
+                type="button"
+                onClick={async () => { await supabase.auth.signOut(); setCurrentUser(null); }}
+                className="touch-manipulation min-h-[44px] rounded-full border-2 border-[#7A8F88] bg-transparent px-5 py-1.5 text-sm font-semibold uppercase tracking-[0.14em] text-[#7A8F88] transition-colors hover:bg-[#F4F9F7] focus:outline-none focus:ring-1 focus:ring-[#2A6B52]/35"
+              >
+                Sign Out
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={() => setAuthModalOpen(true)}
+                className="touch-manipulation min-h-[44px] rounded-full border-2 border-[#7A8F88] bg-transparent px-5 py-1.5 text-sm font-semibold uppercase tracking-[0.14em] text-[#7A8F88] transition-colors hover:bg-[#F4F9F7] focus:outline-none focus:ring-1 focus:ring-[#2A6B52]/35"
+              >
+                Sign In
+              </button>
+            )}
             <button
               type="button"
               onClick={() => {
@@ -1841,6 +1914,12 @@ export default function Home() {
         onSelectCredits={(c) => void startCheckout(c)}
         busyCredits={checkoutBusyCredits}
         error={checkoutClientError}
+      />
+
+      <AuthModal
+        open={authModalOpen}
+        onClose={() => setAuthModalOpen(false)}
+        onAuthSuccess={(user) => setCurrentUser(user)}
       />
 
       <footer className="space-y-2 py-6 text-center">
