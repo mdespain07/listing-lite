@@ -10,6 +10,7 @@ import {
 } from "react";
 import { useDropzone } from "react-dropzone";
 import AuthModal from "./components/auth-modal";
+import ImageLightbox from "./components/image-lightbox";
 import { supabase } from "../lib/supabase";
 
 const MAX_IMAGES = 5;
@@ -610,6 +611,8 @@ export default function Home() {
   const [enhancedImages, setEnhancedImages] = useState(null);
   const [enhanceNotice, setEnhanceNotice] = useState(null);
   const [enhancingImages, setEnhancingImages] = useState(false);
+  const [lightboxImage, setLightboxImage] = useState(null);
+  const [regeneratingKey, setRegeneratingKey] = useState(null);
   const [analysisPhase, setAnalysisPhase] = useState(
     /** @type {'compress' | 'upload' | null} */ (null)
   );
@@ -1070,6 +1073,54 @@ export default function Home() {
     window.scrollTo({ top: 0, behavior: "smooth" });
   }, []);
 
+  const handleRegenerateImage = useCallback(async (card) => {
+    if (regeneratingKey) return;
+    setRegeneratingKey(card.key);
+    try {
+      const images = await Promise.all(
+        files.map((f) => compressImageFileToDataUrl(f))
+      );
+      const enhanceCategory = String(
+        (typeof results?.category === "string" ? results.category : "") ||
+      category || ""
+      ).trim();
+      const res = await fetchWithTimeout("/api/enhance-images", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          images,
+          category: enhanceCategory,
+          heroIndex: card.photoIndex,
+          itemName: String(results?.itemName ?? ""),
+          singleIndex: card.photoIndex,
+          singleLabel: card.label,
+        }),
+      });
+      let data = {};
+      try { data = await res.json(); } catch { data = {}; }
+      if (Array.isArray(data.images)) {
+        setEnhancedImages((prev) => {
+          if (!Array.isArray(prev)) return prev;
+          return prev.map((imgResult) => {
+            if (imgResult.index !== card.photoIndex) return imgResult;
+            const newOutputs = imgResult.outputs.map((output) => {
+              if (output.label !== card.label) return output;
+              const newOutput = data.images
+                .find((r) => r.index === card.photoIndex)
+                ?.outputs?.find((o) => o.label === card.label);
+              return newOutput ?? output;
+            });
+            return { ...imgResult, outputs: newOutputs };
+          });
+        });
+      }
+    } catch {
+      // silently fail — original image stays
+    } finally {
+      setRegeneratingKey(null);
+    }
+  }, [regeneratingKey, files, results, category]);
+
   const handleApplyListingCorrection = async () => {
     const trimmed = listingCorrection.trim();
     if (!results || files.length < 1 || !trimmed || correctionBusy) return;
@@ -1308,6 +1359,17 @@ export default function Home() {
           </div>
         </div>
       )}
+
+      <div className="border-b border-[#E8EDE9] bg-[#2A6B52]">
+        <div className="mx-auto flex max-w-5xl items-center justify-center px-4 py-2.5 sm:px-6">
+          <a
+            href="/how-it-works"
+            className="text-xs font-semibold uppercase tracking-[0.2em] text-white/90 hover:text-white transition-colors"
+          >
+            How It Works →
+          </a>
+        </div>
+      </div>
 
       <section className="border-b border-[#E8EDE9] bg-[#FFFFFF] px-4 py-9 sm:px-6 sm:py-11">
         <div className="mx-auto max-w-5xl">
@@ -1824,10 +1886,11 @@ export default function Home() {
                 <p className="mt-3 max-w-xl text-sm leading-relaxed text-[#5C6F66] sm:text-base">
                   Tap Save or Share on any image to keep it or send it.
                 </p>
-                <p className="mt-2 max-w-xl text-sm leading-relaxed text-[#5C6F66] sm:text-base">
-                  💡 For best results, upload one full-length photo and one
-                  flat-lay photo of clothing items.
-                </p>
+                {enhancingImages && (
+                  <p className="mt-2 max-w-xl text-sm leading-relaxed text-[#5C6F66] sm:text-base">
+                    💡 For best results, include one full-length photo of clothing items.
+                  </p>
+                )}
                 {enhanceNotice && !enhancingImages ? (
                   <p className="mt-4 text-sm leading-relaxed text-[#4A5568]">
                     {enhanceNotice}
@@ -1849,28 +1912,21 @@ export default function Home() {
                   </ul>
                 ) : flattenedEnhanceCards.length > 0 ? (
                   <ul className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4">
-                    {flattenedEnhanceCards.map((card) => {
-                      const showHeroBadge =
-                        card.isHero &&
-                        (card.label === "ghost_mannequin" ||
-                          card.label === "flat_lay");
-                      return (
+                    {flattenedEnhanceCards.map((card) => (
                         <li
                           key={card.key}
                           className="flex flex-col overflow-hidden rounded-lg border border-[#E8EDE9] bg-[#FFFFFF]"
                         >
-                          <div className="relative aspect-square bg-[#F4F9F7]">
+                          <div
+                            className="relative aspect-square bg-[#F4F9F7] cursor-zoom-in"
+                            onClick={() => setLightboxImage({ url: card.url, label: humanReadableEnhanceLabel(card.label) })}
+                          >
                             {/* eslint-disable-next-line @next/next/no-img-element */}
                             <img
                               src={card.url}
                               alt={humanReadableEnhanceLabel(card.label)}
                               className="h-full w-full object-contain"
                             />
-                            {showHeroBadge ? (
-                              <span className="absolute right-2 top-2 rounded-full border-[0.5px] border-[#8FCFB0]/80 bg-[#2A6B52]/95 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.1em] text-white shadow-sm">
-                                HERO
-                              </span>
-                            ) : null}
                           </div>
                           <div className="flex flex-col gap-2 border-t border-[#E8EDE9]/80 p-3 pt-3">
                             {card.label === "ghost_mannequin" ? (
@@ -1878,24 +1934,46 @@ export default function Home() {
                                 AI-generated — verify details match your item
                               </p>
                             ) : null}
-                            <button
-                              type="button"
-                              onClick={() => void shareImage(card.url, card.label)}
-                              className="w-full min-h-[44px] rounded-lg bg-[#2A6B52] text-sm font-medium tracking-wide text-white transition-colors duration-150 hover:bg-[#1A3A32]"
-                            >
-                              {isMobileDevice ? "SAVE OR SHARE" : "DOWNLOAD"}
-                            </button>
+                            <div className="flex gap-2">
+                              <button
+                                type="button"
+                                onClick={() => void shareImage(card.url, card.label)}
+                                className="flex-1 min-h-[44px] rounded-lg bg-[#2A6B52] text-xs font-medium tracking-wide text-white transition-colors duration-150 hover:bg-[#1A3A32]"
+                              >
+                                {isMobileDevice ? "SAVE / SHARE" : "DOWNLOAD"}
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => void handleRegenerateImage(card)}
+                                disabled={regeneratingKey !== null}
+                                className="flex h-[44px] w-[44px] shrink-0 items-center justify-center rounded-lg border border-[#E8EDE9] bg-[#F4F9F7] text-[#2A6B52] transition-colors hover:bg-[#E8EDE9] disabled:opacity-40"
+                                aria-label="Regenerate image"
+                                title="Regenerate"
+                              >
+                                {regeneratingKey === card.key ? (
+                                  <svg className="h-4 w-4 animate-spin" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                                  </svg>
+                                ) : (
+                                  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                                  </svg>
+                                )}
+                              </button>
+                            </div>
                           </div>
                         </li>
-                      );
-                    })}
+                    ))}
                   </ul>
                 ) : null}
               </div>
             )}
 
             {results ? (
-              <div className="border-t-[0.5px] border-[#E8EDE9] px-6 py-6 sm:px-8">
+              <div className="border-t-[0.5px] border-[#E8EDE9] px-6 py-6 sm:px-8 space-y-4">
+                <p className="text-center text-sm leading-relaxed text-[#4A5568]">
+                  Ready to list? Download your sales-ready images, then copy and paste the title and description directly into your listing.
+                </p>
                 <button
                   type="button"
                   onClick={resetNewListing}
@@ -1953,6 +2031,14 @@ export default function Home() {
         onClose={() => setAuthModalOpen(false)}
         onAuthSuccess={(user) => setCurrentUser(user)}
       />
+
+      {lightboxImage && (
+        <ImageLightbox
+          url={lightboxImage.url}
+          label={lightboxImage.label}
+          onClose={() => setLightboxImage(null)}
+        />
+      )}
 
       <footer className="space-y-2 py-6 text-center">
         <p className="text-[11px] font-medium uppercase tracking-[0.2em] text-[#7A8F88]">

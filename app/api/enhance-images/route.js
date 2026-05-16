@@ -475,6 +475,8 @@ export async function POST(request) {
     0,
     Math.min(heroIndex, Math.max(0, images.length - 1))
   );
+  const singleIndex = typeof body.singleIndex === "number" ? Math.trunc(body.singleIndex) : null;
+  const singleLabel = typeof body.singleLabel === "string" ? body.singleLabel.trim() : null;
 
   const normalized = [];
   for (let i = 0; i < images.length; i++) {
@@ -508,7 +510,31 @@ export async function POST(request) {
   const imagesOut = [];
 
   for (let i = 0; i < normalized.length; i++) {
+    // If regenerating a single output, skip all other images
+    if (singleIndex !== null && i !== singleIndex) continue;
     const isHero = i === heroIndex;
+
+    // If regenerating a single label, only run that one enhancement
+    if (singleIndex !== null && singleLabel !== null) {
+      const { data, media_type } = normalized[i];
+      let url = null;
+      try {
+        if (singleLabel === "ghost_mannequin") {
+          url = await photoroomGhostMannequin(apiKey, data, media_type);
+        } else if (singleLabel === "flat_lay") {
+          url = await photoroomFlatLay(apiKey, data, media_type);
+        } else if (singleLabel === "staged") {
+          url = await photoroomLifestyleStaging(apiKey, data, media_type, getStagingPrompt(category));
+        } else {
+          url = await photoroomCleanBackground(apiKey, data, media_type);
+        }
+      } catch (e) {
+        errors.push({ index: i, label: singleLabel, message: e instanceof Error ? e.message : "Enhancement failed" });
+      }
+      imagesOut.push({ index: i, isHero, outputs: [{ label: singleLabel, url }] });
+      continue;
+    }
+
     const entry = await processOneImage(
       apiKey,
       normalized[i],
