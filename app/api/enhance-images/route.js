@@ -351,8 +351,8 @@ async function processOneImage(apiKey, img, index, isHero, category, errorsOut) 
       }),
     ]);
     outputs = [
-      { label: "ghost_mannequin", url: ghostUrl },
       { label: "flat_lay", url: flatLayUrl },
+      { label: "ghost_mannequin", url: ghostUrl },
     ];
   } else if (isHero && !clothing) {
     const [cleanUrl, stagedUrl] = await Promise.all([
