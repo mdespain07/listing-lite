@@ -1355,8 +1355,9 @@ export default function Home() {
                     <path
                       strokeLinecap="round"
                       strokeLinejoin="round"
-                      d="M12 5v14m0 0l-6-6m6 6l6-6"
+                      d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"
                     />
+                    <circle cx="12" cy="13" r="4" strokeLinecap="round" strokeLinejoin="round" />
                   </svg>
                 </div>
                 {atPhotoLimit ? (
@@ -1368,7 +1369,7 @@ export default function Home() {
                     <p className="pointer-events-none font-serif text-center text-xl font-medium tracking-[0.02em] text-[#1A3A32] sm:text-2xl">
                       {isDragActive
                         ? "Release to upload"
-                        : "Upload product photos"}
+                        : "Take or Upload Product Photos"}
                     </p>
                     <p className="pointer-events-none mt-3 max-w-sm text-center text-sm leading-relaxed text-[#4A5568]">
                       {isDragActive
