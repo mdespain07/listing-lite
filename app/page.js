@@ -1374,18 +1374,20 @@ export default function Home() {
         </div>
       )}
 
-      <div className="border-b border-[#E8EDE9] bg-[#2A6B52]">
-        <a
-          href="/how-it-works"
-          className="block w-full py-2.5 text-center text-xs font-semibold uppercase tracking-[0.2em] text-white/90 hover:text-white hover:bg-[#1A3A32] transition-colors"
-        >
-          How It Works →
-        </a>
+      <div className="border-b border-[#E8EDE9] bg-[#F4F9F7]">
+        <div className="mx-auto max-w-5xl px-4 sm:px-6">
+          <a
+            href="/how-it-works"
+            className="block bg-[#2A6B52] py-2.5 text-center text-xs font-semibold uppercase tracking-[0.2em] text-white/90 hover:bg-[#1A3A32] hover:text-white transition-colors"
+          >
+            How It Works →
+          </a>
+        </div>
       </div>
 
       <section className="border-b border-[#E8EDE9] bg-[#FFFFFF] px-4 py-9 sm:px-6 sm:py-11">
         <div className="mx-auto max-w-5xl">
-          <p className="text-xs font-medium uppercase tracking-[0.22em] text-[#4A5568] sm:text-sm">
+          <p className="text-xs font-medium uppercase tracking-[0.22em] text-[#4A5568] sm:text-sm ml-0">
             LISTINGS IN A SNAP
           </p>
           <h1 className="font-serif mt-4 max-w-2xl text-balance text-[2rem] font-medium leading-[1.15] tracking-[0.01em] text-[#1A3A32] sm:text-[2.5rem] sm:leading-tight">
