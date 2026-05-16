@@ -1386,11 +1386,11 @@ export default function Home() {
       </div>
 
       <section className="border-b border-[#E8EDE9] bg-[#FFFFFF] px-4 py-9 sm:px-6 sm:py-11">
-        <div className="mx-auto max-w-5xl">
+        <div className="mx-auto max-w-5xl px-4 sm:px-6">
           <p className="text-xs font-medium uppercase tracking-[0.22em] text-[#4A5568] sm:text-sm ml-0">
             LISTINGS IN A SNAP
           </p>
-          <h1 className="font-serif mt-4 max-w-2xl text-balance text-[2rem] font-medium leading-[1.15] tracking-[0.01em] text-[#1A3A32] sm:text-[4rem] sm:leading-tight">
+          <h1 className="font-serif mt-4 max-w-2xl text-balance text-[2rem] font-medium leading-[1.15] tracking-[0.01em] text-[#1A3A32] sm:text-[3.25rem] sm:leading-tight">
             From photos to a polished listing.
           </h1>
           <p className="mt-4 max-w-lg text-sm leading-relaxed text-[#4A5568] sm:text-[15px]">
