@@ -1235,7 +1235,7 @@ export default function Home() {
                 setCheckoutClientError(null);
                 setCreditsModalOpen(true);
               }}
-              className="touch-manipulation min-h-[44px] rounded-full border-2 border-[#2A6B52] bg-transparent px-6 py-1.5 text-sm font-semibold uppercase tracking-[0.14em] text-[#2A6B52] transition-colors hover:bg-[#F4F9F7] focus:outline-none focus:ring-1 focus:ring-[#2A6B52]/35"
+              className="touch-manipulation min-h-[44px] self-start rounded-full border-2 border-[#2A6B52] bg-transparent px-6 py-1.5 text-sm font-semibold uppercase tracking-[0.14em] text-[#2A6B52] transition-colors hover:bg-[#F4F9F7] focus:outline-none focus:ring-1 focus:ring-[#2A6B52]/35"
             >
               Buy Credits
             </button>
