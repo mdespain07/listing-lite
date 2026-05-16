@@ -1220,15 +1220,7 @@ export default function Home() {
             />
           </div>
           <div className="flex w-full shrink-0 flex-row justify-center gap-5 sm:w-auto sm:justify-end">
-            {currentUser ? (
-              <button
-                type="button"
-                onClick={async () => { await supabase.auth.signOut(); setCurrentUser(null); }}
-                className="touch-manipulation min-h-[44px] rounded-full border-2 border-[#7A8F88] bg-transparent px-5 py-1.5 text-sm font-semibold uppercase tracking-[0.14em] text-[#7A8F88] transition-colors hover:bg-[#F4F9F7] focus:outline-none focus:ring-1 focus:ring-[#2A6B52]/35"
-              >
-                Sign Out
-              </button>
-            ) : (
+            {!currentUser && (
               <button
                 type="button"
                 onClick={() => setAuthModalOpen(true)}
@@ -1247,16 +1239,27 @@ export default function Home() {
             >
               Buy Credits
             </button>
-            <button
-              type="button"
-              tabIndex={-1}
-              role="status"
-              className="flex min-h-[44px] shrink-0 cursor-default items-center justify-center rounded-full border-0 bg-[#2A6B52] px-6 py-1.5 text-sm font-semibold uppercase tracking-[0.16em]"
-              style={{ color: "#FFFFFF" }}
-              aria-label={`${credits} credits remaining`}
-            >
-              {credits} credits
-            </button>
+            {currentUser && (
+              <div className="flex flex-col items-center gap-0.5">
+                <button
+                  type="button"
+                  tabIndex={-1}
+                  role="status"
+                  className="flex min-h-[44px] shrink-0 cursor-default items-center justify-center rounded-full border-0 bg-[#2A6B52] px-6 py-1.5 text-sm font-semibold uppercase tracking-[0.16em]"
+                  style={{ color: "#FFFFFF" }}
+                  aria-label={`${credits} credits remaining`}
+                >
+                  {credits} credits
+                </button>
+                <button
+                  type="button"
+                  onClick={async () => { await supabase.auth.signOut(); setCurrentUser(null); }}
+                  className="text-[10px] font-medium uppercase tracking-[0.14em] text-[#7A8F88] underline-offset-2 hover:underline hover:text-[#2A6B52] transition-colors"
+                >
+                  Sign out
+                </button>
+              </div>
+            )}
           </div>
         </div>
       </header>
