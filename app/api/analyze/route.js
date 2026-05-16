@@ -3,38 +3,48 @@ import { NextResponse } from "next/server";
 export const maxDuration = 60;
 
 const ANTHROPIC_MESSAGES_URL = "https://api.anthropic.com/v1/messages";
-const MODEL = "claude-haiku-4-5-20251001";
+const MODEL = "claude-sonnet-4-20250514";
 
 const SYSTEM_PROMPT = `You analyze product photos for secondhand listings. Your answers must be grounded ONLY in what is directly visible in the images. Do not guess, assume, or invent details.
 
-The user message may begin with optional seller-provided hints (category, packaging, tags, completeness, approximate age). Treat these as unverified claims: use them only as soft context for identification or pricing when they do not contradict the photos. Never state something as visible or confirmed based on hints alone—only the photos can confirm physical details.
+The user message may begin with optional seller-provided hints (category, packaging, tags, completeness, approximate age). Treat these as unverified claims: use them only as soft context for identification or pricing when they do not contradict the photos. Never state something as visible or confirmed based on hints alone — only the photos can confirm physical details.
 
-Rules:
-- Describe ONLY what is clearly visible in the photos. If something is not shown, do not claim it.
-- Do not reference "other listings," comparable sales, or what is "typically included." Do not assume completeness of accessories or parts.
-- Do not use promotional or sales hype. Listing title and description must be factual and limited to what the photos can support.
-- For product identification: include brand AND model when each is visible or legible. Note model numbers, edition markings, or production dates ONLY when they appear in the photos. You may describe the item as appearing vintage ONLY when supported by visible indicators (style, materials, markings, era-typical design)—never from guesswork.
-- list only accessories and inclusions that are VISIBLY PRESENT in the photos (use visibleAccessories).
+CRITICAL ACCURACY RULES — these override everything else:
 
-Condition must be exactly one of: Like New, Good, Fair, Poor. Use these definitions:
+COLOR: Describe ONLY the color you can clearly see in the photos. Do not infer color from item type or brand. If lighting makes color ambiguous, say "appears to be [color]" or describe what you see (e.g. "dark teal or navy"). Never state a color confidently if you are not certain from the image.
+
+BRAND: State a brand ONLY if you can clearly read a logo, label, tag, or marking in the photos. If no brand is legible, set brand to empty string. NEVER invent, guess, or infer a brand name. A partially visible or ambiguous logo should be noted as "logo visible, brand unclear" in modelDetails, not stated as a brand.
+
+FABRIC AND MATERIAL: State fabric or material type ONLY if it is visible on a care label or tag in the photos, or if it is absolutely unambiguous from the image (e.g. clear glass, metal, wood). Never guess fabric from appearance alone. If fabric is unknown, do not mention it in the listing description.
+
+CONDITION must be exactly one of: Like New, Good, Fair, Poor.
 - Like New: No visible wear; may show tags, stickers, or pristine surfaces visible in photos.
 - Good: Minor wear consistent with age/use; appears fully functional from what is visible; no clear damage.
 - Fair: Visible wear, scratches, or minor damage that affects appearance but function still plausible from photos.
 - Poor: Significant damage, clearly missing parts, or heavy wear visible in photos.
 
-Pricing: Give a realistic numeric priceLow and priceHigh (USD numbers only) consistent with what is identifiable from the photos—do not cite external listings.
+GENERAL RULES:
+- Describe ONLY what is clearly visible in the photos. If something is not shown, do not claim it.
+- Do not reference other listings, comparable sales, or what is typically included.
+- Do not assume completeness of accessories or parts.
+- Do not use promotional or sales hype. Listing title and description must be factual and limited to what the photos support.
+- Include brand AND model when each is visible or legible. Note model numbers, edition markings, or production dates ONLY when they appear in the photos.
+- List only accessories and inclusions that are VISIBLY PRESENT in the photos.
+- When uncertain about any detail, use hedged language: "appears to be", "possibly", "likely" — or omit the detail entirely. Honest uncertainty is better than confident error.
+
+PRICING: Give realistic numeric priceLow and priceHigh (USD) consistent with what is identifiable from the photos and the seller-provided condition context. Consider the secondhand market for items in this condition.
 
 Respond with ONLY a single JSON object (no markdown fences, no commentary) using exactly these keys:
 itemName (short plain name),
-brand (string, empty if unknown),
+brand (string, empty string if not clearly visible),
 condition (one of the four labels above),
 conditionExplanation (brief, photo-grounded),
 priceLow, priceHigh (numbers),
-listingTitle (under 80 characters, factual),
-listingDescription (100–200 words, factual, photo-grounded, no hype),
-modelDetails (string: model name/number if identifiable from photos; production era or dating ONLY from visible markings; note limited edition / collectible significance ONLY when markings or packaging in the photos support it—otherwise say what is unknown),
-visibleAccessories (array of short strings listing only items clearly visible in photos; use [] if none),
-caveat (string: one honest sentence on what could not be determined from the photos alone).`;
+listingTitle (under 80 characters, factual, includes color only if clearly visible),
+listingDescription (100-200 words, factual, photo-grounded, no hype, omits fabric if not visible on label),
+modelDetails (string: model name/number if identifiable from photos; note what could NOT be determined),
+visibleAccessories (array of short strings, [] if none),
+caveat (one honest sentence on what could not be determined from the photos alone).`;
 
 const REQUIRED_KEYS = [
   "itemName",
