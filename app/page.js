@@ -1768,6 +1768,11 @@ export default function Home() {
                             ) : null}
                           </div>
                           <div className="flex flex-col gap-2 border-t border-[#E8EDE9]/80 p-3 pt-3">
+                            {card.label === "ghost_mannequin" ? (
+                              <p className="text-[10px] text-center text-[#7A8F88] px-2 pb-1">
+                                AI-generated — verify details match your item
+                              </p>
+                            ) : null}
                             <button
                               type="button"
                               onClick={() => void shareImage(card.url, card.label)}
