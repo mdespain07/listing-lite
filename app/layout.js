@@ -18,6 +18,10 @@ export const metadata = {
   title: "BrightListed — Listings in a Snap",
   description:
     "AI-powered listing assistance. Upload photos, get professional listings, accurate pricing, and sales-ready images in seconds.",
+  icons: {
+    icon: "/favicon.ico",
+    apple: "/favicon.png",
+  },
 };
 
 export const viewport = {
