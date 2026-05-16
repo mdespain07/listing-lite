@@ -206,7 +206,6 @@ async function photoroomCleanBackground(apiKey, base64Data, mediaType) {
       padding: "0.08",
       horizontalAlignment: "center",
       verticalAlignment: "center",
-      "shadow.mode": "ai.auto",
     });
   } catch (err) {
     if (err instanceof PhotoroomHttpError) {
@@ -297,7 +296,6 @@ async function photoroomLifestyleStaging(
     return await photoroomEdit(apiKey, base64Data, mediaType, {
       removeBackground: "true",
       "background.prompt": prompt,
-      "shadow.mode": "ai.auto",
       padding: "0.08",
       horizontalAlignment: "center",
       verticalAlignment: "center",
