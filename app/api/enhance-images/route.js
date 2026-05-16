@@ -331,7 +331,7 @@ async function processOneImage(apiKey, img, index, isHero, category, errorsOut) 
   const clothing = isClothing(category);
 
   /** @type {{ label: string; url: string | null }[]} */
-  let outputs;
+  let outputs = [];
 
   if (isHero && clothing) {
     const [ghostUrl, flatLayUrl] = await Promise.all([
@@ -388,7 +388,7 @@ async function processOneImage(apiKey, img, index, isHero, category, errorsOut) 
     // Non-hero images: clean background only
     outputs = [];
     const [cleanUrl] = await Promise.all([
-      photoroomCleanBackground(apiKey, img.data, img.media_type).catch(
+      photoroomCleanBackground(apiKey, data, media_type).catch(
         (e) => {
           errorsOut.push({
             index,
