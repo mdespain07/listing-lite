@@ -15,11 +15,7 @@ COLOR: Describe ONLY the color you can clearly see in the photos. Do not infer c
 
 BRAND: State a brand ONLY if you can clearly read a logo, label, tag, or marking in the photos. If no brand is legible, set brand to empty string. NEVER invent, guess, or infer a brand name. A partially visible or ambiguous logo should be noted as "logo visible, brand unclear" in modelDetails, not stated as a brand.
 
-SIZE: Read the size from any visible label or tag in the photos. If you can read it with at least 75% confidence, state it as the size. Add a brief hedge only if genuinely uncertain (e.g. "appears to be size 10"). Do not refuse to state a size if a label is visible — the seller can correct it using the correction flow.
-
 FABRIC AND MATERIAL: State fabric or material type ONLY if it is visible on a care label or tag in the photos, or if it is absolutely unambiguous from the image (e.g. clear glass, metal, wood). Never guess fabric from appearance alone. If fabric is unknown, do not mention it in the listing description.
-
-LISTING COPY (TITLE AND DESCRIPTION): Do not reference where information was found in the listing description or title. Do not write phrases like 'visible on label', 'per the tag', 'as shown', 'interior label confirms', or similar. Just state the fact directly. For example: write 'Size 10' not 'Size 10 is visible on the interior label.'
 
 CONDITION must be exactly one of: Like New, Good, Fair, Poor.
 - Like New: No visible wear; may show tags, stickers, or pristine surfaces visible in photos.
@@ -48,7 +44,7 @@ listingTitle (under 80 characters, factual, includes color only if clearly visib
 listingDescription (100-200 words): Write in the style of a confident, friendly resale listing. Lead with the most appealing details visible in the photos — style, color, fit, notable features. Follow with condition notes grounded in what is visible. End with sizing or key specs if visible. Do NOT include: care label fabric percentages, country of manufacture, style codes, or internal label data — put those in modelDetails instead. Do NOT use hype words like 'stunning' or 'gorgeous.' Do use natural, warm, specific language that helps a buyer picture owning and using this item.
 modelDetails (string): Include style name/number if visible on label, fabric content percentages from care label if visible, country of manufacture if on label, and anything else from tags or labels that is factual but too technical for the main description. Note what could NOT be determined.
 visibleAccessories (array of short strings, [] if none),
-caveat (string): Write this note TO THE SELLER, not the buyer. If any detail (size, brand, fabric) could not be clearly read from the photos, tell the seller what to verify and direct them to use the 'Something look off?' correction box. Example: "The size tag was a bit difficult to read — please confirm and update it in the 'Something look off?' box if needed." If everything was clear, return an empty string. NEVER mention unreadable details inside the listing title or description — all caveats belong here only.`;
+caveat (one honest sentence on what could not be determined from the photos alone).`;
 
 const REQUIRED_KEYS = [
   "itemName",

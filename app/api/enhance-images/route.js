@@ -384,19 +384,22 @@ async function processOneImage(apiKey, img, index, isHero, category, errorsOut) 
     ];
   } else {
     // Non-hero images: clean background only
+    outputs = [];
     const [cleanUrl] = await Promise.all([
-      photoroomCleanBackground(apiKey, data, media_type).catch((e) => {
-        errorsOut.push({
-          index,
-          label: "clean",
-          message: e.message,
-        });
-        console.error("Photoroom failed:", {
-          status: undefined,
-          body: e.message,
-        });
-        return null;
-      }),
+      photoroomCleanBackground(apiKey, data, media_type).catch(
+        (e) => {
+          errorsOut.push({
+            index,
+            label: "clean",
+            message: e.message,
+          });
+          console.error("Photoroom failed:", {
+            status: undefined,
+            body: e.message,
+          });
+          return null;
+        }
+      ),
     ]);
     if (cleanUrl) outputs.push({ label: "clean", url: cleanUrl });
   }

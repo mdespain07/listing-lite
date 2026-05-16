@@ -237,49 +237,32 @@ function formatPerCredit(credits, priceUsd) {
   return formatUsd(priceUsd / credits);
 }
 
-function isMobile() {
-  if (typeof navigator === "undefined" || typeof window === "undefined") {
-    return false;
-  }
-  return (
-    /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) ||
-    (navigator.maxTouchPoints > 1 && window.innerWidth < 1024)
-  );
-}
-
 /**
  * @param {string} dataUrl
  * @param {string} label
  */
-async function handleSaveOrShare(dataUrl, label) {
-  if (isMobile()) {
-    try {
-      const res = await fetch(dataUrl);
-      const blob = await res.blob();
-      const file = new File([blob], `brightlisted-${label}.png`, {
-        type: "image/png",
+async function shareImage(dataUrl, label) {
+  try {
+    const res = await fetch(dataUrl);
+    const blob = await res.blob();
+    const file = new File([blob], `brightlisted-${label}.png`, {
+      type: "image/png",
+    });
+
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      await navigator.share({
+        files: [file],
+        title: "BrightListed photo",
       });
-      if (navigator.canShare && navigator.canShare({ files: [file] })) {
-        await navigator.share({
-          files: [file],
-          title: "BrightListed photo",
-        });
-      } else {
-        const url = URL.createObjectURL(blob);
-        window.open(url, "_blank");
-      }
-    } catch (err) {
-      if (err && typeof err === "object" && err.name !== "AbortError") {
-        console.error("Share failed:", err);
-      }
+    } else {
+      const url = URL.createObjectURL(blob);
+      window.open(url, "_blank", "noopener,noreferrer");
+      window.setTimeout(() => URL.revokeObjectURL(url), 120_000);
     }
-  } else {
-    const a = document.createElement("a");
-    a.href = dataUrl;
-    a.download = `brightlisted-${label}.png`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
+  } catch (err) {
+    if (err && typeof err === "object" && err.name !== "AbortError") {
+      console.error("Share failed:", err);
+    }
   }
 }
 
@@ -630,14 +613,6 @@ export default function Home() {
       null
     )
   );
-  const [isMobileDevice, setIsMobileDevice] = useState(false);
-
-  useEffect(() => {
-    const id = requestAnimationFrame(() => {
-      setIsMobileDevice(isMobile());
-    });
-    return () => cancelAnimationFrame(id);
-  }, []);
 
   const hasOversizeUpload = useMemo(
     () => files.some((f) => f.size > MAX_UPLOAD_WARNING_BYTES),
@@ -1760,12 +1735,10 @@ export default function Home() {
                           <div className="flex flex-col gap-2 border-t border-[#E8EDE9]/80 p-3 pt-3">
                             <button
                               type="button"
-                              className="touch-manipulation flex min-h-11 w-full items-center justify-center rounded-lg border-0 bg-[#2A6B52] px-3 text-xs font-semibold uppercase tracking-[0.14em] text-white transition-colors duration-150 hover:bg-[#1A3A32] focus:outline-none focus:ring-1 focus:ring-[#2A6B52]/35"
-                              onClick={() =>
-                                void handleSaveOrShare(card.url, card.label)
-                              }
+                              className="touch-manipulation flex min-h-11 w-full items-center justify-center rounded-lg border-0 bg-[#2A6B52] px-3 text-xs font-semibold uppercase tracking-[0.14em] text-white opacity-100 transition-opacity hover:opacity-90 focus:outline-none focus:ring-1 focus:ring-[#2A6B52]/35"
+                              onClick={() => void shareImage(card.url, card.label)}
                             >
-                              {isMobileDevice ? "Save or Share" : "Download"}
+                              Save or share
                             </button>
                           </div>
                         </li>
