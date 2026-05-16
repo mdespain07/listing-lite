@@ -241,6 +241,7 @@ async function photoroomGhostMannequin(apiKey, base64Data, mediaType) {
     return await photoroomEdit(apiKey, base64Data, mediaType, {
       removeBackground: "true",
       "ghostMannequin.mode": "ai.auto",
+      "ghostMannequin.colorCorrection": "false",
       "background.color": "FFFFFF",
       padding: "0.05",
     });
