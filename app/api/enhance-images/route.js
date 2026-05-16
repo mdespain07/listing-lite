@@ -413,6 +413,17 @@ export async function POST(request) {
     imagesOut.push(entry);
   }
 
+  console.log('Enhance response:', JSON.stringify({
+    imageCount: imagesOut.length,
+    outputs: imagesOut.map(img => ({
+      index: img.index,
+      isHero: img.isHero,
+      outputCount: img.outputs.length,
+      outputLabels: img.outputs.map(o => o.label),
+      nullOutputs: img.outputs.filter(o => !o.url).map(o => o.label)
+    }))
+  }));
+
   return NextResponse.json({
     images: imagesOut,
     ...(errors.length > 0 ? { errors } : {}),

@@ -1446,8 +1446,8 @@ export default function Home() {
                     aria-hidden
                   />
                 </div>
-                <p className="mt-3 max-w-xl text-xs font-medium uppercase tracking-[0.18em] text-[#4A5568] sm:text-sm">
-                  Tap Share on any image to save or send.
+                <p className="mt-3 max-w-xl text-sm leading-relaxed text-[#5C6F66] sm:text-base">
+                  Tap Save or Share on any image to keep it or send it.
                 </p>
                 {enhanceNotice && !enhancingImages ? (
                   <p className="mt-4 text-sm leading-relaxed text-[#4A5568]">
@@ -1503,7 +1503,7 @@ export default function Home() {
                               className="touch-manipulation flex min-h-11 w-full items-center justify-center rounded-lg border-[0.5px] border-[#2A6B52] bg-[#FFFFFF] px-3 text-xs font-semibold uppercase tracking-[0.14em] text-[#2A6B52] transition-colors hover:bg-[#F4F9F7] focus:outline-none focus:ring-1 focus:ring-[#2A6B52]/35"
                               onClick={() => void shareImage(card.url, card.label)}
                             >
-                              Share
+                              Save or share
                             </button>
                           </div>
                         </li>
