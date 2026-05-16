@@ -883,7 +883,10 @@ export default function Home() {
       const enhanceBody = JSON.stringify({
         images,
         category: enhanceCategory,
-        heroIndex: 0,
+        heroIndex:
+          typeof analyzeData.heroIndex === "number"
+            ? analyzeData.heroIndex
+            : 0,
       });
 
       /** Optional: never fail the main flow if enhance errors or times out. */

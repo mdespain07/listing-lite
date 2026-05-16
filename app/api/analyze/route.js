@@ -46,7 +46,8 @@ listingTitle (under 80 characters, factual, includes color only if clearly visib
 listingDescription (100-200 words): Write in the style of a confident, friendly resale listing. Lead with the most appealing details visible in the photos — style, color, fit, notable features. Follow with condition notes grounded in what is visible. End with sizing or key specs if visible. Do NOT include: care label fabric percentages, country of manufacture, style codes, or internal label data — put those in modelDetails instead. Do NOT use hype words like 'stunning' or 'gorgeous.' Do use natural, warm, specific language that helps a buyer picture owning and using this item.
 modelDetails (string): Include style name/number if visible on label, fabric content percentages from care label if visible, country of manufacture if on label, and anything else from tags or labels that is factual but too technical for the main description. Note what could NOT be determined.
 visibleAccessories (array of short strings, [] if none),
-caveat (string): Write this note TO THE SELLER, not the buyer. If details could not be clearly read from the photos, tell the seller what to verify and suggest they use the correction box to fix it. Example: 'The size tag was difficult to read clearly — please confirm the size and add it in the Something look off box if needed.' If everything was clear, write an empty string.`;
+caveat (string): Write this note TO THE SELLER, not the buyer. If details could not be clearly read from the photos, tell the seller what to verify and suggest they use the correction box to fix it. Example: 'The size tag was difficult to read clearly — please confirm the size and add it in the Something look off box if needed.' If everything was clear, write an empty string.
+heroIndex (number): The index (0-based) of the photo that shows the most complete view of the item — ideally full length, front-facing, with the entire item visible. This photo will be used for primary image processing. If only one photo is provided, return 0. If multiple photos are provided, choose the one that shows the most complete view of the entire item, not a closeup or partial view.`;
 
 const REQUIRED_KEYS = [
   "itemName",
@@ -60,6 +61,7 @@ const REQUIRED_KEYS = [
   "modelDetails",
   "visibleAccessories",
   "caveat",
+  "heroIndex",
 ];
 
 const ALLOWED_MEDIA_TYPES = new Set([
@@ -282,6 +284,10 @@ function normalizeAnalysisResponse(parsed) {
     modelDetails: String(parsed.modelDetails ?? ""),
     visibleAccessories,
     caveat: String(parsed.caveat ?? ""),
+    heroIndex:
+      typeof parsed.heroIndex === "number"
+        ? Math.max(0, Math.trunc(parsed.heroIndex))
+        : 0,
   };
 }
 
