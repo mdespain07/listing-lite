@@ -47,7 +47,7 @@ listingDescription (100-200 words): Write in the style of a confident, friendly 
 modelDetails (string): Include style name/number if visible on label, fabric content percentages from care label if visible, country of manufacture if on label, and anything else from tags or labels that is factual but too technical for the main description. Note what could NOT be determined.
 visibleAccessories (array of short strings, [] if none),
 caveat (string): Write this note TO THE SELLER, not the buyer. If details could not be clearly read from the photos, tell the seller what to verify and suggest they use the correction box to fix it. Example: 'The size tag was difficult to read clearly — please confirm the size and add it in the Something look off box if needed.' If everything was clear, write an empty string.
-heroIndex (number): The index (0-based) of the photo that shows the most complete view of the item — ideally full length, front-facing, with the entire item visible. This photo will be used for primary image processing. If only one photo is provided, return 0. If multiple photos are provided, choose the one that shows the most complete view of the entire item, not a closeup or partial view.`;
+heroIndex (number): CRITICAL — always pick the photo showing the most complete view of the ENTIRE item from furthest away. For clothing: always pick the full-length view over any closeup, detail shot, or partial view — even if the closeup is sharper. For all items: prefer the photo where the complete item is visible with the least cropping. If uncertain, pick index 0. Never pick a closeup or detail photo as hero.`;
 
 const REQUIRED_KEYS = [
   "itemName",
