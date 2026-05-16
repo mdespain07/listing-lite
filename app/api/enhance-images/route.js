@@ -205,6 +205,71 @@ async function photoroomEdit(apiKey, base64Data, mediaType, fields) {
  * @param {string} apiKey
  * @param {string} base64Data
  * @param {string} mediaType
+ * @param {Record<string, string>} fields
+ * @param {{ backBase64Data: string; backMediaType: string } | null} backImage
+ * @returns {Promise<string>}
+ */
+async function photoroomEditWithBack(
+  apiKey,
+  base64Data,
+  mediaType,
+  fields,
+  backImage
+) {
+  const buffer = Buffer.from(base64Data, "base64");
+  const blob = new Blob([buffer], { type: mediaType });
+  const form = new FormData();
+  form.append("imageFile", blob, fileNameForMime(mediaType));
+
+  if (backImage) {
+    const backBuffer = Buffer.from(backImage.backBase64Data, "base64");
+    const backBlob = new Blob([backBuffer], { type: backImage.backMediaType });
+    form.append(
+      "ghostMannequin.backImage",
+      backBlob,
+      fileNameForMime(backImage.backMediaType)
+    );
+  }
+
+  for (const [key, value] of Object.entries(fields)) {
+    if (value === undefined || value === null) continue;
+    form.append(key, String(value));
+  }
+
+  const res = await fetch(PHOTOROOM_EDIT_URL, {
+    method: "POST",
+    headers: { "x-api-key": apiKey },
+    body: form,
+  });
+
+  const contentType = res.headers.get("content-type") || "image/png";
+  if (!res.ok) {
+    let detail = `Photoroom returned HTTP ${res.status}`;
+    const errText = await res.text();
+    try {
+      const errJson = JSON.parse(errText);
+      if (errJson && typeof errJson.detail === "string") {
+        detail = errJson.detail;
+      } else if (errJson && typeof errJson.message === "string") {
+        detail = errJson.message;
+      }
+    } catch {
+      if (errText && errText.length < 500) detail = errText;
+    }
+    throw new PhotoroomHttpError(detail, res.status, errText);
+  }
+  if (!contentType.startsWith("image/")) {
+    throw new Error("Unexpected response from Photoroom");
+  }
+  const outBuf = Buffer.from(await res.arrayBuffer());
+  const b64 = outBuf.toString("base64");
+  return `data:${contentType};base64,${b64}`;
+}
+
+/**
+ * @param {string} apiKey
+ * @param {string} base64Data
+ * @param {string} mediaType
  */
 async function photoroomCleanBackground(apiKey, base64Data, mediaType) {
   try {
@@ -235,16 +300,37 @@ async function photoroomCleanBackground(apiKey, base64Data, mediaType) {
  * @param {string} apiKey
  * @param {string} base64Data
  * @param {string} mediaType
+ * @param {string | null} backBase64Data
+ * @param {string | null} backMediaType
  */
-async function photoroomGhostMannequin(apiKey, base64Data, mediaType) {
+async function photoroomGhostMannequin(
+  apiKey,
+  base64Data,
+  mediaType,
+  backBase64Data,
+  backMediaType
+) {
   try {
-    return await photoroomEdit(apiKey, base64Data, mediaType, {
+    const fields = {
       removeBackground: "true",
       "ghostMannequin.mode": "ai.auto",
       "ghostMannequin.colorCorrection": "false",
       "background.color": "FFFFFF",
       padding: "0.05",
-    });
+    };
+
+    let extraForm = null;
+    if (backBase64Data && backMediaType) {
+      extraForm = { backBase64Data, backMediaType };
+    }
+
+    return await photoroomEditWithBack(
+      apiKey,
+      base64Data,
+      mediaType,
+      fields,
+      extraForm
+    );
   } catch (err) {
     if (err instanceof PhotoroomHttpError) {
       console.error(`Photoroom photoroomGhostMannequin failed:`, {
@@ -333,6 +419,7 @@ async function photoroomLifestyleStaging(
  * @param {string} category
  * @param {string} itemName
  * @param {{ label: string; message: string; index: number }[]} errorsOut
+ * @param {{ data: string; media_type: string }[]} allImages
  */
 async function processOneImage(
   apiKey,
@@ -341,7 +428,8 @@ async function processOneImage(
   isHero,
   category,
   itemName,
-  errorsOut
+  errorsOut,
+  allImages
 ) {
   const { data, media_type } = img;
   const clothing = isClothing(category, itemName);
@@ -350,6 +438,7 @@ async function processOneImage(
   let outputs = [];
 
   if (isHero && clothing) {
+    const backImg = allImages.find((_, i) => i !== index) || null;
     const [cleanUrl, ghostUrl] = await Promise.all([
       photoroomCleanBackground(apiKey, data, media_type).catch((e) => {
         errorsOut.push({
@@ -359,7 +448,13 @@ async function processOneImage(
         });
         return null;
       }),
-      photoroomGhostMannequin(apiKey, data, media_type).catch((e) => {
+      photoroomGhostMannequin(
+        apiKey,
+        data,
+        media_type,
+        backImg ? backImg.data : null,
+        backImg ? backImg.media_type : null
+      ).catch((e) => {
         errorsOut.push({
           index,
           label: "ghost_mannequin",
@@ -516,7 +611,8 @@ export async function POST(request) {
       isHero,
       category,
       itemName,
-      errors
+      errors,
+      normalized
     );
     imagesOut.push(entry);
   }
