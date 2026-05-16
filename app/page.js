@@ -1691,6 +1691,10 @@ export default function Home() {
                 <p className="mt-3 max-w-xl text-sm leading-relaxed text-[#5C6F66] sm:text-base">
                   Tap Save or Share on any image to keep it or send it.
                 </p>
+                <p className="mt-2 max-w-xl text-sm leading-relaxed text-[#5C6F66] sm:text-base">
+                  💡 For best results, upload one full-length photo and one
+                  flat-lay photo of clothing items.
+                </p>
                 {enhanceNotice && !enhancingImages ? (
                   <p className="mt-4 text-sm leading-relaxed text-[#4A5568]">
                     {enhanceNotice}

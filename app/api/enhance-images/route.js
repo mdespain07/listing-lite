@@ -332,7 +332,15 @@ async function processOneImage(apiKey, img, index, isHero, category, errorsOut) 
   let outputs = [];
 
   if (isHero && clothing) {
-    const [ghostUrl, flatLayUrl] = await Promise.all([
+    const [cleanUrl, ghostUrl] = await Promise.all([
+      photoroomCleanBackground(apiKey, data, media_type).catch((e) => {
+        errorsOut.push({
+          index,
+          label: "clean",
+          message: e instanceof Error ? e.message : "Enhancement failed",
+        });
+        return null;
+      }),
       photoroomGhostMannequin(apiKey, data, media_type).catch((e) => {
         errorsOut.push({
           index,
@@ -341,17 +349,9 @@ async function processOneImage(apiKey, img, index, isHero, category, errorsOut) 
         });
         return null;
       }),
-      photoroomFlatLay(apiKey, data, media_type).catch((e) => {
-        errorsOut.push({
-          index,
-          label: "flat_lay",
-          message: e instanceof Error ? e.message : "Enhancement failed",
-        });
-        return null;
-      }),
     ]);
     outputs = [
-      { label: "flat_lay", url: flatLayUrl },
+      { label: "clean", url: cleanUrl },
       { label: "ghost_mannequin", url: ghostUrl },
     ];
   } else if (isHero && !clothing) {
