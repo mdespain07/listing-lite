@@ -1465,6 +1465,9 @@ export default function Home() {
 
             <div className="space-y-6">
               <div>
+                <p className="mb-5 text-sm leading-relaxed text-[#7A8F88] italic">
+                  Additional information is optional, but helps us better analyze your item.
+                </p>
                 <label
                   htmlFor="listing-category"
                   className="mb-2 block text-sm font-medium uppercase tracking-[0.18em] text-[#4A5568] sm:text-base"
@@ -1493,7 +1496,7 @@ export default function Home() {
                 </select>
               </div>
 
-              <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 sm:gap-6">
+              <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 sm:gap-x-6 sm:gap-y-10">
                 <div className="min-w-0">
                   <p className="mb-2 text-sm font-medium uppercase leading-snug tracking-[0.16em] text-[#4A5568] sm:text-base">
                     Original box or packaging included?
