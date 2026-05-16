@@ -1466,7 +1466,7 @@ export default function Home() {
             <div className="space-y-6">
               <div>
                 <p className="mb-5 text-sm leading-relaxed text-[#7A8F88] italic">
-                  Additional information is optional, but helps us better analyze your item.
+                  Information below is optional and helps provide a more accurate analysis.
                 </p>
                 <label
                   htmlFor="listing-category"
@@ -1778,6 +1778,17 @@ export default function Home() {
                       {formatMoney(results.priceLow)} –{" "}
                       {formatMoney(results.priceHigh)}
                     </p>
+                    {results.sweetSpotPrice && (
+                      <div className="mt-4 inline-flex flex-col gap-1 rounded-[12px] border-[0.5px] border-[#8FCFB0]/80 bg-[#F4F9F7] px-4 py-3">
+                        <p className="text-xs font-medium uppercase tracking-[0.16em] text-[#2A6B52]">Sweet Spot Price</p>
+                        <p className="font-serif text-2xl font-medium tracking-tight text-[#1A3A32]">
+                          {formatMoney(results.sweetSpotPrice)}
+                        </p>
+                        <p className="text-xs leading-relaxed text-[#7A8F88]">
+                          Estimated best price for a quick, profitable sale. Do your own research before pricing.
+                        </p>
+                      </div>
+                    )}
                   </div>
 
                 </div>

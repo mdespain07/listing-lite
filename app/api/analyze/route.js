@@ -13,11 +13,11 @@ CRITICAL ACCURACY RULES — these override everything else:
 
 COLOR: Describe ONLY the color you can clearly see in the photos. Do not infer color from item type or brand. If lighting makes color ambiguous, say "appears to be [color]" or describe what you see (e.g. "dark teal or navy"). Never state a color confidently if you are not certain from the image.
 
-BRAND: State a brand ONLY if you can clearly read a logo, label, tag, or marking in the photos. If no brand is legible, set brand to empty string. NEVER invent, guess, or infer a brand name. A partially visible or ambiguous logo should be noted as "logo visible, brand unclear" in modelDetails, not stated as a brand.
+BRAND: State a brand ONLY if you can clearly read a logo, label, tag, or marking in the photos, OR if the seller has explicitly named a brand in their notes. Never hedge brand with 'appears to be' or 'possibly' — if you can read it, state it confidently. If the brand is genuinely illegible or not visible, set brand to empty string and note it in the caveat so the seller can add it manually. Never invent, guess, or infer a brand name.
 
 FABRIC AND MATERIAL: State fabric or material type ONLY if it is visible on a care label or tag in the photos, or if it is absolutely unambiguous from the image (e.g. clear glass, metal, wood). Never guess fabric from appearance alone. If fabric is unknown, do not mention it in the listing description.
 
-SIZE: For sizing, make your best read of what is visible even if partially obscured. State the size with a hedge if uncertain (e.g. 'appears to be size 10') rather than refusing to state it. The user can correct it via the correction flow.
+SIZE AND PRICE TAGS: When a hang tag, price tag, or size label is visible in the photos, read it confidently and state it directly — no hedging language like 'appears to be' or 'please verify.' Include size in the listing title and description for clothing items. If a retail price is visible on a tag, include it in the description. If a tag is genuinely illegible or not present in any photo, omit the detail entirely and note it in the caveat so the seller can add it manually.
 
 CONDITION must be exactly one of: Like New, Good, Fair, Poor.
 - Like New: No visible wear; may show tags, stickers, or pristine surfaces visible in photos.
@@ -41,8 +41,8 @@ itemName (short plain name),
 brand (string, empty string if not clearly visible),
 condition (one of the four labels above),
 conditionExplanation (brief, photo-grounded),
-priceLow, priceHigh (numbers),
-listingTitle (under 80 characters, factual, includes color only if clearly visible),
+priceLow, priceHigh (numbers), sweetSpotPrice (number): The single best price for a quick but profitable sale — typically 10-20% below priceHigh. This is the price most likely to sell within a week while still getting good value.
+listingTitle (under 80 characters, factual, includes color only if clearly visible, includes brand and size for clothing when both are known),
 listingDescription (100-200 words): Write in the style of a confident, friendly resale listing. Lead with the most appealing details visible in the photos — style, color, fit, notable features. Follow with condition notes grounded in what is visible. End with sizing or key specs if visible. Do NOT include: care label fabric percentages, country of manufacture, style codes, or internal label data — put those in modelDetails instead. Do NOT use hype words like 'stunning' or 'gorgeous.' Do use natural, warm, specific language that helps a buyer picture owning and using this item.
 modelDetails (string): Include style name/number if visible on label, fabric content percentages from care label if visible, country of manufacture if on label, and anything else from tags or labels that is factual but too technical for the main description. Note what could NOT be determined.
 visibleAccessories (array of short strings, [] if none),
@@ -56,6 +56,7 @@ const REQUIRED_KEYS = [
   "conditionExplanation",
   "priceLow",
   "priceHigh",
+  "sweetSpotPrice",
   "listingTitle",
   "listingDescription",
   "modelDetails",
