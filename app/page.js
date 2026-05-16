@@ -1159,6 +1159,11 @@ export default function Home() {
 
   const startCheckout = useCallback(async (packageCredits) => {
     setCheckoutClientError(null);
+    if (!currentUser) {
+      setCreditsModalOpen(false);
+      setAuthModalOpen(true);
+      return;
+    }
     setCheckoutBusyCredits(packageCredits);
     try {
       const res = await fetch("/api/create-checkout", {
