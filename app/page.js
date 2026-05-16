@@ -1262,12 +1262,12 @@ export default function Home() {
   return (
     <div className="flex min-h-dvh flex-col bg-[#F4F9F7] font-sans text-[#1A3A32] antialiased">
       <header className="border-b border-[#E8EDE9] bg-[#FFFFFF]">
-        <div className="mx-auto flex max-w-5xl flex-col gap-4 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:gap-4 sm:px-6 sm:py-5">
+        <div className="mx-auto flex max-w-5xl flex-col gap-4 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:gap-4 sm:px-6 sm:py-4">
           <div className="flex w-full justify-center sm:justify-start">
             <img
               src="/logo.svg"
               alt="BrightListed"
-              className="h-14 w-auto shrink-0 sm:h-16"
+              className="h-12 w-auto shrink-0 sm:h-14"
             />
           </div>
           <div className="flex w-full shrink-0 flex-row justify-center gap-5 sm:w-auto sm:justify-end">
@@ -1360,11 +1360,11 @@ export default function Home() {
         </div>
       )}
 
-      <div className="border-b border-[#E8EDE9] bg-[#2A6B52]">
-        <div className="mx-auto flex max-w-5xl items-center justify-center px-4 py-2.5 sm:px-6">
+      <div className="border-b border-[#E8EDE9] bg-[#F4F9F7]">
+        <div className="mx-auto flex max-w-5xl items-center justify-start px-4 py-2.5 sm:px-6">
           <a
             href="/how-it-works"
-            className="text-xs font-semibold uppercase tracking-[0.2em] text-white/90 hover:text-white transition-colors"
+            className="inline-flex items-center gap-2 rounded-full bg-[#2A6B52] px-5 py-1.5 text-xs font-semibold uppercase tracking-[0.2em] text-white/90 hover:text-white hover:bg-[#1A3A32] transition-colors"
           >
             How It Works →
           </a>
@@ -1511,6 +1511,9 @@ export default function Home() {
                   you run into issues.
                 </p>
               )}
+              <p className="mt-4 text-sm leading-relaxed text-[#7A8F88] italic">
+                💡 For clothing, lay items flat on a clean surface — no hangers — and include one full-length shot for the best results.
+              </p>
             </div>
 
             <div>
@@ -1970,17 +1973,19 @@ export default function Home() {
             )}
 
             {results ? (
-              <div className="border-t-[0.5px] border-[#E8EDE9] px-6 py-6 sm:px-8 space-y-4">
+              <div className="border-t-[0.5px] border-[#E8EDE9] px-6 py-6 sm:px-8">
                 <p className="text-center text-sm leading-relaxed text-[#4A5568]">
-                  Ready to list? Download your sales-ready images, then copy and paste the title and description directly into your listing.
+                  Ready to list? Download your sales-ready images, then copy and paste the title and description for your product!
                 </p>
-                <button
-                  type="button"
-                  onClick={resetNewListing}
-                  className="touch-manipulation flex min-h-11 w-full items-center justify-center rounded-[12px] border-[0.5px] border-[#2A6B52] bg-transparent px-4 py-3 text-center text-sm font-semibold text-[#2A6B52] transition-colors hover:bg-[#F4F9F7] focus:outline-none focus:ring-1 focus:ring-[#2A6B52]/35"
-                >
-                  Start new listing →
-                </button>
+                <div className="mt-10">
+                  <button
+                    type="button"
+                    onClick={resetNewListing}
+                    className="touch-manipulation flex min-h-11 w-full items-center justify-center rounded-[12px] border-[0.5px] border-[#2A6B52] bg-transparent px-4 py-3 text-center text-sm font-semibold text-[#2A6B52] transition-colors hover:bg-[#F4F9F7] focus:outline-none focus:ring-1 focus:ring-[#2A6B52]/35"
+                  >
+                    Start new listing →
+                  </button>
+                </div>
               </div>
             ) : null}
           </div>
