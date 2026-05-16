@@ -613,6 +613,7 @@ export default function Home() {
   const [enhancingImages, setEnhancingImages] = useState(false);
   const [lightboxImage, setLightboxImage] = useState(null);
   const [regeneratingKey, setRegeneratingKey] = useState(null);
+  const [regeneratedKeys, setRegeneratedKeys] = useState(new Set());
   const [analysisPhase, setAnalysisPhase] = useState(
     /** @type {'compress' | 'upload' | null} */ (null)
   );
@@ -831,6 +832,13 @@ export default function Home() {
         const raw = localStorage.getItem(CREDITS_STORAGE_KEY);
         const n = Number.parseInt(raw ?? "0", 10);
         setCredits(Number.isNaN(n) ? 0 : n);
+        setResults(null);
+        setEnhancedImages(null);
+        setEnhanceNotice(null);
+        setFiles([]);
+        setNotes("");
+        setListingCorrection("");
+        setError(null);
       }
     });
     return () => subscription.unsubscribe();
@@ -1075,6 +1083,7 @@ export default function Home() {
 
   const handleRegenerateImage = useCallback(async (card) => {
     if (regeneratingKey) return;
+    if (regeneratedKeys.has(card.key)) return;
     setRegeneratingKey(card.key);
     try {
       const images = await Promise.all(
@@ -1118,8 +1127,9 @@ export default function Home() {
       // silently fail — original image stays
     } finally {
       setRegeneratingKey(null);
+      setRegeneratedKeys((prev) => new Set([...prev, card.key]));
     }
-  }, [regeneratingKey, files, results, category]);
+  }, [regeneratingKey, regeneratedKeys, files, results, category]);
 
   const handleApplyListingCorrection = async () => {
     const trimmed = listingCorrection.trim();
@@ -1360,8 +1370,8 @@ export default function Home() {
         </div>
       )}
 
-      <div className="border-b border-[#E8EDE9] bg-[#F4F9F7]">
-        <div className="mx-auto flex max-w-5xl items-center justify-start px-4 py-2.5 sm:px-6">
+      <div className="border-b border-[#E8EDE9] bg-[#FFFFFF]">
+        <div className="mx-auto max-w-5xl px-4 py-2.5 sm:px-6">
           <a
             href="/how-it-works"
             className="inline-flex items-center gap-2 rounded-full bg-[#2A6B52] px-5 py-1.5 text-xs font-semibold uppercase tracking-[0.2em] text-white/90 hover:text-white hover:bg-[#1A3A32] transition-colors"
@@ -1391,7 +1401,7 @@ export default function Home() {
       >
         <div className="rounded-[12px] border-[0.5px] border-[#E8EDE9] bg-[#FFFFFF] p-5 sm:p-9">
           <div className="space-y-9">
-            <div>
+            <div className={results ? "pointer-events-none opacity-40 select-none" : ""}>
               <SectionLabel>Photos (1–5)</SectionLabel>
               <div ref={photoPreviewRef}>
               <div
@@ -1948,8 +1958,8 @@ export default function Home() {
                               <button
                                 type="button"
                                 onClick={() => void handleRegenerateImage(card)}
-                                disabled={regeneratingKey !== null}
-                                className="flex h-[44px] w-[44px] shrink-0 items-center justify-center rounded-lg border border-[#E8EDE9] bg-[#F4F9F7] text-[#2A6B52] transition-colors hover:bg-[#E8EDE9] disabled:opacity-40"
+                                disabled={regeneratingKey !== null || regeneratedKeys.has(card.key)}
+                                className={`flex h-[44px] w-[44px] shrink-0 items-center justify-center rounded-lg border transition-colors ${regeneratedKeys.has(card.key) ? "border-[#E8EDE9] bg-[#F4F9F7] text-[#C5D4CC] cursor-not-allowed" : "border-[#E8EDE9] bg-[#F4F9F7] text-[#2A6B52] hover:bg-[#E8EDE9] disabled:opacity-40"}`}
                                 aria-label="Regenerate image"
                                 title="Regenerate"
                               >
@@ -1975,15 +1985,15 @@ export default function Home() {
             {results ? (
               <div className="border-t-[0.5px] border-[#E8EDE9] px-6 py-6 sm:px-8">
                 <p className="text-center text-sm leading-relaxed text-[#4A5568]">
-                  Ready to list? Download your sales-ready images, then copy and paste the title and description for your product!
+                  Ready to list? Download your sales-ready images, then copy and paste the title and description for your listing!
                 </p>
-                <div className="mt-10">
+                <div className="mt-16">
                   <button
                     type="button"
                     onClick={resetNewListing}
                     className="touch-manipulation flex min-h-11 w-full items-center justify-center rounded-[12px] border-[0.5px] border-[#2A6B52] bg-transparent px-4 py-3 text-center text-sm font-semibold text-[#2A6B52] transition-colors hover:bg-[#F4F9F7] focus:outline-none focus:ring-1 focus:ring-[#2A6B52]/35"
                   >
-                    Start new listing →
+                    Analyze another item →
                   </button>
                 </div>
               </div>
