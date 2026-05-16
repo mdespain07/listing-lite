@@ -1164,7 +1164,7 @@ export default function Home() {
       const res = await fetch("/api/create-checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ credits: packageCredits }),
+        body: JSON.stringify({ credits: packageCredits, user_id: currentUser?.id ?? "" }),
       });
       let data = {};
       try {
