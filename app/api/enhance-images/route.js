@@ -92,15 +92,23 @@ function fileNameForMime(mediaType) {
 }
 
 /**
- * Clothing / fashion-related categories (case-insensitive).
+ * Clothing / fashion-related categories or item names (case-insensitive).
  * @param {unknown} category
+ * @param {unknown} itemName
  */
-function isClothing(category) {
+function isClothing(category, itemName) {
   const c = String(category ?? "").trim().toLowerCase();
-  if (!c) return false;
-  return /\b(clothing|apparel|shoes|accessories|bags|jewelry|fashion)\b/.test(
-    c
-  );
+  const n = String(itemName ?? "").trim().toLowerCase();
+
+  const clothingCategoryPattern =
+    /\b(clothing|apparel|shoes|accessories|bags|jewelry|fashion)\b/;
+  if (clothingCategoryPattern.test(c)) return true;
+
+  const clothingItemPattern =
+    /\b(dress|shirt|pants|jeans|jacket|coat|blouse|skirt|shorts|sweater|hoodie|cardigan|vest|suit|blazer|leggings|tights|socks|shoe|boot|sneaker|sandal|bag|purse|handbag|scarf|hat|belt|top|tee|tunic|romper|jumpsuit|swimsuit|bikini|underwear|bra|lingerie|pajama|robe|gown|kimono|poncho|cape|trench|parka|fleece|denim|chino|trouser|legging|stocking)\b/;
+  if (clothingItemPattern.test(n)) return true;
+
+  return false;
 }
 
 /**
@@ -322,11 +330,20 @@ async function photoroomLifestyleStaging(
  * @param {number} index
  * @param {boolean} isHero
  * @param {string} category
+ * @param {string} itemName
  * @param {{ label: string; message: string; index: number }[]} errorsOut
  */
-async function processOneImage(apiKey, img, index, isHero, category, errorsOut) {
+async function processOneImage(
+  apiKey,
+  img,
+  index,
+  isHero,
+  category,
+  itemName,
+  errorsOut
+) {
   const { data, media_type } = img;
-  const clothing = isClothing(category);
+  const clothing = isClothing(category, itemName);
 
   /** @type {{ label: string; url: string | null }[]} */
   let outputs = [];
@@ -443,6 +460,8 @@ export async function POST(request) {
 
   const category =
     typeof body.category === "string" ? body.category : "";
+  const itemName =
+    typeof body.itemName === "string" ? body.itemName : "";
 
   let heroIndex = 0;
   if (body.heroIndex !== undefined && body.heroIndex !== null) {
@@ -495,6 +514,7 @@ export async function POST(request) {
       i,
       isHero,
       category,
+      itemName,
       errors
     );
     imagesOut.push(entry);

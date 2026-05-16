@@ -237,32 +237,49 @@ function formatPerCredit(credits, priceUsd) {
   return formatUsd(priceUsd / credits);
 }
 
+const isMobileDevice =
+  /iPhone|iPad|iPod|Android/i.test(
+    typeof navigator !== "undefined" ? navigator.userAgent : ""
+  ) ||
+  (typeof navigator !== "undefined" &&
+    navigator.maxTouchPoints > 1 &&
+    typeof window !== "undefined" &&
+    window.innerWidth < 1024);
+
 /**
  * @param {string} dataUrl
  * @param {string} label
  */
 async function shareImage(dataUrl, label) {
-  try {
-    const res = await fetch(dataUrl);
-    const blob = await res.blob();
-    const file = new File([blob], `brightlisted-${label}.png`, {
-      type: "image/png",
-    });
-
-    if (navigator.canShare && navigator.canShare({ files: [file] })) {
-      await navigator.share({
-        files: [file],
-        title: "BrightListed photo",
+  if (!dataUrl) return;
+  if (isMobileDevice) {
+    try {
+      const res = await fetch(dataUrl);
+      const blob = await res.blob();
+      const file = new File([blob], `brightlisted-${label}.png`, {
+        type: "image/png",
       });
-    } else {
-      const url = URL.createObjectURL(blob);
-      window.open(url, "_blank", "noopener,noreferrer");
-      window.setTimeout(() => URL.revokeObjectURL(url), 120_000);
+      if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        await navigator.share({
+          files: [file],
+          title: "BrightListed photo",
+        });
+      } else {
+        const url = URL.createObjectURL(blob);
+        window.open(url, "_blank");
+      }
+    } catch (err) {
+      if (err && typeof err === "object" && err.name !== "AbortError") {
+        console.error("Share failed:", err);
+      }
     }
-  } catch (err) {
-    if (err && typeof err === "object" && err.name !== "AbortError") {
-      console.error("Share failed:", err);
-    }
+  } else {
+    const a = document.createElement("a");
+    a.href = dataUrl;
+    a.download = `brightlisted-${label}.png`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
   }
 }
 
@@ -887,6 +904,7 @@ export default function Home() {
           typeof analyzeData.heroIndex === "number"
             ? analyzeData.heroIndex
             : 0,
+        itemName: String(analyzeData.itemName ?? ""),
       });
 
       /** Optional: never fail the main flow if enhance errors or times out. */
@@ -1742,10 +1760,10 @@ export default function Home() {
                           <div className="flex flex-col gap-2 border-t border-[#E8EDE9]/80 p-3 pt-3">
                             <button
                               type="button"
-                              className="touch-manipulation flex min-h-11 w-full items-center justify-center rounded-lg border-0 bg-[#2A6B52] px-3 text-xs font-semibold uppercase tracking-[0.14em] text-white opacity-100 transition-opacity hover:opacity-90 focus:outline-none focus:ring-1 focus:ring-[#2A6B52]/35"
                               onClick={() => void shareImage(card.url, card.label)}
+                              className="w-full min-h-[44px] rounded-lg bg-[#2A6B52] text-sm font-medium tracking-wide text-white transition-colors duration-150 hover:bg-[#1A3A32]"
                             >
-                              Save or share
+                              {isMobileDevice ? "SAVE OR SHARE" : "DOWNLOAD"}
                             </button>
                           </div>
                         </li>
