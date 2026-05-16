@@ -299,7 +299,11 @@ export async function POST(request) {
     tagsAttached,
     partsIncluded,
     approximateAge,
+    correction,
   } = body;
+
+  const correctionText =
+    typeof correction === "string" ? correction.trim() : "";
 
   if (!Array.isArray(images)) {
     return NextResponse.json(
@@ -369,6 +373,19 @@ export async function POST(request) {
 
   const instructionText = `Please analyze the photos in this message for a classified listing. Respond with only a single JSON object using the exact keys from your system instructions. Do not wrap the JSON in markdown code fences and do not add any text before or after the JSON.`;
 
+  /** @type {Array<{ type: string; text?: string; source?: unknown }>} */
+  const userContent = [
+    { type: "text", text: sellerContextText },
+    ...imageBlocks,
+  ];
+  if (correctionText) {
+    userContent.push({
+      type: "text",
+      text: `The user has flagged a correction: ${correctionText}. Please update the title and description accordingly. Keep all other analysis unchanged.`,
+    });
+  }
+  userContent.push({ type: "text", text: instructionText });
+
   const payload = {
     model: MODEL,
     max_tokens: 4096,
@@ -376,11 +393,7 @@ export async function POST(request) {
     messages: [
       {
         role: "user",
-        content: [
-          { type: "text", text: sellerContextText },
-          ...imageBlocks,
-          { type: "text", text: instructionText },
-        ],
+        content: userContent,
       },
     ],
   };

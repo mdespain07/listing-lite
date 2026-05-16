@@ -369,6 +369,7 @@ function SectionLabel({ children }) {
  */
 function CopyableField({ text, label }) {
   const [copied, setCopied] = useState(false);
+  const isDescription = label.includes("DESCRIPTION");
 
   const copy = async () => {
     try {
@@ -397,8 +398,13 @@ function CopyableField({ text, label }) {
       <textarea
         readOnly
         value={text}
-        rows={label.includes("Description") ? 8 : 2}
-        className="w-full resize-y rounded-[12px] border-[0.5px] border-[#E8EDE9] bg-[#F0EDE6] px-3.5 py-3 text-[15px] leading-relaxed text-[#1A3A32] focus:outline-none focus:ring-1 focus:ring-[#2A6B52]/30"
+        rows={isDescription ? 8 : 2}
+        className={[
+          "w-full resize-y rounded-[12px] border-[0.5px] border-[#E8EDE9] bg-[#F0EDE6] px-3.5 py-3 text-[15px] leading-relaxed text-[#1A3A32] focus:outline-none focus:ring-1 focus:ring-[#2A6B52]/30",
+          isDescription ? "min-h-[160px] overflow-y-auto" : "",
+        ]
+          .filter(Boolean)
+          .join(" ")}
         onFocus={(e) => e.target.select()}
       />
     </div>
@@ -576,6 +582,12 @@ export default function Home() {
     /** @type {'compress' | 'upload' | null} */ (null)
   );
   const analyzeStatusRef = useRef(null);
+  const photoPreviewRef = useRef(/** @type {HTMLDivElement | null} */ (null));
+  const resultsSectionRef = useRef(/** @type {HTMLElement | null} */ (null));
+  const prevFilesLengthRef = useRef(0);
+  const [listingCorrection, setListingCorrection] = useState("");
+  const [correctionBusy, setCorrectionBusy] = useState(false);
+  const [correctionFlash, setCorrectionFlash] = useState(false);
   const [creditsModalOpen, setCreditsModalOpen] = useState(false);
   const [checkoutBusyCredits, setCheckoutBusyCredits] = useState(
     /** @type {number | null} */ (null)
@@ -658,6 +670,22 @@ export default function Home() {
   useEffect(() => {
     return () => previewUrls.forEach((url) => URL.revokeObjectURL(url));
   }, [previewUrls]);
+
+  useEffect(() => {
+    if (files.length > prevFilesLengthRef.current && files.length > 0) {
+      photoPreviewRef.current?.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+    }
+    prevFilesLengthRef.current = files.length;
+  }, [files.length]);
+
+  useEffect(() => {
+    if (!correctionFlash) return;
+    const id = window.setTimeout(() => setCorrectionFlash(false), 2000);
+    return () => window.clearTimeout(id);
+  }, [correctionFlash]);
 
   useEffect(() => {
     if (!analyzing) return;
@@ -807,6 +835,12 @@ export default function Home() {
       }
 
       setResults(analyzeData);
+      requestAnimationFrame(() => {
+        resultsSectionRef.current?.scrollIntoView({
+          behavior: "smooth",
+          block: "start",
+        });
+      });
       setCredits((c) => {
         const nextCredits = Math.max(0, c - 1);
         if (typeof window !== "undefined") {
@@ -902,6 +936,113 @@ export default function Home() {
     } finally {
       setAnalyzing(false);
       setAnalysisPhase(null);
+    }
+  };
+
+  const resetNewListing = useCallback(() => {
+    setFiles([]);
+    setResults(null);
+    setEnhancedImages(null);
+    setEnhanceNotice(null);
+    setEnhancingImages(false);
+    setNotes("");
+    setCategory("");
+    setPackagingIncluded("no");
+    setTagsAttached("no");
+    setPartsComplete("unsure");
+    setApproximateAge("unknown");
+    setError(null);
+    setListingCorrection("");
+    setCorrectionBusy(false);
+    setCorrectionFlash(false);
+    setAnalysisPhase(null);
+    setAnalyzing(false);
+    prevFilesLengthRef.current = 0;
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }, []);
+
+  const handleApplyListingCorrection = async () => {
+    const trimmed = listingCorrection.trim();
+    if (!results || files.length < 1 || !trimmed || correctionBusy) return;
+    setCorrectionBusy(true);
+    setError(null);
+    try {
+      const images = await Promise.all(
+        files.map((f) => compressImageFileToDataUrl(f))
+      );
+
+      let analyzeRes;
+      try {
+        analyzeRes = await fetchWithTimeout("/api/analyze", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            images,
+            notes: notes.trim() || undefined,
+            category: category.trim() || undefined,
+            packagingIncluded,
+            tagsAttached,
+            partsIncluded: partsComplete,
+            approximateAge,
+            correction: trimmed,
+          }),
+        });
+      } catch (e) {
+        setError(
+          isAbortOrTimeoutError(e)
+            ? NETWORK_TIMEOUT_MESSAGE
+            : "We couldn’t reach the server. Check your connection and try again."
+        );
+        return;
+      }
+
+      let analyzeData = {};
+      try {
+        analyzeData = await analyzeRes.json();
+      } catch {
+        analyzeData = {};
+      }
+
+      if (!analyzeRes.ok) {
+        if (isPayloadTooLargeError(analyzeRes)) {
+          setError(PAYLOAD_TOO_LARGE_MESSAGE);
+        } else if (isTimeoutHttpError(analyzeRes)) {
+          setError(NETWORK_TIMEOUT_MESSAGE);
+        } else {
+          const msg =
+            typeof analyzeData.error === "string"
+              ? analyzeData.error
+              : "Something went wrong. Please try again.";
+          setError(msg);
+        }
+        return;
+      }
+
+      setResults((prev) =>
+        prev
+          ? {
+              ...prev,
+              listingTitle: String(
+                analyzeData.listingTitle ?? prev.listingTitle
+              ),
+              listingDescription: String(
+                analyzeData.listingDescription ?? prev.listingDescription
+              ),
+            }
+          : prev
+      );
+      setListingCorrection("");
+      setCorrectionFlash(true);
+    } catch (e) {
+      const msg =
+        e instanceof Error &&
+        (e.message === "Could not process image" ||
+          e.message === "Could not read image")
+          ? "We couldn’t process one of your photos. Try another picture or a smaller file (JPEG or PNG works best)."
+          : "We couldn’t read your photos or reach the server. Check your connection and try again.";
+      setError(msg);
+    } finally {
+      setCorrectionBusy(false);
     }
   };
 
@@ -1045,6 +1186,7 @@ export default function Home() {
           <div className="space-y-9">
             <div>
               <SectionLabel>Photos (1–5)</SectionLabel>
+              <div ref={photoPreviewRef}>
               <div
                 {...getRootProps()}
                 className={[
@@ -1148,6 +1290,7 @@ export default function Home() {
                   ))}
                 </ul>
               )}
+              </div>
               {hasOversizeUpload && (
                 <p
                   className="mt-4 rounded-[12px] border-[0.5px] border-amber-200/90 bg-amber-50/90 px-4 py-3.5 text-sm leading-relaxed text-amber-950"
@@ -1294,6 +1437,7 @@ export default function Home() {
         </div>
 
         <section
+          ref={resultsSectionRef}
           className="mt-10 overflow-hidden rounded-[12px] border-[0.5px] border-[#E8EDE9] bg-[#FFFFFF]"
           aria-labelledby="results-heading"
         >
@@ -1341,6 +1485,56 @@ export default function Home() {
                 </div>
 
                 <div className="space-y-6 border-t-[0.5px] border-[#E8EDE9] bg-[#FFFFFF] px-6 py-8 sm:px-8 sm:py-9">
+                  <CopyableField
+                    label="LISTING TITLE"
+                    text={String(results.listingTitle ?? "")}
+                  />
+                  <CopyableField
+                    label="LISTING DESCRIPTION"
+                    text={String(results.listingDescription ?? "")}
+                  />
+
+                  <div className="rounded-[12px] border-[0.5px] border-[#E8EDE9] bg-[#F4F9F7]/80 px-4 py-4 sm:px-5 sm:py-5">
+                    <p className="text-sm leading-snug text-[#5C6F66]">
+                      Something look off?
+                    </p>
+                    <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:items-stretch">
+                      <input
+                        type="text"
+                        value={listingCorrection}
+                        onChange={(e) => setListingCorrection(e.target.value)}
+                        placeholder={
+                          "Tell us what we got wrong (e.g. it's green, not blue)"
+                        }
+                        disabled={
+                          correctionBusy || files.length < 1 || analyzing
+                        }
+                        className="min-h-11 w-full flex-1 rounded-[12px] border-[0.5px] border-[#E8EDE9] bg-[#FFFFFF] px-3.5 py-2 text-[15px] leading-snug text-[#1A3A32] placeholder:text-[#4A5568]/85 focus:outline-none focus:ring-1 focus:ring-[#2A6B52]/35 disabled:opacity-50"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => void handleApplyListingCorrection()}
+                        disabled={
+                          correctionBusy ||
+                          !listingCorrection.trim() ||
+                          files.length < 1 ||
+                          analyzing
+                        }
+                        className="touch-manipulation shrink-0 rounded-[12px] bg-[#2A6B52] px-5 py-2.5 text-sm font-semibold text-white transition-opacity hover:opacity-90 focus:outline-none focus:ring-1 focus:ring-[#2A6B52]/35 disabled:cursor-not-allowed disabled:opacity-40 sm:min-h-11 sm:self-center"
+                      >
+                        {correctionBusy ? "Fixing…" : "Fix it"}
+                      </button>
+                    </div>
+                    {correctionFlash ? (
+                      <p
+                        className="mt-3 text-sm font-medium text-[#2A6B52]"
+                        role="status"
+                      >
+                        Updated!
+                      </p>
+                    ) : null}
+                  </div>
+
                   <div className="flex flex-wrap items-start gap-3">
                     <span
                       className={`inline-flex min-h-11 items-center rounded-full border-[0.5px] px-4 py-2 text-sm font-semibold uppercase tracking-wide ${conditionBadgeClass(String(results.condition ?? ""))}`}
@@ -1408,14 +1602,6 @@ export default function Home() {
                     </p>
                   </div>
 
-                  <CopyableField
-                    label="LISTING TITLE"
-                    text={String(results.listingTitle ?? "")}
-                  />
-                  <CopyableField
-                    label="LISTING DESCRIPTION"
-                    text={String(results.listingDescription ?? "")}
-                  />
                 </div>
               </div>
             )}
@@ -1462,8 +1648,7 @@ export default function Home() {
                         className="flex flex-col overflow-hidden rounded-lg border border-[#E8EDE9] bg-[#FFFFFF]"
                       >
                         <div className="aspect-square animate-pulse bg-gradient-to-br from-[#E8EDE9]/90 via-[#F4F9F7] to-[#E8EDE9]/60" />
-                        <div className="flex flex-col gap-2 border-t border-[#E8EDE9]/80 p-3">
-                          <div className="mx-auto h-3 w-20 animate-pulse rounded-full bg-[#E8EDE9]" />
+                        <div className="flex flex-col gap-2 border-t border-[#E8EDE9]/80 p-3 pt-3">
                           <div className="h-11 animate-pulse rounded-lg bg-[#E8EDE9]/70" />
                         </div>
                       </li>
@@ -1494,13 +1679,10 @@ export default function Home() {
                               </span>
                             ) : null}
                           </div>
-                          <div className="flex flex-col gap-2 border-t border-[#E8EDE9]/80 p-3">
-                            <p className="text-center text-[10px] font-semibold uppercase tracking-[0.22em] text-[#1A3A32]">
-                              {humanReadableEnhanceLabel(card.label)}
-                            </p>
+                          <div className="flex flex-col gap-2 border-t border-[#E8EDE9]/80 p-3 pt-3">
                             <button
                               type="button"
-                              className="touch-manipulation flex min-h-11 w-full items-center justify-center rounded-lg border-[0.5px] border-[#2A6B52] bg-[#FFFFFF] px-3 text-xs font-semibold uppercase tracking-[0.14em] text-[#2A6B52] transition-colors hover:bg-[#F4F9F7] focus:outline-none focus:ring-1 focus:ring-[#2A6B52]/35"
+                              className="touch-manipulation flex min-h-11 w-full items-center justify-center rounded-lg border-0 bg-[#2A6B52] px-3 text-xs font-semibold uppercase tracking-[0.14em] text-white opacity-100 transition-opacity hover:opacity-90 focus:outline-none focus:ring-1 focus:ring-[#2A6B52]/35"
                               onClick={() => void shareImage(card.url, card.label)}
                             >
                               Save or share
@@ -1513,6 +1695,18 @@ export default function Home() {
                 ) : null}
               </div>
             )}
+
+            {results ? (
+              <div className="border-t-[0.5px] border-[#E8EDE9] px-6 py-6 sm:px-8">
+                <button
+                  type="button"
+                  onClick={resetNewListing}
+                  className="touch-manipulation flex min-h-11 w-full items-center justify-center rounded-[12px] border-[0.5px] border-[#2A6B52] bg-transparent px-4 py-3 text-center text-sm font-semibold text-[#2A6B52] transition-colors hover:bg-[#F4F9F7] focus:outline-none focus:ring-1 focus:ring-[#2A6B52]/35"
+                >
+                  Start new listing →
+                </button>
+              </div>
+            ) : null}
           </div>
         </section>
       </main>
