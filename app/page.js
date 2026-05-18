@@ -637,6 +637,7 @@ export default function Home() {
     )
   );
   const [authModalOpen, setAuthModalOpen] = useState(false);
+  const [authModalEmail, setAuthModalEmail] = useState("");
   const [currentUser, setCurrentUser] = useState(null);
 
   const hasOversizeUpload = useMemo(
@@ -757,6 +758,8 @@ export default function Home() {
       url.searchParams.delete("credits");
       url.searchParams.delete("session_id");
       url.searchParams.delete("cancelled");
+      url.searchParams.delete("reset");
+      url.searchParams.delete("email");
       const qs = url.searchParams.toString();
       window.history.replaceState(
         {},
@@ -787,6 +790,13 @@ export default function Home() {
     } else if (params.get("cancelled") === "true") {
       banner = { type: "cancelled" };
       stripCheckoutParams();
+    } else if (params.get("reset") === "true") {
+      const resetEmail = params.get("email") ?? "";
+      stripCheckoutParams();
+      startTransition(() => {
+        setAuthModalOpen(true);
+        setAuthModalEmail(resetEmail);
+      });
     }
 
     localStorage.setItem(CREDITS_STORAGE_KEY, String(next));
@@ -2047,8 +2057,9 @@ export default function Home() {
 
       <AuthModal
         open={authModalOpen}
-        onClose={() => setAuthModalOpen(false)}
+        onClose={() => { setAuthModalOpen(false); setAuthModalEmail(""); }}
         onAuthSuccess={(user) => setCurrentUser(user)}
+        initialEmail={authModalEmail}
       />
 
       {lightboxImage && (

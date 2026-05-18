@@ -29,7 +29,10 @@ export default function ResetPassword() {
     try {
       const { error: updateError } = await supabase.auth.updateUser({ password });
       if (updateError) { setError(updateError.message); return; }
-      setSuccess(true);
+      const { data: { user } } = await supabase.auth.getUser();
+      const email = user?.email ?? "";
+      await supabase.auth.signOut();
+      window.location.href = "/?reset=true&email=" + encodeURIComponent(email);
     } finally {
       setBusy(false);
     }

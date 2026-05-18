@@ -3,9 +3,9 @@
 import { useEffect, useState } from "react";
 import { supabase } from "../../lib/supabase";
 
-export default function AuthModal({ open, onClose, onAuthSuccess }) {
+export default function AuthModal({ open, onClose, onAuthSuccess, initialEmail = "" }) {
   const [mode, setMode] = useState("signin");
-  const [email, setEmail] = useState("");
+  const [email, setEmail] = useState(initialEmail);
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
   const [forgotMode, setForgotMode] = useState(false);
@@ -15,7 +15,7 @@ export default function AuthModal({ open, onClose, onAuthSuccess }) {
 
   useEffect(() => {
     if (!open) {
-      setEmail("");
+      setEmail(initialEmail);
       setPassword("");
       setError(null);
       setConfirmMessage(false);
@@ -25,6 +25,10 @@ export default function AuthModal({ open, onClose, onAuthSuccess }) {
       setForgotSent(false);
     }
   }, [open]);
+
+  useEffect(() => {
+    if (initialEmail) setEmail(initialEmail);
+  }, [initialEmail]);
 
   useEffect(() => {
     if (!open) return;
