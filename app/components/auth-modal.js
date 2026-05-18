@@ -8,6 +8,8 @@ export default function AuthModal({ open, onClose, onAuthSuccess }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
+  const [forgotMode, setForgotMode] = useState(false);
+  const [forgotSent, setForgotSent] = useState(false);
   const [error, setError] = useState(null);
   const [confirmMessage, setConfirmMessage] = useState(false);
 
@@ -19,6 +21,8 @@ export default function AuthModal({ open, onClose, onAuthSuccess }) {
       setConfirmMessage(false);
       setBusy(false);
       setMode("signin");
+      setForgotMode(false);
+      setForgotSent(false);
     }
   }, [open]);
 
@@ -63,6 +67,22 @@ export default function AuthModal({ open, onClose, onAuthSuccess }) {
         if (signInError) { setError(signInError.message); return; }
         if (data?.user) { onAuthSuccess(data.user); onClose(); }
       }
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const handleForgotPassword = async () => {
+    const trimmedEmail = email.trim();
+    if (!trimmedEmail) { setError("Please enter your email address."); return; }
+    setBusy(true);
+    setError(null);
+    try {
+      const { error: resetError } = await supabase.auth.resetPasswordForEmail(trimmedEmail, {
+        redirectTo: `${window.location.origin}/reset-password`,
+      });
+      if (resetError) { setError(resetError.message); return; }
+      setForgotSent(true);
     } finally {
       setBusy(false);
     }
@@ -118,58 +138,123 @@ export default function AuthModal({ open, onClose, onAuthSuccess }) {
             </div>
           ) : (
             <div className="space-y-4">
-              {error && (
-                <p className="rounded-[12px] border-[0.5px] border-red-200/90 bg-red-50/90 px-4 py-3 text-sm leading-relaxed text-red-900" role="alert">
-                  {error}
-                </p>
-              )}
-              <div>
-                <label htmlFor="auth-email" className="mb-2 block text-sm font-medium uppercase tracking-[0.16em] text-[#4A5568]">Email</label>
-                <input
-                  id="auth-email"
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  onKeyDown={(e) => { if (e.key === "Enter") handleSubmit(); }}
-                  disabled={busy}
-                  className="min-h-11 w-full rounded-[12px] border-[0.5px] border-[#E8EDE9] bg-[#FFFFFF] px-4 py-3 text-[15px] text-[#1A3A32] placeholder:text-[#4A5568] focus:outline-none focus:ring-1 focus:ring-[#2A6B52]/35 disabled:opacity-50"
-                  placeholder="you@example.com"
-                  autoComplete="email"
-                />
-              </div>
-              <div>
-                <label htmlFor="auth-password" className="mb-2 block text-sm font-medium uppercase tracking-[0.16em] text-[#4A5568]">Password</label>
-                <input
-                  id="auth-password"
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  onKeyDown={(e) => { if (e.key === "Enter") handleSubmit(); }}
-                  disabled={busy}
-                  className="min-h-11 w-full rounded-[12px] border-[0.5px] border-[#E8EDE9] bg-[#FFFFFF] px-4 py-3 text-[15px] text-[#1A3A32] placeholder:text-[#4A5568] focus:outline-none focus:ring-1 focus:ring-[#2A6B52]/35 disabled:opacity-50"
-                  placeholder={mode === "signup" ? "At least 6 characters" : "Your password"}
-                  autoComplete={mode === "signup" ? "new-password" : "current-password"}
-                />
-              </div>
-              <button
-                type="button"
-                onClick={handleSubmit}
-                disabled={busy}
-                className="w-full touch-manipulation min-h-[44px] rounded-[12px] bg-[#2A6B52] px-4 py-3 text-sm font-semibold uppercase tracking-[0.2em] text-white transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
-              >
-                {busy ? (mode === "signup" ? "Creating account…" : "Signing in…") : (mode === "signup" ? "Create account" : "Sign in")}
-              </button>
-              <p className="text-center text-sm text-[#4A5568]">
-                {mode === "signin" ? (
-                  <>No account?{" "}
-                    <button type="button" onClick={() => { setMode("signup"); setError(null); }} className="font-semibold text-[#2A6B52] underline-offset-2 hover:underline">Create one</button>
-                  </>
+              {forgotMode ? (
+                forgotSent ? (
+                  <div className="space-y-4">
+                    <p className="rounded-[12px] border-[0.5px] border-[#8FCFB0]/80 bg-[#F4F9F7] px-4 py-4 text-sm leading-relaxed text-[#1A3A32]">
+                      <span className="font-semibold text-[#2A6B52]">Check your inbox.</span> We sent a password reset link to <span className="font-medium">{email.trim()}</span>.
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => { setForgotMode(false); setForgotSent(false); setError(null); }}
+                      className="w-full touch-manipulation min-h-[44px] rounded-[12px] border-[0.5px] border-[#2A6B52] bg-transparent px-4 py-3 text-sm font-semibold text-[#2A6B52] transition-colors hover:bg-[#F4F9F7]"
+                    >
+                      Back to sign in
+                    </button>
+                  </div>
                 ) : (
-                  <>Already have an account?{" "}
-                    <button type="button" onClick={() => { setMode("signin"); setError(null); }} className="font-semibold text-[#2A6B52] underline-offset-2 hover:underline">Sign in</button>
-                  </>
-                )}
-              </p>
+                  <div className="space-y-4">
+                    {error && (
+                      <p className="rounded-[12px] border-[0.5px] border-red-200/90 bg-red-50/90 px-4 py-3 text-sm leading-relaxed text-red-900" role="alert">{error}</p>
+                    )}
+                    <p className="text-sm leading-relaxed text-[#4A5568]">Enter your email and we'll send you a reset link.</p>
+                    <div>
+                      <label htmlFor="auth-email" className="mb-2 block text-sm font-medium uppercase tracking-[0.16em] text-[#4A5568]">Email</label>
+                      <input
+                        id="auth-email"
+                        type="email"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        onKeyDown={(e) => { if (e.key === "Enter") handleForgotPassword(); }}
+                        disabled={busy}
+                        className="min-h-11 w-full rounded-[12px] border-[0.5px] border-[#E8EDE9] bg-[#FFFFFF] px-4 py-3 text-[15px] text-[#1A3A32] placeholder:text-[#4A5568] focus:outline-none focus:ring-1 focus:ring-[#2A6B52]/35 disabled:opacity-50"
+                        placeholder="you@example.com"
+                        autoComplete="email"
+                      />
+                    </div>
+                    <button
+                      type="button"
+                      onClick={handleForgotPassword}
+                      disabled={busy}
+                      className="w-full touch-manipulation min-h-[44px] rounded-[12px] bg-[#2A6B52] px-4 py-3 text-sm font-semibold uppercase tracking-[0.2em] text-white transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
+                    >
+                      {busy ? "Sending…" : "Send reset link"}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => { setForgotMode(false); setError(null); }}
+                      className="w-full text-center text-sm text-[#4A5568] hover:text-[#2A6B52] transition-colors"
+                    >
+                      Back to sign in
+                    </button>
+                  </div>
+                )
+              ) : (
+                <div className="space-y-4">
+                  {error && (
+                    <p className="rounded-[12px] border-[0.5px] border-red-200/90 bg-red-50/90 px-4 py-3 text-sm leading-relaxed text-red-900" role="alert">{error}</p>
+                  )}
+                  <div>
+                    <label htmlFor="auth-email" className="mb-2 block text-sm font-medium uppercase tracking-[0.16em] text-[#4A5568]">Email</label>
+                    <input
+                      id="auth-email"
+                      type="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      onKeyDown={(e) => { if (e.key === "Enter") handleSubmit(); }}
+                      disabled={busy}
+                      className="min-h-11 w-full rounded-[12px] border-[0.5px] border-[#E8EDE9] bg-[#FFFFFF] px-4 py-3 text-[15px] text-[#1A3A32] placeholder:text-[#4A5568] focus:outline-none focus:ring-1 focus:ring-[#2A6B52]/35 disabled:opacity-50"
+                      placeholder="you@example.com"
+                      autoComplete="email"
+                    />
+                  </div>
+                  <div>
+                    <div className="mb-2 flex items-center justify-between">
+                      <label htmlFor="auth-password" className="block text-sm font-medium uppercase tracking-[0.16em] text-[#4A5568]">Password</label>
+                      {mode === "signin" && (
+                        <button
+                          type="button"
+                          onClick={() => { setForgotMode(true); setError(null); }}
+                          className="text-xs font-medium text-[#2A6B52] underline-offset-2 hover:underline"
+                        >
+                          Forgot password?
+                        </button>
+                      )}
+                    </div>
+                    <input
+                      id="auth-password"
+                      type="password"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      onKeyDown={(e) => { if (e.key === "Enter") handleSubmit(); }}
+                      disabled={busy}
+                      className="min-h-11 w-full rounded-[12px] border-[0.5px] border-[#E8EDE9] bg-[#FFFFFF] px-4 py-3 text-[15px] text-[#1A3A32] placeholder:text-[#4A5568] focus:outline-none focus:ring-1 focus:ring-[#2A6B52]/35 disabled:opacity-50"
+                      placeholder={mode === "signup" ? "At least 6 characters" : "Your password"}
+                      autoComplete={mode === "signup" ? "new-password" : "current-password"}
+                    />
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleSubmit}
+                    disabled={busy}
+                    className="w-full touch-manipulation min-h-[44px] rounded-[12px] bg-[#2A6B52] px-4 py-3 text-sm font-semibold uppercase tracking-[0.2em] text-white transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
+                  >
+                    {busy ? (mode === "signup" ? "Creating account…" : "Signing in…") : (mode === "signup" ? "Create account" : "Sign in")}
+                  </button>
+                  <p className="text-center text-sm text-[#4A5568]">
+                    {mode === "signin" ? (
+                      <>No account?{" "}
+                        <button type="button" onClick={() => { setMode("signup"); setError(null); }} className="font-semibold text-[#2A6B52] underline-offset-2 hover:underline">Create one</button>
+                      </>
+                    ) : (
+                      <>Already have an account?{" "}
+                        <button type="button" onClick={() => { setMode("signin"); setError(null); }} className="font-semibold text-[#2A6B52] underline-offset-2 hover:underline">Sign in</button>
+                      </>
+                    )}
+                  </p>
+                </div>
+              )}
+
             </div>
           )}
         </div>
