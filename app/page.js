@@ -1387,7 +1387,7 @@ export default function Home() {
       <div className="border-b border-[#E8EDE9] bg-[#F4F9F7]">
         <div className="mx-auto max-w-5xl px-4 sm:px-6">
           <a
-            href="/how-it-works"
+            href="/welcome"
             className="block bg-[#2A6B52] py-2.5 text-center text-xs font-semibold uppercase tracking-[0.2em] text-white/90 hover:bg-[#1A3A32] hover:text-white transition-colors"
           >
             How It Works →
