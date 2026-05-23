@@ -33,36 +33,36 @@ export default function WelcomePage() {
       </header>
 
       {/* HERO */}
-      <section className="bg-[#FFFFFF] border-b border-[#E8EDE9]">
-        <div className="mx-auto max-w-5xl px-4 py-16 sm:px-6 sm:py-24">
-          <div className="max-w-2xl">
-            <p className="text-xs font-semibold uppercase tracking-[0.28em] text-[#2A6B52]">
+      <section className="bg-gradient-to-br from-[#1A3A32] via-[#2A6B52] to-[#1A3A32] border-b border-[#E8EDE9]">
+        <div className="mx-auto max-w-5xl px-4 py-20 sm:px-6 sm:py-32">
+          <div className="max-w-3xl">
+            <p className="text-sm font-semibold uppercase tracking-[0.28em] text-[#8FCFB0]">
               Listings in a Snap
             </p>
-            <h1 className="font-serif mt-5 text-[2.75rem] font-medium leading-[1.1] tracking-[0.01em] text-[#1A3A32] sm:text-[4.5rem]">
+            <h1 className="font-serif mt-5 text-[3rem] font-medium leading-[1.1] tracking-[0.01em] text-[#F4F9F7] sm:text-[5rem]">
               From cluttered photos to polished listings.
             </h1>
-            <p className="mt-6 max-w-lg text-base leading-relaxed text-[#4A5568] sm:text-lg">
+            <p className="mt-6 max-w-xl text-lg leading-relaxed text-[#8FCFB0]/90 sm:text-xl">
               Upload a photo of anything you want to sell. BrightListed writes the title, description, and pricing — and transforms your photo into a sales-ready image. All in under a minute.
             </p>
-            <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center">
+            <div className="mt-10 flex flex-col gap-4 sm:flex-row sm:items-center">
               <a
                 href="/"
-                className="touch-manipulation inline-flex min-h-[52px] items-center justify-center rounded-[12px] bg-[#2A6B52] px-8 py-3 text-sm font-semibold uppercase tracking-[0.18em] text-white transition-opacity hover:opacity-90"
+                className="touch-manipulation inline-flex min-h-[56px] items-center justify-center rounded-[12px] bg-[#8FCFB0] px-10 py-3 text-base font-semibold uppercase tracking-[0.18em] text-[#1A3A32] transition-opacity hover:opacity-90"
               >
                 Try it free — 3 credits included
               </a>
-              <p className="text-sm text-[#7A8F88]">No credit card required to start.</p>
+              <p className="text-sm text-[#8FCFB0]/70">No credit card required to start.</p>
             </div>
           </div>
         </div>
       </section>
 
       {/* BEFORE / AFTER */}
-      <section className="border-b border-[#E8EDE9] bg-[#F4F9F7]">
+      <section className="border-b border-[#E8EDE9] bg-[#FFFFFF]">
         <div className="mx-auto max-w-5xl px-4 py-16 sm:px-6 sm:py-20">
-          <p className="text-xs font-semibold uppercase tracking-[0.28em] text-[#2A6B52]">See the difference</p>
-          <h2 className="font-serif mt-4 text-3xl font-medium tracking-[0.01em] text-[#1A3A32] sm:text-4xl">
+          <p className="text-sm font-semibold uppercase tracking-[0.28em] text-[#2A6B52]">See the difference</p>
+          <h2 className="font-serif mt-4 text-4xl font-medium tracking-[0.01em] text-[#1A3A32] sm:text-5xl">
             Your photo. Transformed.
           </h2>
           <p className="mt-3 max-w-lg text-sm leading-relaxed text-[#4A5568]">
@@ -108,10 +108,10 @@ export default function WelcomePage() {
       </section>
 
       {/* HOW IT WORKS */}
-      <section className="border-b border-[#E8EDE9] bg-[#FFFFFF]">
+      <section className="border-b border-[#E8EDE9] bg-[#F4F9F7]">
         <div className="mx-auto max-w-5xl px-4 py-16 sm:px-6 sm:py-20">
-          <p className="text-xs font-semibold uppercase tracking-[0.28em] text-[#2A6B52]">How it works</p>
-          <h2 className="font-serif mt-4 text-3xl font-medium tracking-[0.01em] text-[#1A3A32] sm:text-4xl">
+          <p className="text-sm font-semibold uppercase tracking-[0.28em] text-[#2A6B52]">How it works</p>
+          <h2 className="font-serif mt-4 text-4xl font-medium tracking-[0.01em] text-[#1A3A32] sm:text-5xl">
             Three steps to a polished listing.
           </h2>
           <div className="mt-12 grid grid-cols-1 gap-8 sm:grid-cols-3">
@@ -133,9 +133,9 @@ export default function WelcomePage() {
               },
             ].map(({ step, title, body }) => (
               <div key={step} className="flex flex-col gap-4">
-                <p className="font-serif text-5xl font-medium text-[#8FCFB0]">{step}</p>
-                <h3 className="font-serif text-xl font-medium text-[#1A3A32]">{title}</h3>
-                <p className="text-sm leading-relaxed text-[#4A5568]">{body}</p>
+                <p className="font-serif text-6xl font-medium text-[#8FCFB0]">{step}</p>
+                <h3 className="font-serif text-2xl font-medium text-[#1A3A32]">{title}</h3>
+                <p className="text-base leading-relaxed text-[#4A5568]">{body}</p>
               </div>
             ))}
           </div>
@@ -143,10 +143,10 @@ export default function WelcomePage() {
       </section>
 
       {/* VIDEO PLACEHOLDER */}
-      <section className="border-b border-[#E8EDE9] bg-[#F4F9F7]">
+      <section className="border-b border-[#E8EDE9] bg-[#FFFFFF]">
         <div className="mx-auto max-w-5xl px-4 py-16 sm:px-6 sm:py-20">
-          <p className="text-xs font-semibold uppercase tracking-[0.28em] text-[#2A6B52]">See it in action</p>
-          <h2 className="font-serif mt-4 text-3xl font-medium tracking-[0.01em] text-[#1A3A32] sm:text-4xl">
+          <p className="text-sm font-semibold uppercase tracking-[0.28em] text-[#2A6B52]">See it in action</p>
+          <h2 className="font-serif mt-4 text-4xl font-medium tracking-[0.01em] text-[#1A3A32] sm:text-5xl">
             Watch how fast it works.
           </h2>
           <div className="mt-10 overflow-hidden rounded-[20px] border-[0.5px] border-[#E8EDE9] bg-[#FFFFFF] shadow-[0_8px_40px_rgba(26,58,50,0.08)]">
@@ -167,11 +167,11 @@ export default function WelcomePage() {
       {/* PRICING */}
       <section className="border-b border-[#E8EDE9] bg-[#FFFFFF]">
         <div className="mx-auto max-w-5xl px-4 py-16 sm:px-6 sm:py-20">
-          <p className="text-xs font-semibold uppercase tracking-[0.28em] text-[#2A6B52]">Pricing</p>
-          <h2 className="font-serif mt-4 text-3xl font-medium tracking-[0.01em] text-[#1A3A32] sm:text-4xl">
+          <p className="text-sm font-semibold uppercase tracking-[0.28em] text-[#2A6B52]">Pricing</p>
+          <h2 className="font-serif mt-4 text-4xl font-medium tracking-[0.01em] text-[#1A3A32] sm:text-5xl">
             Pay only for what you use.
           </h2>
-          <p className="mt-3 max-w-lg text-sm leading-relaxed text-[#4A5568]">
+          <p className="mt-3 max-w-lg text-base leading-relaxed text-[#4A5568]">
             No subscriptions. No monthly fees. Buy credits when you need them — each credit covers one full listing analysis plus enhanced photos.
           </p>
           <div className="mt-10 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -190,11 +190,11 @@ export default function WelcomePage() {
                     Most popular
                   </span>
                 )}
-                <p className="font-serif text-lg font-medium text-[#1A3A32]">
+                <p className="font-serif text-xl font-medium text-[#1A3A32]">
                   {credits === 1 ? "1 credit" : `${credits} credits`}
                 </p>
-                <p className="font-serif text-3xl font-medium tracking-tight text-[#1A3A32]">{price}</p>
-                <p className="text-xs text-[#7A8F88]">{per}</p>
+                <p className="font-serif text-4xl font-medium tracking-tight text-[#1A3A32]">{price}</p>
+                <p className="text-sm text-[#7A8F88]">{per}</p>
                 <a
                   href="/"
                   className="mt-2 inline-flex min-h-[44px] items-center justify-center rounded-[10px] bg-[#2A6B52] px-4 py-2.5 text-xs font-semibold uppercase tracking-[0.16em] text-white transition-opacity hover:opacity-90"
