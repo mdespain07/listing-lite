@@ -7,31 +7,8 @@ export default function WelcomePage() {
   return (
     <div className="flex min-h-dvh flex-col bg-[#F4F9F7] font-sans text-[#1A3A32] antialiased">
 
-      {/* HEADER */}
-      <header className="absolute top-0 left-0 right-0 z-20 border-b border-white/10">
-        <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-4 sm:px-6">
-          <a href="/">
-            <img src="/logo.svg" alt="BrightListed" className="h-12 w-auto brightness-0 invert sm:h-14" />
-          </a>
-          <div className="flex items-center gap-3">
-            <a
-              href="/"
-              className="touch-manipulation min-h-[44px] inline-flex items-center rounded-full border-2 border-white/40 bg-transparent px-5 py-1.5 text-xs font-semibold uppercase tracking-[0.14em] text-white transition-colors hover:border-white hover:bg-white/10"
-            >
-              Sign In
-            </a>
-            <a
-              href="/"
-              className="touch-manipulation min-h-[44px] inline-flex items-center rounded-full bg-[#8FCFB0] px-5 py-1.5 text-xs font-semibold uppercase tracking-[0.14em] text-[#1A3A32] transition-opacity hover:opacity-90"
-            >
-              Try Free
-            </a>
-          </div>
-        </div>
-      </header>
-
       {/* HERO */}
-      <section className="relative min-h-[85vh] flex items-end overflow-hidden">
+      <section className="relative min-h-[90vh] flex items-center overflow-hidden bg-[#F4F9F7]">
         {/* Background image */}
         <div className="absolute inset-0 z-0">
           <img
@@ -39,39 +16,58 @@ export default function WelcomePage() {
             alt="Person photographing clothing to sell online"
             className="h-full w-full object-cover object-center"
           />
-          {/* Gradient overlay — dark on left, fades right */}
-          <div className="absolute inset-0 bg-gradient-to-r from-[#0D2218]/90 via-[#1A3A32]/70 to-transparent" />
-          {/* Bottom fade */}
-          <div className="absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-[#F4F9F7] to-transparent" />
         </div>
 
-        {/* Hero content */}
-        <div className="relative z-10 mx-auto w-full max-w-5xl px-4 pb-20 pt-32 sm:px-6 sm:pb-28">
-          <div className="max-w-2xl">
-            <div className="inline-flex items-center gap-2 rounded-full border border-[#8FCFB0]/40 bg-[#8FCFB0]/10 px-4 py-1.5 backdrop-blur-sm">
-              <span className="h-1.5 w-1.5 rounded-full bg-[#8FCFB0]" />
-              <p className="text-xs font-semibold uppercase tracking-[0.28em] text-[#8FCFB0]">
+        {/* Hero content — sits on the light left side of the image */}
+        <div className="relative z-10 mx-auto w-full max-w-5xl px-4 py-32 sm:px-6">
+          <div className="max-w-[52%]">
+            <div className="inline-flex items-center gap-2 rounded-full border border-[#2A6B52]/20 bg-white/60 px-4 py-1.5 backdrop-blur-sm">
+              <span className="h-1.5 w-1.5 rounded-full bg-[#2A6B52]" />
+              <p className="text-xs font-semibold uppercase tracking-[0.28em] text-[#2A6B52]">
                 Listings in a Snap
               </p>
             </div>
-            <h1 className="font-serif mt-6 text-[3.25rem] font-medium leading-[1.05] tracking-[0.01em] text-white sm:text-[5.5rem]">
+            <h1 className="font-serif mt-6 text-[3.25rem] font-medium leading-[1.05] tracking-[0.01em] text-[#1A3A32] sm:text-[5rem]">
               From cluttered photos to polished listings.
             </h1>
-            <p className="mt-6 max-w-lg text-lg leading-relaxed text-white/75 sm:text-xl">
+            <p className="mt-6 max-w-md text-lg leading-relaxed text-[#1A3A32]/70">
               Upload a photo of anything you want to sell. BrightListed writes the title, description, and pricing — and transforms your photo into a sales-ready image. All in under a minute.
             </p>
             <div className="mt-10 flex flex-col gap-4 sm:flex-row sm:items-center">
               <a
                 href="/"
-                className="touch-manipulation inline-flex min-h-[56px] items-center justify-center rounded-[12px] bg-[#8FCFB0] px-10 py-3 text-base font-semibold uppercase tracking-[0.18em] text-[#1A3A32] transition-opacity hover:opacity-90 shadow-[0_8px_32px_rgba(143,207,176,0.35)]"
+                className="touch-manipulation inline-flex min-h-[56px] items-center justify-center rounded-[12px] bg-[#2A6B52] px-10 py-3 text-base font-semibold uppercase tracking-[0.18em] text-white transition-opacity hover:opacity-90 shadow-[0_8px_32px_rgba(42,107,82,0.25)]"
               >
                 Try it free — 3 credits included
               </a>
-              <p className="text-sm text-white/60">No credit card required.</p>
+              <p className="text-sm text-[#1A3A32]/50">No credit card required.</p>
             </div>
           </div>
         </div>
       </section>
+
+      {/* HEADER — overlaid on hero, dark text since background is light */}
+      <header className="absolute top-0 left-0 right-0 z-20 border-b border-[#E8EDE9]/60 bg-[#F4F9F7]/40 backdrop-blur-sm">
+        <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-4 sm:px-6">
+          <a href="/">
+            <img src="/logo.svg" alt="BrightListed" className="h-12 w-auto sm:h-14" />
+          </a>
+          <div className="flex items-center gap-3">
+            <a
+              href="/"
+              className="touch-manipulation min-h-[44px] inline-flex items-center rounded-full border-2 border-[#7A8F88] bg-white/60 backdrop-blur-sm px-5 py-1.5 text-xs font-semibold uppercase tracking-[0.14em] text-[#1A3A32] transition-colors hover:bg-white"
+            >
+              Sign In
+            </a>
+            <a
+              href="/"
+              className="touch-manipulation min-h-[44px] inline-flex items-center rounded-full bg-[#2A6B52] px-5 py-1.5 text-xs font-semibold uppercase tracking-[0.14em] text-white transition-opacity hover:opacity-90"
+            >
+              Try Free
+            </a>
+          </div>
+        </div>
+      </header>
 
       {/* STATS BAR */}
       <section className="border-y border-[#E8EDE9] bg-[#FFFFFF]">
