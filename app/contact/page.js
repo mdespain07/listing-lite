@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import LegalSiteHeader from "../components/legal-site-header";
+import { LegalSiteHeader } from "../components/legal-site-header";
 
 export default function ContactPage() {
   const [name, setName] = useState("");
