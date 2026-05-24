@@ -96,7 +96,8 @@ export default function IntakePage() {
   const [screen, setScreen] = useState(SCREEN.PIN);
   const [pin, setPin] = useState("");
   useEffect(() => {
-    if (sessionStorage.getItem("bl_admin_authed") === "1") {
+    const expiry = localStorage.getItem("bl_admin_authed");
+    if (expiry && Date.now() < Number(expiry)) {
       setScreen(SCREEN.CLIENT);
     }
   }, []);
@@ -121,6 +122,7 @@ export default function IntakePage() {
   const [itemTitle, setItemTitle] = useState("");
   const [itemUnsold, setItemUnsold] = useState("donate");
   const [itemError, setItemError] = useState("");
+  const [manualMode, setManualMode] = useState(false);
 
   // Submission
   const [submitting, setSubmitting] = useState(false);
@@ -131,7 +133,8 @@ export default function IntakePage() {
   // PIN
   const handlePin = () => {
     if (pin === PIN) {
-      sessionStorage.setItem("bl_admin_authed", "1");
+      const expiry = Date.now() + 3 * 60 * 60 * 1000;
+      localStorage.setItem("bl_admin_authed", String(expiry));
       setScreen(SCREEN.CLIENT);
       setPinError("");
     } else {
@@ -152,18 +155,7 @@ export default function IntakePage() {
     try {
       const dataUrl = await compressImage(file);
       setItemPhotoPreview(dataUrl);
-      const res = await fetch("/api/analyze", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ images: [dataUrl] }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Analysis failed");
-      setItemSuggestion(data);
-      setItemTitle(data.listingTitle || "");
-      setItemFloor(data.priceLow ? String(data.priceLow) : "");
-      setItemCeiling(data.priceHigh ? String(data.priceHigh) : "");
-      setItemPhoto(dataUrl);
+      let uploadedUrl = dataUrl;
       try {
         const uploadRes = await fetch("/api/intake/upload-photo", {
           method: "POST",
@@ -175,13 +167,32 @@ export default function IntakePage() {
         });
         const uploadData = await uploadRes.json();
         if (uploadRes.ok && uploadData.url) {
-          setItemPhoto(uploadData.url);
+          uploadedUrl = uploadData.url;
         }
       } catch {
         // silently fall back to data URL if upload fails
       }
+      setItemPhoto(uploadedUrl);
+
+      try {
+        const res = await fetch("/api/analyze", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ images: [dataUrl] }),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || "Analysis failed");
+        setItemSuggestion(data);
+        setItemTitle(data.listingTitle || "");
+        setItemFloor(data.priceLow ? String(data.priceLow) : "");
+        setItemCeiling(data.priceHigh ? String(data.priceHigh) : "");
+      } catch (e) {
+        console.error("AI analysis failed:", e);
+        setItemError("AI pricing unavailable — please enter item details manually below.");
+        setManualMode(true);
+      }
     } catch (e) {
-      setItemError(e.message || "Could not analyze photo. Try again.");
+      setItemError(e.message || "Could not process photo. Try again.");
     } finally {
       setItemAnalyzing(false);
     }
@@ -202,16 +213,17 @@ export default function IntakePage() {
     setItemTitle("");
     setItemUnsold("donate");
     setItemError("");
+    setManualMode(false);
   };
 
   const handleAddItem = () => {
-    if (!itemPhoto || !itemFloor || !itemCeiling || !itemTitle) {
-      setItemError("Please complete all item fields before adding.");
+    if (!itemTitle || !itemFloor || !itemCeiling) {
+      setItemError("Please enter item title and price range before adding.");
       return;
     }
     setItems((prev) => [...prev, {
       id: crypto.randomUUID(),
-      photo: itemPhoto,
+      photo: itemPhoto || null,
       title: itemTitle,
       floor: parseFloat(itemFloor),
       ceiling: parseFloat(itemCeiling),
@@ -367,6 +379,7 @@ export default function IntakePage() {
                       <img src={item.photo} alt={item.title} className="h-16 w-16 rounded-[8px] object-cover shrink-0" />
                     )}
                     <div className="flex-1 min-w-0">
+                      <p className="text-xs font-semibold uppercase tracking-[0.12em] text-[#7A8F88]">{item.itemNumber || "Pending #"}</p>
                       <p className="font-medium text-[#1A3A32] truncate">{item.title}</p>
                       <p className="text-sm text-[#7A8F88]">${item.floor} – ${item.ceiling} · {item.unsold === "donate" ? "Donate if unsold" : "Pickup if unsold"}</p>
                     </div>
@@ -452,6 +465,37 @@ export default function IntakePage() {
                 )}
               </Field>
 
+              {/* Manual entry toggle */}
+              {!itemSuggestion && !itemAnalyzing && !itemPhotoPreview && (
+                <div className="flex items-center justify-center">
+                  <button
+                    type="button"
+                    onClick={() => { setManualMode(true); setItemError(""); }}
+                    className="text-sm font-medium text-[#7A8F88] underline-offset-2 hover:text-[#2A6B52] hover:underline transition-colors"
+                  >
+                    Skip photo — enter manually
+                  </button>
+                </div>
+              )}
+
+              {/* Manual mode notice */}
+              {manualMode && !itemSuggestion && (
+                <div className="rounded-[10px] border border-amber-200/90 bg-amber-50/90 px-4 py-3">
+                  <p className="text-sm font-medium text-amber-800">
+                    {itemPhotoPreview
+                      ? "AI pricing unavailable — enter item details manually below."
+                      : "Manual entry mode — fill in item details below. You can still add a photo above."}
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => { setManualMode(false); setItemError(""); }}
+                    className="mt-1 text-xs text-amber-700 underline-offset-2 hover:underline"
+                  >
+                    Try AI again
+                  </button>
+                </div>
+              )}
+
               {/* AI Suggestion Banner */}
               {itemSuggestion && !itemAnalyzing && (
                 <div className="rounded-[10px] border border-[#8FCFB0]/60 bg-[#F4F9F7] px-4 py-3">
@@ -502,7 +546,7 @@ export default function IntakePage() {
               </Btn>
               <Btn
                 onClick={handleAddItem}
-                disabled={itemAnalyzing || !itemPhoto || !itemFloor || !itemCeiling || !itemTitle}
+                disabled={itemAnalyzing || !itemTitle || !itemFloor || !itemCeiling}
                 className="flex-1"
               >
                 Add Item →
@@ -540,6 +584,7 @@ export default function IntakePage() {
                 <div key={item.id} className="flex items-center gap-4 border-t border-[#E8EDE9] pt-4 first:border-0 first:pt-0">
                   {item.photo && <img src={item.photo} alt={item.title} className="h-14 w-14 rounded-[8px] object-cover shrink-0" />}
                   <div className="flex-1 min-w-0">
+                    <p className="text-xs font-semibold uppercase tracking-[0.12em] text-[#7A8F88]">Item # assigned on submit</p>
                     <p className="font-medium text-[#1A3A32]">{item.title}</p>
                     <p className="text-sm text-[#7A8F88]">${item.floor} – ${item.ceiling} · {item.unsold === "donate" ? "Donate if unsold" : "Pickup if unsold"}</p>
                   </div>
@@ -553,15 +598,11 @@ export default function IntakePage() {
               <div className="space-y-2">
                 <div className="flex justify-between text-base">
                   <span className="text-[#4A5568]">Seller receives</span>
-                  <span className="font-semibold text-[#1A3A32]">{COMMISSION_CLIENT}%</span>
+                  <span className="font-semibold text-[#2A6B52]">60%</span>
                 </div>
                 <div className="flex justify-between text-base">
-                  <span className="text-[#4A5568]">Brynn (consignment)</span>
-                  <span className="font-semibold text-[#1A3A32]">{COMMISSION_BRYNN}%</span>
-                </div>
-                <div className="flex justify-between text-base">
-                  <span className="text-[#4A5568]">BrightListed (platform)</span>
-                  <span className="font-semibold text-[#1A3A32]">{COMMISSION_BL}%</span>
+                  <span className="text-[#4A5568]">BrightListed commission</span>
+                  <span className="font-semibold text-[#1A3A32]">40%</span>
                 </div>
               </div>
               <p className="text-sm text-[#7A8F88] border-t border-[#E8EDE9] pt-3">

@@ -30,6 +30,7 @@ export async function GET() {
       payout_reference,
       intake_items (
         id,
+        item_number,
         item_title,
         photo_url,
         price_floor,

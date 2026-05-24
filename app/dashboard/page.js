@@ -68,7 +68,7 @@ function Btn({ children, onClick, disabled, variant = "primary", className = "" 
   );
 }
 
-function Modal({ open, onClose, title, children }) {
+function Modal({ open, onClose, title, itemNumber, children }) {
   useEffect(() => {
     if (!open) return;
     const prev = document.body.style.overflow;
@@ -83,7 +83,12 @@ function Modal({ open, onClose, title, children }) {
       <div className="absolute inset-0 bg-[#1A3A32]/40 backdrop-blur-[2px]" aria-hidden />
       <div className="relative z-10 w-full max-w-lg max-h-[90dvh] overflow-y-auto rounded-[20px] border border-[#E8EDE9] bg-white shadow-2xl">
         <div className="flex items-center justify-between border-b border-[#E8EDE9] px-6 py-4">
-          <h3 className="font-serif text-xl font-medium text-[#1A3A32]">{title}</h3>
+          <div>
+            {itemNumber ? (
+              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#7A8F88]">{itemNumber}</p>
+            ) : null}
+            <h3 className="font-serif text-xl font-medium text-[#1A3A32]">{title}</h3>
+          </div>
           <button type="button" onClick={onClose} className="flex h-8 w-8 items-center justify-center rounded-full hover:bg-[#F4F9F7] text-[#7A8F88]">
             <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
@@ -100,6 +105,12 @@ export default function DashboardPage() {
   const [authed, setAuthed] = useState(false);
   const [pin, setPin] = useState("");
   const [pinError, setPinError] = useState("");
+  useEffect(() => {
+    const expiry = localStorage.getItem("bl_admin_authed");
+    if (expiry && Date.now() < Number(expiry)) {
+      setAuthed(true);
+    }
+  }, []);
   const [sessions, setSessions] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -146,8 +157,15 @@ export default function DashboardPage() {
   }, [authed, fetchData]);
 
   const handlePin = () => {
-    if (pin === PIN) { setAuthed(true); setPinError(""); }
-    else { setPinError("Incorrect PIN."); setPin(""); }
+    if (pin === PIN) {
+      const expiry = Date.now() + 3 * 60 * 60 * 1000;
+      localStorage.setItem("bl_admin_authed", String(expiry));
+      setAuthed(true);
+      setPinError("");
+    } else {
+      setPinError("Incorrect PIN.");
+      setPin("");
+    }
   };
 
   // Flatten all items with session info
@@ -231,6 +249,17 @@ export default function DashboardPage() {
     return data;
   };
 
+  const deleteSession = async (sessionId, eraseAll = false) => {
+    const res = await fetch("/api/dashboard/session", {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ sessionId, eraseAll }),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || "Delete failed");
+    return data;
+  };
+
   const handleMarkSold = async () => {
     if (!salePrice || !selectedItem) return;
     setSoldBusy(true);
@@ -267,15 +296,29 @@ export default function DashboardPage() {
 
   const handleGenerateListing = async () => {
     if (!selectedItem?.photo_url) {
-      alert("No photo available for this item. Upload a photo to generate a listing.");
+      alert("No photo available for this item. Make sure a photo was uploaded during intake.");
       return;
     }
     setGeneratingListing(true);
     try {
+      // Fetch the image from Supabase Storage and convert to base64
+      const imgRes = await fetch(selectedItem.photo_url);
+      if (!imgRes.ok) throw new Error("Could not load item photo.");
+      const blob = await imgRes.blob();
+      const base64 = await new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = reject;
+        reader.readAsDataURL(blob);
+      });
+
       const res = await fetch("/api/analyze", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ images: [selectedItem.photo_url] }),
+        body: JSON.stringify({
+          images: [base64],
+          category: selectedItem.session?.intake_items ? "" : "",
+        }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Analysis failed");
@@ -507,6 +550,7 @@ export default function DashboardPage() {
                   </div>
                   <div className="p-4 space-y-2">
                     <div className="flex items-start justify-between gap-2">
+                      <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#7A8F88] mb-0.5">{item.item_number || "—"}</p>
                       <p className="font-medium text-[#1A3A32] leading-snug line-clamp-2">{item.item_title}</p>
                       <span className={`shrink-0 rounded-full border px-2.5 py-0.5 text-xs font-semibold ${cls}`}>{label}</span>
                     </div>
@@ -579,7 +623,7 @@ export default function DashboardPage() {
       </main>
 
       {/* ITEM DETAIL MODAL */}
-      <Modal open={!!selectedItem} onClose={closeItem} title={selectedItem?.item_title || "Item Detail"}>
+      <Modal open={!!selectedItem} onClose={closeItem} title={selectedItem?.item_title || "Item Detail"} itemNumber={selectedItem?.item_number}>
         {selectedItem && (
           <div className="space-y-5">
             {/* Photo */}
@@ -599,6 +643,10 @@ export default function DashboardPage() {
 
             {/* Details */}
             <div className="space-y-2 text-sm">
+              <div className="flex justify-between">
+                <span className="text-[#7A8F88]">Item Number</span>
+                <span className="font-medium text-[#1A3A32]">{selectedItem?.item_number || "—"}</span>
+              </div>
               <div className="flex justify-between">
                 <span className="text-[#7A8F88]">Client</span>
                 <span className="font-medium text-[#1A3A32]">{selectedSession?.client_name}</span>
@@ -865,6 +913,7 @@ export default function DashboardPage() {
                         <div className="h-12 w-12 rounded-[6px] bg-[#F4F9F7] shrink-0" />
                       )}
                       <div className="flex-1 min-w-0">
+                        <p className="text-xs font-semibold uppercase tracking-[0.12em] text-[#7A8F88]">{item.item_number || "—"}</p>
                         <p className="text-sm font-medium text-[#1A3A32] truncate">{item.item_title}</p>
                         <p className="text-xs text-[#7A8F88]">{formatMoney(item.price_floor)} – {formatMoney(item.price_ceiling)}</p>
                       </div>
@@ -877,6 +926,43 @@ export default function DashboardPage() {
                     </div>
                   );
                 })}
+              </div>
+
+              <div className="border-t border-[#E8EDE9] pt-4 space-y-2">
+                <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#7A8F88]">Data Management</p>
+                <div className="flex flex-col gap-2">
+                  <Btn
+                    variant="danger"
+                    className="w-full"
+                    onClick={async () => {
+                      if (!confirm(`Delete ${selectedClientSession.client_name} and all their items? This cannot be undone.`)) return;
+                      try {
+                        await deleteSession(selectedClientSession.id, false);
+                        await fetchData();
+                        setSelectedClientSession(null);
+                      } catch (e) { alert(e.message); }
+                    }}
+                  >
+                    Delete Client & All Items
+                  </Btn>
+                  <Btn
+                    variant="ghost"
+                    className="w-full"
+                    onClick={async () => {
+                      if (!confirm(`Erase all identifying information for ${selectedClientSession.client_name}? Sales records will be kept but all personal data will be anonymized. This cannot be undone.`)) return;
+                      try {
+                        await deleteSession(selectedClientSession.id, true);
+                        await fetchData();
+                        setSelectedClientSession(null);
+                      } catch (e) { alert(e.message); }
+                    }}
+                  >
+                    Erase Personal Data Only
+                  </Btn>
+                  <p className="text-xs leading-relaxed text-[#7A8F88]">
+                    "Erase Personal Data" anonymizes all identifying information while keeping sales records intact — use this to comply with privacy deletion requests.
+                  </p>
+                </div>
               </div>
             </div>
           );

@@ -33,3 +33,47 @@ export async function PATCH(request) {
 
   return NextResponse.json({ session: data });
 }
+
+export async function DELETE(request) {
+  const supabase = makeServiceSupabase();
+  let body;
+  try { body = await request.json(); } catch {
+    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+  }
+
+  const { sessionId, eraseAll } = body;
+  if (!sessionId) {
+    return NextResponse.json({ error: "Missing sessionId" }, { status: 400 });
+  }
+
+  if (eraseAll) {
+    // Full data erasure — anonymize rather than delete to preserve sales records
+    const { error: updateError } = await supabase
+      .from("intake_sessions")
+      .update({
+        client_name: "[Deleted]",
+        client_phone: "[Deleted]",
+        client_email: "[Deleted]",
+        venmo_username: null,
+        mailing_address: null,
+      })
+      .eq("id", sessionId);
+
+    if (updateError) {
+      return NextResponse.json({ error: updateError.message }, { status: 500 });
+    }
+    return NextResponse.json({ success: true, erased: true });
+  }
+
+  // Full delete — removes session and all items (cascade)
+  const { error } = await supabase
+    .from("intake_sessions")
+    .delete()
+    .eq("id", sessionId);
+
+  if (error) {
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+
+  return NextResponse.json({ success: true });
+}

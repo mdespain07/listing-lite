@@ -15,7 +15,7 @@ function formatMoney(n) {
 function buildEmailHtml({ client, items, sessionId, signedAt }) {
   const itemRows = items.map((item, i) => `
     <tr style="border-bottom: 1px solid #E8EDE9;">
-      <td style="padding: 12px 8px; font-size: 15px; color: #1A3A32;">${i + 1}. ${item.title}</td>
+      <td style="padding: 12px 8px; font-size: 15px; color: #1A3A32;">${item.itemNumber || (i + 1)}. ${item.title}</td>
       <td style="padding: 12px 8px; font-size: 15px; color: #1A3A32; white-space: nowrap;">${formatMoney(item.floor)} – ${formatMoney(item.ceiling)}</td>
       <td style="padding: 12px 8px; font-size: 15px; color: #1A3A32;">${item.unsold === "donate" ? "Donate" : "Client Pickup"}</td>
     </tr>
@@ -55,7 +55,7 @@ function buildEmailHtml({ client, items, sessionId, signedAt }) {
       <h2 style="font-size: 13px; font-family: Arial, sans-serif; letter-spacing: 0.18em; text-transform: uppercase; color: #7A8F88; margin: 0 0 16px;">Commission Agreement</h2>
       <div style="background: #F4F9F7; border-radius: 12px; padding: 20px; margin-bottom: 28px;">
         <p style="color: #1A3A32; font-size: 15px; margin: 0 0 8px;"><strong>You receive: 60%</strong> of each item's sale price</p>
-        <p style="color: #4A5568; font-size: 15px; margin: 0 0 12px;">Consignment fee: 40%</p>
+        <p style="color: #4A5568; font-size: 15px; margin: 0 0 12px;">BrightListed commission: 40%</p>
         <p style="color: #7A8F88; font-size: 13px; margin: 0; border-top: 1px solid #E8EDE9; padding-top: 12px;">
           Payment issued within 7 days of sale via ${paymentDetail}.
         </p>
@@ -72,109 +72,6 @@ function buildEmailHtml({ client, items, sessionId, signedAt }) {
   </div>
 </body>
 </html>`;
-}
-
-async function buildPdfBase64({ client, items, sessionId, signature, signedAt }) {
-  // Build a simple HTML-based PDF content as base64
-  // We'll use a data URI approach since jsPDF is client-side only
-  // Instead we'll create a structured text PDF using raw PDF syntax
-  
-  const paymentDetail = client.paymentPref === "venmo"
-    ? `Venmo: ${client.venmo}`
-    : `Check: ${client.address}`;
-
-  const itemLines = items.map((item, i) =>
-    `${i + 1}. ${item.title} | ${formatMoney(item.floor)} - ${formatMoney(item.ceiling)} | ${item.unsold === "donate" ? "Donate if unsold" : "Pickup if unsold"}`
-  );
-
-  // Build PDF manually using PDF spec
-  const lines = [
-    "BrightListed Consignment Agreement",
-    "=====================================",
-    "",
-    `Client: ${client.name}`,
-    `Phone: ${client.phone}`,
-    `Email: ${client.email}`,
-    `Payment: ${paymentDetail}`,
-    `Date: ${signedAt}`,
-    `Session ID: ${sessionId}`,
-    "",
-    "ITEMS",
-    "-----",
-    ...itemLines,
-    "",
-    "COMMISSION AGREEMENT",
-    "--------------------",
-    "Seller receives: 60% of sale price",
-    "Consignment fee: 40%",
-    "Items unsold after 45 days handled per client preference above.",
-    "Payment issued within 7 days of sale.",
-    "",
-    "SIGNATURE",
-    "---------",
-    `Electronically signed by ${client.name} on ${signedAt}`,
-    "Signature on file with BrightListed.",
-  ];
-
-  // Build a minimal valid PDF
-  const pageWidth = 612;
-  const margin = 72;
-  const lineHeight = 16;
-  let y = 750;
-  
-  const textObjects = lines.map((line) => {
-    const isHeader = line === lines[0];
-    const isSectionHeader = line.includes("---") || line.includes("===");
-    if (isSectionHeader) { y -= 4; return ""; }
-    const fontSize = isHeader ? 16 : 10;
-    const obj = `BT /F1 ${fontSize} Tf ${margin} ${y} Td (${line.replace(/[()\\]/g, "\\$&")}) Tj ET`;
-    y -= lineHeight;
-    if (isHeader) y -= 8;
-    return obj;
-  }).filter(Boolean);
-
-  const contentStream = textObjects.join("\n");
-  
-  const pdfParts = [];
-  const offsets = [];
-  
-  // Header
-  pdfParts.push("%PDF-1.4\n");
-  
-  // Object 1 - catalog
-  offsets.push(pdfParts.join("").length);
-  pdfParts.push("1 0 obj\n<< /Type /Catalog /Pages 2 0 R >>\nendobj\n");
-  
-  // Object 2 - pages
-  offsets.push(pdfParts.join("").length);
-  pdfParts.push("2 0 obj\n<< /Type /Pages /Kids [3 0 R] /Count 1 >>\nendobj\n");
-  
-  // Object 3 - page
-  offsets.push(pdfParts.join("").length);
-  pdfParts.push(`3 0 obj\n<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${pageWidth} 792] /Contents 4 0 R /Resources << /Font << /F1 5 0 R >> >> >>\nendobj\n`);
-  
-  // Object 4 - content stream
-  offsets.push(pdfParts.join("").length);
-  pdfParts.push(`4 0 obj\n<< /Length ${contentStream.length} >>\nstream\n${contentStream}\nendstream\nendobj\n`);
-  
-  // Object 5 - font
-  offsets.push(pdfParts.join("").length);
-  pdfParts.push("5 0 obj\n<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>\nendobj\n");
-  
-  // Cross-reference table
-  const xrefOffset = pdfParts.join("").length;
-  const xref = ["xref", `0 ${offsets.length + 1}`, "0000000000 65535 f "];
-  offsets.forEach((offset) => {
-    xref.push(String(offset).padStart(10, "0") + " 00000 n ");
-  });
-  pdfParts.push(xref.join("\n") + "\n");
-  
-  // Trailer
-  pdfParts.push(`trailer\n<< /Size ${offsets.length + 1} /Root 1 0 R >>\nstartxref\n${xrefOffset}\n%%EOF`);
-  
-  const pdfContent = pdfParts.join("");
-  const base64 = Buffer.from(pdfContent, "latin1").toString("base64");
-  return base64;
 }
 
 export async function POST(request) {
@@ -224,9 +121,10 @@ export async function POST(request) {
     if_unsold: item.unsold,
   }));
 
-  const { error: itemsError } = await supabase
+  const { data: insertedItems, error: itemsError } = await supabase
     .from("intake_items")
-    .insert(itemRows);
+    .insert(itemRows)
+    .select("id, item_number, item_title");
 
   if (itemsError) {
     return NextResponse.json({ error: itemsError.message }, { status: 500 });
@@ -250,19 +148,40 @@ export async function POST(request) {
     }
   }
 
-  // Generate PDF
-  const pdfBase64 = await buildPdfBase64({
-    client, items, sessionId: session.id, signature, signedAt,
-  });
+  const itemsWithNumbers = items.map((item, i) => ({
+    ...item,
+    itemNumber: insertedItems?.[i]?.item_number || "",
+  }));
+
+  let pdfBase64 = null;
+  try {
+    const pdfRes = await fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/intake/generate-pdf`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        client,
+        items: itemsWithNumbers,
+        sessionId: session.id,
+        signature: signature || null,
+        signedAt,
+      }),
+    });
+    if (pdfRes.ok) {
+      const pdfData = await pdfRes.json();
+      pdfBase64 = pdfData.pdfBase64;
+    }
+  } catch (e) {
+    console.error("PDF generation failed:", e);
+  }
 
   // Send emails via Resend
   const resendKey = process.env.RESEND_API_KEY;
   if (resendKey) {
-    const html = buildEmailHtml({ client, items, sessionId: session.id, signedAt });
-    const attachments = [{
+    const html = buildEmailHtml({ client, items: itemsWithNumbers, sessionId: session.id, signedAt });
+    const attachments = pdfBase64 ? [{
       filename: `BrightListed-Agreement-${client.name.replace(/\s+/g, "-")}.pdf`,
       content: pdfBase64,
-    }];
+    }] : [];
 
     await Promise.allSettled([
       fetch("https://api.resend.com/emails", {
