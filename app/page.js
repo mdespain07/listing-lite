@@ -607,6 +607,7 @@ export default function Home() {
   const [credits, setCredits] = useState(INITIAL_CREDITS);
   const [analyzing, setAnalyzing] = useState(false);
   const [results, setResults] = useState(null);
+  const [selectedPlatform, setSelectedPlatform] = useState("general");
   const [error, setError] = useState(null);
   const [enhancedImages, setEnhancedImages] = useState(null);
   const [enhanceNotice, setEnhanceNotice] = useState(null);
@@ -1074,6 +1075,7 @@ export default function Home() {
   const resetNewListing = useCallback(() => {
     setFiles([]);
     setResults(null);
+    setSelectedPlatform("general");
     setEnhancedImages(null);
     setEnhanceNotice(null);
     setEnhancingImages(false);
@@ -1206,14 +1208,13 @@ export default function Home() {
         prev
           ? {
               ...prev,
-              listingTitle: String(
-                analyzeData.listingTitle ?? prev.listingTitle
-              ),
+              listingTitle: String(analyzeData.listingTitle ?? prev.listingTitle),
               listingDescription: appendHomeEnvironmentSuffix(
                 String(analyzeData.listingDescription ?? ""),
                 smokeFreeHome,
                 petFreeHome
               ),
+              listings: analyzeData.listings ?? prev.listings,
             }
           : prev
       );
@@ -1752,13 +1753,32 @@ export default function Home() {
                 </div>
 
                 <div className="space-y-6 border-t-[0.5px] border-[#E8EDE9] bg-[#FFFFFF] px-6 py-8 sm:px-8 sm:py-9">
-                  <CopyableField
-                    label="LISTING TITLE"
-                    text={String(results.listingTitle ?? "")}
-                  />
+                  <div className="space-y-3">
+                    <div className="flex flex-wrap gap-2">
+                      {[
+                        { key: "general", label: "General" },
+                        { key: "facebook", label: "Facebook" },
+                        { key: "ebay", label: "eBay" },
+                        { key: "poshmark", label: "Poshmark" },
+                      ].map(({ key, label }) => (
+                        <button
+                          key={key}
+                          type="button"
+                          onClick={() => setSelectedPlatform(key)}
+                          className={`touch-manipulation min-h-[36px] rounded-full border px-4 py-1.5 text-sm font-semibold uppercase tracking-[0.12em] transition-colors ${selectedPlatform === key ? "border-[#2A6B52] bg-[#2A6B52] text-white" : "border-[#E8EDE9] bg-white text-[#4A5568] hover:border-[#8FCFB0]/60"}`}
+                        >
+                          {label}
+                        </button>
+                      ))}
+                    </div>
+                    <CopyableField
+                      label="LISTING TITLE"
+                      text={String(results.listings?.[selectedPlatform]?.title || results.listingTitle || "")}
+                    />
+                  </div>
                   <CopyableField
                     label="LISTING DESCRIPTION"
-                    text={String(results.listingDescription ?? "")}
+                    text={String(results.listings?.[selectedPlatform]?.description || results.listingDescription || "")}
                   />
 
                   <div className="rounded-[12px] border-[0.5px] border-[#E8EDE9] bg-[#F4F9F7]/80 px-4 py-4 sm:px-5 sm:py-5">

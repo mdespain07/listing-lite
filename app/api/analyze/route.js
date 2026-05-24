@@ -42,8 +42,7 @@ brand (string, empty string if not clearly visible),
 condition (one of the four labels above),
 conditionExplanation (brief, photo-grounded),
 priceLow, priceHigh (numbers), sweetSpotPrice (number): The single best price for a quick but profitable sale — typically 10-20% below priceHigh. This is the price most likely to sell within a week while still getting good value.
-listingTitle (under 80 characters, factual, includes color only if clearly visible, includes brand and size for clothing when both are known, never include retail price in the title),
-listingDescription (100-200 words): Write in the style of a confident, friendly resale listing, written from the seller's perspective as if they know the item well. Lead with the most appealing details visible in the photos — style, color, fit, notable features. Follow with condition notes grounded in what is visible. End with sizing or key specs if clearly visible. NEVER use phrases like 'visible in photos', 'confirmed from photos', 'not confirmed from photos', 'appears visible', or any language that references the photos or the analysis process — write as if you are the seller describing the item from memory. Only include details you are confident about. If a detail is unknown or unclear, omit it entirely from the description and note it in the caveat instead. Do NOT include: care label fabric percentages, country of manufacture, style codes, or internal label data — put those in modelDetails instead. Do NOT use hype words like 'stunning' or 'gorgeous.' Do use natural, warm, specific language that helps a buyer picture owning and using this item.
+listings (object): Generate four platform-specific listing variations. Each variation has a title and description. Follow these platform-specific rules:\n\nFACEBOOK_MARKETPLACE: title under 60 characters, plain and local-friendly. Description 50-80 words, conversational and direct. Lead with condition and price context. Short sentences. No hashtags. End with smoke-free/pet-free if applicable.\n\nEBAY: title exactly 80 characters if possible, keyword-stuffed with brand, model, size, color, condition (use abbreviations: NWT, EUC, VGC, GUC). Description 100-150 words, structured with features as a short list. Include measurements for clothing. Lead with most searchable attributes.\n\nPOSHMARK: title under 50 characters, brand and style focused. Description 80-120 words, warm and personal, written like a friend selling to a friend. Include style notes, outfit suggestions, and 5-8 relevant hashtags at the end (e.g. #vintage #poshmark #ootd).\n\nGENERAL: title under 70 characters, clear and descriptive. Description 80-120 words, balanced and factual. Works for KSL, Craigslist, Nextdoor. Lead with what it is, condition, and price range context.\n\nFor ALL platforms: never reference photos or analysis process. Write as the seller. Only include confirmed details. No hype words.
 modelDetails (string): Include style name/number if visible on label, fabric content percentages from care label if visible, country of manufacture if on label, and anything else from tags or labels that is factual but too technical for the main description. Note what could NOT be determined.
 visibleAccessories (array of short strings, [] if none),
 caveat (string): Write this note TO THE SELLER, not the buyer. If details could not be clearly read from the photos, tell the seller what to verify and suggest they use the correction box to fix it. Example: 'The size tag was difficult to read clearly — please confirm the size and add it in the Something look off box if needed.' If everything was clear, write an empty string.
@@ -57,8 +56,7 @@ const REQUIRED_KEYS = [
   "priceLow",
   "priceHigh",
   "sweetSpotPrice",
-  "listingTitle",
-  "listingDescription",
+  "listings",
   "modelDetails",
   "visibleAccessories",
   "caveat",
@@ -274,14 +272,39 @@ function normalizeAnalysisResponse(parsed) {
     visibleAccessories = String(vis).trim();
   }
 
+  const listings = parsed.listings && typeof parsed.listings === "object" ? {
+    facebook: {
+      title: String(parsed.listings.FACEBOOK_MARKETPLACE?.title ?? parsed.listings.facebook?.title ?? ""),
+      description: String(parsed.listings.FACEBOOK_MARKETPLACE?.description ?? parsed.listings.facebook?.description ?? ""),
+    },
+    ebay: {
+      title: String(parsed.listings.EBAY?.title ?? parsed.listings.ebay?.title ?? ""),
+      description: String(parsed.listings.EBAY?.description ?? parsed.listings.ebay?.description ?? ""),
+    },
+    poshmark: {
+      title: String(parsed.listings.POSHMARK?.title ?? parsed.listings.poshmark?.title ?? ""),
+      description: String(parsed.listings.POSHMARK?.description ?? parsed.listings.poshmark?.description ?? ""),
+    },
+    general: {
+      title: String(parsed.listings.GENERAL?.title ?? parsed.listings.general?.title ?? ""),
+      description: String(parsed.listings.GENERAL?.description ?? parsed.listings.general?.description ?? ""),
+    },
+  } : {
+    facebook: { title: "", description: "" },
+    ebay: { title: "", description: "" },
+    poshmark: { title: "", description: "" },
+    general: { title: "", description: "" },
+  };
+
   return {
     ...parsed,
     itemName: String(parsed.itemName ?? ""),
     brand: String(parsed.brand ?? ""),
     condition: String(parsed.condition ?? ""),
     conditionExplanation: String(parsed.conditionExplanation ?? ""),
-    listingTitle: String(parsed.listingTitle ?? ""),
-    listingDescription: String(parsed.listingDescription ?? ""),
+    listingTitle: listings.general.title,
+    listingDescription: listings.general.description,
+    listings,
     modelDetails: String(parsed.modelDetails ?? ""),
     visibleAccessories,
     caveat: String(parsed.caveat ?? ""),
