@@ -209,6 +209,17 @@ export default function DashboardPage() {
     return data.item;
   };
 
+  const patchSession = async (sessionId, updates) => {
+    const res = await fetch("/api/dashboard/session", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ sessionId, updates }),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || "Update failed");
+    return data.session;
+  };
+
   const deleteItem = async (itemId) => {
     const res = await fetch("/api/dashboard", {
       method: "DELETE",
@@ -386,6 +397,53 @@ export default function DashboardPage() {
             </div>
           ))}
         </div>
+        {(() => {
+          // Find most recent Friday
+          const now = new Date();
+          const dayOfWeek = now.getDay(); // 0=Sun, 1=Mon, ..., 5=Fri, 6=Sat
+          const daysSinceFriday = dayOfWeek >= 5 ? dayOfWeek - 5 : dayOfWeek + 2;
+          const lastFriday = new Date(now);
+          lastFriday.setDate(now.getDate() - daysSinceFriday);
+          lastFriday.setHours(0, 0, 0, 0);
+
+          const weekItems = sessions
+            .flatMap((s) => s.intake_items || [])
+            .filter((i) => i.status === "sold" && i.sold_at && new Date(i.sold_at) >= lastFriday);
+
+          const weekRevenue = weekItems.reduce((sum, i) => sum + (i.sale_price || 0), 0);
+          const weekBrynn = weekRevenue * COMMISSION_BRYNN;
+
+          const totalPaidBrynn = sessions
+            .filter((s) => s.payout_date)
+            .flatMap((s) => s.intake_items || [])
+            .filter((i) => i.status === "sold")
+            .reduce((sum, i) => sum + (i.sale_price || 0) * COMMISSION_BRYNN, 0);
+
+          return (
+            <div className="rounded-[16px] border border-[#E8EDE9] bg-white p-5">
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#7A8F88]">
+                    Brynn — This Pay Period
+                  </p>
+                  <p className="font-serif mt-1 text-3xl font-medium text-[#1A3A32]">
+                    {formatMoney(weekBrynn)}
+                  </p>
+                  <p className="mt-1 text-sm text-[#7A8F88]">
+                    {weekItems.length} item{weekItems.length !== 1 ? "s" : ""} sold since {lastFriday.toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+                  </p>
+                </div>
+                <div className="text-right shrink-0">
+                  <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#7A8F88]">Total Paid to Brynn</p>
+                  <p className="font-serif mt-1 text-2xl font-medium text-[#2A6B52]">
+                    {formatMoney(totalPaidBrynn)}
+                  </p>
+                  <p className="mt-1 text-sm text-[#7A8F88]">all time</p>
+                </div>
+              </div>
+            </div>
+          );
+        })()}
 
         {/* FILTERS */}
         <div className="flex flex-wrap gap-3 items-center">
@@ -723,7 +781,7 @@ export default function DashboardPage() {
                   <span className="text-[#7A8F88]">Client Earnings (60%)</span>
                   <span className="font-semibold text-[#2A6B52]">{formatMoney(comm.client)}</span>
                 </div>
-                <div className="flex justify-between">
+                <div className="flex justify-between items-center">
                   <span className="text-[#7A8F88]">Payout Status</span>
                   <span className={`font-semibold ${selectedClientSession.payout_date ? "text-emerald-600" : "text-amber-600"}`}>
                     {selectedClientSession.payout_date
@@ -731,6 +789,68 @@ export default function DashboardPage() {
                       : "Pending"}
                   </span>
                 </div>
+                {!selectedClientSession.payout_date && comm.client > 0 && (
+                  <div className="space-y-2 border-t border-[#E8EDE9] pt-3 mt-2">
+                    <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#7A8F88]">Record Payout</p>
+                    <div className="flex gap-2">
+                      <select
+                        id="payout-method-select"
+                        defaultValue="venmo"
+                        className="flex-1 min-h-[36px] rounded-[8px] border border-[#E8EDE9] bg-white px-3 py-1.5 text-sm text-[#1A3A32] focus:outline-none focus:ring-1 focus:ring-[#2A6B52]/30"
+                      >
+                        <option value="venmo">Venmo</option>
+                        <option value="check">Check</option>
+                        <option value="cash">Cash</option>
+                        <option value="other">Other</option>
+                      </select>
+                      <Btn variant="sm" onClick={async () => {
+                        const method = document.getElementById("payout-method-select").value;
+                        try {
+                          await patchSession(selectedClientSession.id, {
+                            payout_amount: comm.client,
+                            payout_date: new Date().toISOString(),
+                            payout_method: method,
+                          });
+                          await fetchData();
+                          setSelectedClientSession((prev) => ({
+                            ...prev,
+                            payout_amount: comm.client,
+                            payout_date: new Date().toISOString(),
+                            payout_method: method,
+                          }));
+                        } catch (e) { alert(e.message); }
+                      }}>
+                        Mark Paid {formatMoney(comm.client)}
+                      </Btn>
+                    </div>
+                  </div>
+                )}
+                {selectedClientSession.payout_date && (
+                  <div className="border-t border-[#E8EDE9] pt-3 mt-2">
+                    <p className="text-xs text-[#7A8F88]">
+                      Paid via {selectedClientSession.payout_method || "—"} on {new Date(selectedClientSession.payout_date).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}
+                    </p>
+                    <button type="button" onClick={async () => {
+                      if (!confirm("Undo this payout? This will mark the client as unpaid.")) return;
+                      try {
+                        await patchSession(selectedClientSession.id, {
+                          payout_amount: null,
+                          payout_date: null,
+                          payout_method: null,
+                        });
+                        await fetchData();
+                        setSelectedClientSession((prev) => ({
+                          ...prev,
+                          payout_amount: null,
+                          payout_date: null,
+                          payout_method: null,
+                        }));
+                      } catch (e) { alert(e.message); }
+                    }} className="mt-1 text-xs text-red-500 hover:underline underline-offset-2">
+                      Undo payout
+                    </button>
+                  </div>
+                )}
               </div>
 
               <div className="space-y-2">

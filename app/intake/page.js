@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 
 const PIN = "2847";
 const COMMISSION_CLIENT = 60;
@@ -94,6 +94,11 @@ const SCREEN = {
 export default function IntakePage() {
   const [screen, setScreen] = useState(SCREEN.PIN);
   const [pin, setPin] = useState("");
+  useEffect(() => {
+    if (sessionStorage.getItem("bl_admin_authed") === "1") {
+      setScreen(SCREEN.CLIENT);
+    }
+  }, []);
   const [pinError, setPinError] = useState("");
 
   // Client info
@@ -122,8 +127,14 @@ export default function IntakePage() {
 
   // PIN
   const handlePin = () => {
-    if (pin === PIN) { setScreen(SCREEN.CLIENT); setPinError(""); }
-    else { setPinError("Incorrect PIN. Please try again."); setPin(""); }
+    if (pin === PIN) {
+      sessionStorage.setItem("bl_admin_authed", "1");
+      setScreen(SCREEN.CLIENT);
+      setPinError("");
+    } else {
+      setPinError("Incorrect PIN. Please try again.");
+      setPin("");
+    }
   };
 
   // Client validation
@@ -243,6 +254,9 @@ export default function IntakePage() {
       <header className="border-b border-[#E8EDE9] bg-white px-4 py-4">
         <div className="mx-auto flex max-w-2xl items-center justify-between">
           <img src="/logo.svg" alt="BrightListed" className="h-10 w-auto" />
+          <a href="/dashboard" className="text-sm font-semibold uppercase tracking-[0.14em] text-[#2A6B52] hover:underline underline-offset-2">
+            Dashboard →
+          </a>
           {screen !== SCREEN.PIN && screen !== SCREEN.SUCCESS && (
             <p className="text-sm font-medium text-[#7A8F88]">
               {screen === SCREEN.CLIENT ? "Step 1 of 3 — Client Info" :
