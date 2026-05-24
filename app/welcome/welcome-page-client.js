@@ -278,6 +278,12 @@ export default function WelcomePageClient() {
             >
               Start listing for free
             </a>
+            <a
+              href="/book"
+              className="touch-manipulation inline-flex min-h-[48px] items-center justify-center rounded-[12px] border-2 border-white/30 bg-transparent px-8 py-3 text-base font-semibold uppercase tracking-[0.18em] text-white/80 transition-all hover:border-white hover:text-white"
+            >
+              Book a Drop-Off →
+            </a>
             <p className="text-base text-white/40">No credit card required · 3 free credits included</p>
           </div>
         </div>
