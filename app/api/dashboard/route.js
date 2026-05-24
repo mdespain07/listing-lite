@@ -83,3 +83,27 @@ export async function PATCH(request) {
 
   return NextResponse.json({ item: data });
 }
+
+export async function DELETE(request) {
+  const supabase = makeServiceSupabase();
+  let body;
+  try { body = await request.json(); } catch {
+    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+  }
+
+  const { itemId } = body;
+  if (!itemId) {
+    return NextResponse.json({ error: "Missing itemId" }, { status: 400 });
+  }
+
+  const { error } = await supabase
+    .from("intake_items")
+    .delete()
+    .eq("id", itemId);
+
+  if (error) {
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+
+  return NextResponse.json({ success: true });
+}

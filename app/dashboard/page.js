@@ -124,6 +124,7 @@ export default function DashboardPage() {
   // Listing URLs
   const [listingUrls, setListingUrls] = useState(["", "", "", ""]);
   const [savingUrls, setSavingUrls] = useState(false);
+  const [selectedClientSession, setSelectedClientSession] = useState(null);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -163,9 +164,14 @@ export default function DashboardPage() {
     })
     .sort((a, b) => {
       if (sortBy === "intake_date") return new Date(b.created_at) - new Date(a.created_at);
+      if (sortBy === "intake_date_asc") return new Date(a.created_at) - new Date(b.created_at);
       if (sortBy === "deadline") return daysRemaining(a.created_at) - daysRemaining(b.created_at);
       if (sortBy === "client") return a.session.client_name.localeCompare(b.session.client_name);
+      if (sortBy === "client_desc") return b.session.client_name.localeCompare(a.session.client_name);
       if (sortBy === "status") return a.status.localeCompare(b.status);
+      if (sortBy === "price_high") return (b.price_ceiling || 0) - (a.price_ceiling || 0);
+      if (sortBy === "price_low") return (a.price_floor || 0) - (b.price_floor || 0);
+      if (sortBy === "sale_price") return (b.sale_price || 0) - (a.sale_price || 0);
       return 0;
     });
 
@@ -201,6 +207,17 @@ export default function DashboardPage() {
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || "Update failed");
     return data.item;
+  };
+
+  const deleteItem = async (itemId) => {
+    const res = await fetch("/api/dashboard", {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ itemId }),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || "Delete failed");
+    return data;
   };
 
   const handleMarkSold = async () => {
@@ -389,9 +406,14 @@ export default function DashboardPage() {
           <select value={sortBy} onChange={(e) => setSortBy(e.target.value)}
             className="min-h-[40px] rounded-[10px] border border-[#E8EDE9] bg-white px-3 py-2 text-sm text-[#1A3A32] focus:outline-none focus:ring-1 focus:ring-[#2A6B52]/30">
             <option value="intake_date">Sort: Newest First</option>
+            <option value="intake_date_asc">Sort: Oldest First</option>
             <option value="deadline">Sort: Deadline Soonest</option>
-            <option value="client">Sort: Client Name</option>
+            <option value="client">Sort: Client Name (A–Z)</option>
+            <option value="client_desc">Sort: Client Name (Z–A)</option>
             <option value="status">Sort: Status</option>
+            <option value="price_high">Sort: Price High–Low</option>
+            <option value="price_low">Sort: Price Low–High</option>
+            <option value="sale_price">Sort: Sale Price</option>
           </select>
           {loading && <Spinner />}
         </div>
@@ -460,7 +482,7 @@ export default function DashboardPage() {
               <table className="w-full text-sm">
                 <thead className="border-b border-[#E8EDE9] bg-[#F4F9F7]">
                   <tr>
-                    {["Client", "Items", "Sold", "Client Owes", "Brynn", "BrightListed", "Status"].map((h) => (
+                    {["Client", "Items", "Sold", "Client Earnings", "Brynn Commission", "BrightListed", "Status"].map((h) => (
                       <th key={h} className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-[0.14em] text-[#7A8F88]">{h}</th>
                     ))}
                   </tr>
@@ -473,8 +495,10 @@ export default function DashboardPage() {
                     return (
                       <tr key={s.id} className="border-b border-[#E8EDE9] last:border-0 hover:bg-[#F4F9F7]/50">
                         <td className="px-4 py-3">
-                          <p className="font-medium text-[#1A3A32]">{s.client_name}</p>
-                          <p className="text-xs text-[#7A8F88]">{s.client_email}</p>
+                          <button type="button" onClick={() => setSelectedClientSession(s)} className="text-left hover:underline underline-offset-2">
+                            <p className="font-medium text-[#2A6B52]">{s.client_name}</p>
+                            <p className="text-xs text-[#7A8F88]">{s.client_email}</p>
+                          </button>
                         </td>
                         <td className="px-4 py-3 text-[#4A5568]">{itemCount}</td>
                         <td className="px-4 py-3 text-[#4A5568]">{soldCount}</td>
@@ -568,6 +592,21 @@ export default function DashboardPage() {
               </div>
             )}
 
+            {selectedItem.status === "available" && (
+              <div className="border-t border-[#E8EDE9] pt-4">
+                <Btn variant="danger" className="w-full" onClick={async () => {
+                  if (!confirm("Delete this item? This cannot be undone.")) return;
+                  try {
+                    await deleteItem(selectedItem.id);
+                    await fetchData();
+                    closeItem();
+                  } catch (e) { alert(e.message); }
+                }}>
+                  Delete Item
+                </Btn>
+              </div>
+            )}
+
             {/* Mark Sold inline */}
             {soldModal && selectedItem.status === "available" && (
               <div className="rounded-[12px] border border-[#E8EDE9] bg-[#F4F9F7] p-4 space-y-3">
@@ -583,6 +622,21 @@ export default function DashboardPage() {
                     {soldBusy ? <Spinner className="h-4 w-4" /> : "Confirm"}
                   </Btn>
                 </div>
+              </div>
+            )}
+
+            {selectedItem.status !== "available" && (
+              <div className="border-t border-[#E8EDE9] pt-4">
+                <Btn variant="danger" className="w-full" onClick={async () => {
+                  if (!confirm("Delete this item? This cannot be undone.")) return;
+                  try {
+                    await deleteItem(selectedItem.id);
+                    await fetchData();
+                    closeItem();
+                  } catch (e) { alert(e.message); }
+                }}>
+                  Delete Item
+                </Btn>
               </div>
             )}
 
@@ -624,6 +678,89 @@ export default function DashboardPage() {
             </div>
           </div>
         )}
+      </Modal>
+
+      <Modal
+        open={!!selectedClientSession}
+        onClose={() => setSelectedClientSession(null)}
+        title={selectedClientSession?.client_name || "Client Detail"}
+      >
+        {selectedClientSession && (() => {
+          const comm = sessionCommission(selectedClientSession);
+          const items = selectedClientSession.intake_items || [];
+          return (
+            <div className="space-y-5">
+              <div className="rounded-[12px] border border-[#E8EDE9] bg-[#F4F9F7] p-4 space-y-2 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-[#7A8F88]">Phone</span>
+                  <span className="text-[#1A3A32]">{selectedClientSession.client_phone}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-[#7A8F88]">Email</span>
+                  <span className="text-[#1A3A32]">{selectedClientSession.client_email}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-[#7A8F88]">Payment</span>
+                  <span className="text-[#1A3A32]">
+                    {selectedClientSession.payment_preference === "venmo"
+                      ? `Venmo: ${selectedClientSession.venmo_username}`
+                      : `Check: ${selectedClientSession.mailing_address}`}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-[#7A8F88]">Intake Date</span>
+                  <span className="text-[#1A3A32]">{new Date(selectedClientSession.created_at).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}</span>
+                </div>
+              </div>
+
+              <div className="rounded-[12px] border border-[#8FCFB0]/60 bg-[#F4F9F7] p-4 space-y-2 text-sm">
+                <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#2A6B52]">Earnings Summary</p>
+                <div className="flex justify-between">
+                  <span className="text-[#7A8F88]">Total Sales</span>
+                  <span className="font-semibold text-[#1A3A32]">{formatMoney(comm.total)}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-[#7A8F88]">Client Earnings (60%)</span>
+                  <span className="font-semibold text-[#2A6B52]">{formatMoney(comm.client)}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-[#7A8F88]">Payout Status</span>
+                  <span className={`font-semibold ${selectedClientSession.payout_date ? "text-emerald-600" : "text-amber-600"}`}>
+                    {selectedClientSession.payout_date
+                      ? `Paid ${new Date(selectedClientSession.payout_date).toLocaleDateString()}`
+                      : "Pending"}
+                  </span>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#7A8F88]">All Items ({items.length})</p>
+                {items.map((item) => {
+                  const { cls, label } = statusBadge(item.status, item.created_at);
+                  return (
+                    <div key={item.id} className="flex items-center gap-3 rounded-[10px] border border-[#E8EDE9] bg-white p-3">
+                      {item.photo_url ? (
+                        <img src={item.photo_url} alt={item.item_title} className="h-12 w-12 rounded-[6px] object-cover shrink-0" />
+                      ) : (
+                        <div className="h-12 w-12 rounded-[6px] bg-[#F4F9F7] shrink-0" />
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-[#1A3A32] truncate">{item.item_title}</p>
+                        <p className="text-xs text-[#7A8F88]">{formatMoney(item.price_floor)} – {formatMoney(item.price_ceiling)}</p>
+                      </div>
+                      <div className="flex flex-col items-end gap-1">
+                        <span className={`rounded-full border px-2 py-0.5 text-xs font-semibold ${cls}`}>{label}</span>
+                        {item.status === "sold" && (
+                          <span className="text-xs font-semibold text-[#2A6B52]">{formatMoney(item.sale_price)}</span>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          );
+        })()}
       </Modal>
     </div>
   );
