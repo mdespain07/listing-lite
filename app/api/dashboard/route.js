@@ -47,6 +47,12 @@ export async function GET() {
         listing_url_2,
         listing_url_3,
         listing_url_4,
+        current_price,
+        first_markdown_at,
+        final_markdown_at,
+        markdown_notes,
+        deadline_date,
+        days_listed,
         created_at
       )
     `)

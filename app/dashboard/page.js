@@ -18,12 +18,27 @@ function daysAgo(dateStr) {
   return Math.floor(diff / (1000 * 60 * 60 * 24));
 }
 
-function daysRemaining(dateStr) {
-  return Math.max(0, UNSOLD_DAYS - daysAgo(dateStr));
+function daysUntilDeadline(item) {
+  if (item.deadline_date) {
+    const diff = new Date(item.deadline_date).getTime() - Date.now();
+    return Math.max(0, Math.floor(diff / (1000 * 60 * 60 * 24)));
+  }
+  return Math.max(0, (item.days_listed || 45) - daysAgo(item.created_at));
 }
 
-function statusBadge(status, intakeDate) {
-  const remaining = daysRemaining(intakeDate);
+function markdownStatus(item) {
+  if (item.status !== "available") return null;
+  const age = daysAgo(item.created_at);
+  const total = item.days_listed || 45;
+  const firstMarkdownDay = Math.floor(total * 0.31); // ~14 days on 45-day listing
+  const finalMarkdownDay = Math.floor(total * 0.67); // ~30 days on 45-day listing
+  if (age >= finalMarkdownDay && !item.final_markdown_at) return "final";
+  if (age >= firstMarkdownDay && !item.first_markdown_at) return "first";
+  return null;
+}
+
+function statusBadge(status, item) {
+  const remaining = typeof item === "object" ? daysUntilDeadline(item) : Math.max(0, (45) - daysAgo(item));
   const urgent = status === "available" && remaining <= 7;
   const map = {
     available: urgent
@@ -183,7 +198,7 @@ export default function DashboardPage() {
     .sort((a, b) => {
       if (sortBy === "intake_date") return new Date(b.created_at) - new Date(a.created_at);
       if (sortBy === "intake_date_asc") return new Date(a.created_at) - new Date(b.created_at);
-      if (sortBy === "deadline") return daysRemaining(a.created_at) - daysRemaining(b.created_at);
+      if (sortBy === "deadline") return daysUntilDeadline(a) - daysUntilDeadline(b);
       if (sortBy === "client") return a.session.client_name.localeCompare(b.session.client_name);
       if (sortBy === "client_desc") return b.session.client_name.localeCompare(a.session.client_name);
       if (sortBy === "status") return a.status.localeCompare(b.status);
@@ -199,7 +214,7 @@ export default function DashboardPage() {
   const totalRevenue = soldItems.reduce((sum, i) => sum + (i.sale_price || 0), 0);
   const brynnEarnings = totalRevenue * COMMISSION_BRYNN;
   const blEarnings = totalRevenue * COMMISSION_BL;
-  const urgentItems = availableItems.filter((i) => daysRemaining(i.created_at) <= 7);
+  const urgentItems = availableItems.filter((i) => daysUntilDeadline(i) <= 7);
 
   const openItem = (item) => {
     setSelectedItem(item);
@@ -528,8 +543,7 @@ export default function DashboardPage() {
         ) : (
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {filteredItems.map((item) => {
-              const { cls, label } = statusBadge(item.status, item.created_at);
-              const remaining = daysRemaining(item.created_at);
+              const { cls, label } = statusBadge(item.status, item);
               return (
                 <button
                   key={item.id}
@@ -553,13 +567,18 @@ export default function DashboardPage() {
                       <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#7A8F88] mb-0.5">{item.item_number || "—"}</p>
                       <p className="font-medium text-[#1A3A32] leading-snug line-clamp-2">{item.item_title}</p>
                       <span className={`shrink-0 rounded-full border px-2.5 py-0.5 text-xs font-semibold ${cls}`}>{label}</span>
+                      {markdownStatus(item) && (
+                        <span className="shrink-0 rounded-full border border-orange-200 bg-orange-50 px-2.5 py-0.5 text-xs font-semibold text-orange-700">
+                          {markdownStatus(item) === "first" ? "1st Markdown" : "Final Markdown"}
+                        </span>
+                      )}
                     </div>
                     <p className="text-sm text-[#7A8F88]">{item.session.client_name}</p>
                     <div className="flex items-center justify-between text-sm">
                       <span className="text-[#4A5568]">{formatMoney(item.price_floor)} – {formatMoney(item.price_ceiling)}</span>
                       {item.status === "available" && (
-                        <span className={`text-xs ${remaining <= 7 ? "text-amber-600 font-semibold" : "text-[#7A8F88]"}`}>
-                          {remaining}d left
+                        <span className={`text-xs ${daysUntilDeadline(item) <= 7 ? "text-amber-600 font-semibold" : "text-[#7A8F88]"}`}>
+                          {daysUntilDeadline(item)}d left
                         </span>
                       )}
                       {item.status === "sold" && (
@@ -637,7 +656,7 @@ export default function DashboardPage() {
 
             {/* Status badge */}
             {(() => {
-              const { cls, label } = statusBadge(selectedItem.status, selectedItem.created_at);
+              const { cls, label } = statusBadge(selectedItem.status, selectedItem);
               return <span className={`inline-flex rounded-full border px-3 py-1 text-sm font-semibold ${cls}`}>{label}</span>;
             })()}
 
@@ -668,11 +687,36 @@ export default function DashboardPage() {
                 <span className="text-[#4A5568]">{selectedItem.if_unsold === "donate" ? "Donate" : "Client Pickup"}</span>
               </div>
               {selectedItem.status === "available" && (
-                <div className="flex justify-between">
+                <div className="flex justify-between items-center">
                   <span className="text-[#7A8F88]">Days Remaining</span>
-                  <span className={`font-semibold ${daysRemaining(selectedItem.created_at) <= 7 ? "text-amber-600" : "text-[#2A6B52]"}`}>
-                    {daysRemaining(selectedItem.created_at)} days
-                  </span>
+                  <div className="flex items-center gap-2">
+                    <span className={`font-semibold ${daysUntilDeadline(selectedItem) <= 7 ? "text-amber-600" : "text-[#2A6B52]"}`}>
+                      {daysUntilDeadline(selectedItem)} days
+                    </span>
+                    <div className="flex gap-1">
+                      {[15, 30].map((days) => (
+                        <button
+                          key={days}
+                          type="button"
+                          onClick={async () => {
+                            const newDeadline = new Date(selectedItem.deadline_date || new Date(selectedItem.created_at).getTime() + (selectedItem.days_listed || 45) * 24 * 60 * 60 * 1000);
+                            newDeadline.setDate(newDeadline.getDate() + days);
+                            try {
+                              const updated = await patchItem(selectedItem.id, {
+                                deadline_date: newDeadline.toISOString(),
+                                days_listed: (selectedItem.days_listed || 45) + days,
+                              });
+                              await fetchData();
+                              setSelectedItem((prev) => ({ ...prev, ...updated }));
+                            } catch (e) { alert(e.message); }
+                          }}
+                          className="rounded-full border border-[#E8EDE9] bg-[#F4F9F7] px-2 py-0.5 text-xs font-medium text-[#2A6B52] hover:bg-[#E8EDE9] transition-colors"
+                        >
+                          +{days}d
+                        </button>
+                      ))}
+                    </div>
+                  </div>
                 </div>
               )}
               {selectedItem.status === "sold" && (
@@ -695,6 +739,63 @@ export default function DashboardPage() {
                 <Btn onClick={() => setSoldModal(true)}>Mark Sold</Btn>
                 <Btn variant="ghost" onClick={() => handleMarkResolved("donated")}>Mark Donated</Btn>
                 <Btn variant="ghost" onClick={() => handleMarkResolved("picked_up")}>Mark Picked Up</Btn>
+              </div>
+            )}
+
+            {selectedItem.status === "available" && markdownStatus(selectedItem) && (
+              <div className="border-t border-[#E8EDE9] pt-4 space-y-3">
+                <p className="text-sm font-semibold uppercase tracking-[0.14em] text-orange-600">
+                  {markdownStatus(selectedItem) === "first" ? "First Markdown Due" : "Final Markdown Due"}
+                </p>
+                <div className="rounded-[10px] border border-orange-200 bg-orange-50/80 px-4 py-3 space-y-2">
+                  <div className="flex justify-between text-sm">
+                    <span className="text-[#4A5568]">Current price</span>
+                    <span className="font-semibold text-[#1A3A32]">{formatMoney(selectedItem.current_price || selectedItem.price_ceiling)}</span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-[#4A5568]">Suggested markdown</span>
+                    <span className="font-semibold text-orange-700">
+                      {markdownStatus(selectedItem) === "first"
+                        ? formatMoney(((selectedItem.current_price || selectedItem.price_ceiling) + selectedItem.price_floor) / 2)
+                        : formatMoney(selectedItem.price_floor)}
+                    </span>
+                  </div>
+                </div>
+                <div className="flex gap-2">
+                  <input
+                    type="number"
+                    min={selectedItem.price_floor}
+                    max={selectedItem.price_ceiling}
+                    step="0.01"
+                    placeholder="New price"
+                    id="markdown-price-input"
+                    className="flex-1 min-h-[40px] rounded-[10px] border border-[#E8EDE9] bg-white px-3 py-2 text-sm text-[#1A3A32] focus:outline-none focus:ring-1 focus:ring-[#2A6B52]/30"
+                  />
+                  <Btn variant="sm" onClick={async () => {
+                    const input = document.getElementById("markdown-price-input");
+                    const newPrice = parseFloat(input?.value);
+                    if (!newPrice || newPrice < selectedItem.price_floor) {
+                      alert(`Price cannot be below the minimum of ${formatMoney(selectedItem.price_floor)}`);
+                      return;
+                    }
+                    const isFirst = markdownStatus(selectedItem) === "first";
+                    const updates = {
+                      current_price: newPrice,
+                      ...(isFirst ? { first_markdown_at: new Date().toISOString() } : { final_markdown_at: new Date().toISOString() }),
+                    };
+                    try {
+                      const updated = await patchItem(selectedItem.id, updates);
+                      await fetchData();
+                      setSelectedItem((prev) => ({ ...prev, ...updated }));
+                    } catch (e) { alert(e.message); }
+                  }}>
+                    Apply Markdown
+                  </Btn>
+                </div>
+                <p className="text-xs text-[#7A8F88]">
+                  Cannot go below minimum price of {formatMoney(selectedItem.price_floor)}.
+                  Remember to update all live listings after applying.
+                </p>
               </div>
             )}
 
@@ -904,7 +1005,7 @@ export default function DashboardPage() {
               <div className="space-y-2">
                 <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#7A8F88]">All Items ({items.length})</p>
                 {items.map((item) => {
-                  const { cls, label } = statusBadge(item.status, item.created_at);
+                  const { cls, label } = statusBadge(item.status, item);
                   return (
                     <div key={item.id} className="flex items-center gap-3 rounded-[10px] border border-[#E8EDE9] bg-white p-3">
                       {item.photo_url ? (
