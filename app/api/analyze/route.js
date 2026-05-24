@@ -277,7 +277,7 @@ function missingKeys(parsed, requiredKeys) {
  * Normalize model output for the client (strings, visibleAccessories as string list).
  * @param {Record<string, unknown>} parsed
  */
-function normalizeAnalysisResponse(parsed, isIntakeMode = false) {
+function normalizeAnalysisResponse(parsed, isIntakeMode = false, activePlatforms = ["facebook", "poshmark", "ebay", "general"]) {
   const vis = parsed.visibleAccessories;
   let visibleAccessories = "";
   if (Array.isArray(vis)) {
@@ -365,9 +365,13 @@ export async function POST(request) {
     approximateAge,
     correction,
     mode,
+    platforms,
   } = body;
 
   const isIntakeMode = mode === "intake";
+  const activePlatforms = Array.isArray(platforms) && platforms.length > 0
+    ? platforms
+    : ["facebook", "poshmark", "ebay", "general"];
 
   const correctionText =
     typeof correction === "string" ? correction.trim() : "";
@@ -440,7 +444,7 @@ export async function POST(request) {
 
   const instructionText = isIntakeMode
     ? `Please analyze the photos in this message for a quick consignment intake. Respond with only a single JSON object with these keys: itemName, brand, condition, conditionExplanation, priceLow, priceHigh, sweetSpotPrice, listingTitle (general, under 70 chars), modelDetails, visibleAccessories, caveat, heroIndex. Do not include the full listings object. Do not wrap in markdown.`
-    : `Please analyze the photos in this message for a classified listing. Respond with only a single JSON object using the exact keys from your system instructions. Do not wrap the JSON in markdown code fences and do not add any text before or after the JSON.`;
+    : `Please analyze the photos in this message for a classified listing. Generate listings ONLY for these platforms: ${activePlatforms.join(", ")}. For platforms not in this list, return empty strings for title and description. Respond with only a single JSON object using the exact keys from your system instructions. Do not wrap the JSON in markdown code fences and do not add any text before or after the JSON.`;
 
   /** @type {Array<{ type: string; text?: string; source?: unknown }>} */
   const userContent = [
@@ -551,5 +555,5 @@ export async function POST(request) {
     );
   }
 
-  return NextResponse.json(normalizeAnalysisResponse(parsed, isIntakeMode));
+  return NextResponse.json(normalizeAnalysisResponse(parsed, isIntakeMode, activePlatforms));
 }

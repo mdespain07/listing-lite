@@ -146,6 +146,12 @@ export default function DashboardPage() {
 
   // Generate listing
   const [generatingListing, setGeneratingListing] = useState(false);
+  const [selectedPlatforms, setSelectedPlatforms] = useState({
+    facebook: false,
+    poshmark: false,
+    ebay: false,
+    general: false,
+  });
 
   // Listing URLs
   const [listingUrls, setListingUrls] = useState(["", "", "", ""]);
@@ -229,7 +235,11 @@ export default function DashboardPage() {
     setSalePrice("");
   };
 
-  const closeItem = () => { setSelectedItem(null); setSelectedSession(null); };
+  const closeItem = () => {
+    setSelectedItem(null);
+    setSelectedSession(null);
+    setSelectedPlatforms({ facebook: false, poshmark: false, ebay: false, general: false });
+  };
 
   const patchItem = async (itemId, updates) => {
     const res = await fetch("/api/dashboard", {
@@ -327,12 +337,15 @@ export default function DashboardPage() {
         reader.readAsDataURL(blob);
       });
 
+      const activePlatforms = Object.entries(selectedPlatforms)
+        .filter(([, v]) => v)
+        .map(([k]) => k);
       const res = await fetch("/api/analyze", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           images: [base64],
-          category: selectedItem.session?.intake_items ? "" : "",
+          platforms: activePlatforms,
         }),
       });
       const data = await res.json();
@@ -848,19 +861,64 @@ export default function DashboardPage() {
             )}
 
             {/* Generate Listing */}
-            <div className="border-t border-[#E8EDE9] pt-4 space-y-3">
-              <div className="flex items-center justify-between">
-                <p className="text-sm font-semibold uppercase tracking-[0.14em] text-[#7A8F88]">Listing</p>
-                <Btn variant="sm" onClick={handleGenerateListing} disabled={generatingListing}>
-                  {generatingListing ? <span className="flex items-center gap-1.5"><Spinner className="h-3.5 w-3.5" /> Generating…</span> : "Generate Listing"}
+            <div className="border-t border-[#E8EDE9] pt-4 space-y-4">
+              <p className="text-sm font-semibold uppercase tracking-[0.14em] text-[#7A8F88]">Generate Listing</p>
+              <div className="space-y-2">
+                <p className="text-xs text-[#7A8F88] uppercase tracking-[0.12em] font-semibold">Select platforms:</p>
+                {[
+                  { key: "facebook", label: "Facebook Marketplace" },
+                  { key: "poshmark", label: "Poshmark" },
+                  { key: "ebay", label: "eBay" },
+                  { key: "general", label: "General (KSL, Craigslist, etc.)" },
+                ].map(({ key, label }) => (
+                  <label key={key} className="flex items-center gap-3 cursor-pointer min-h-[36px]">
+                    <input
+                      type="checkbox"
+                      checked={selectedPlatforms[key]}
+                      onChange={(e) => setSelectedPlatforms((prev) => ({ ...prev, [key]: e.target.checked }))}
+                      className="h-4 w-4 rounded border-[#C5D4CC] accent-[#2A6B52]"
+                    />
+                    <span className="text-sm text-[#1A3A32]">{label}</span>
+                  </label>
+                ))}
+              </div>
+              <div className="flex gap-2">
+                <Btn
+                  variant="sm"
+                  onClick={handleGenerateListing}
+                  disabled={generatingListing || !Object.values(selectedPlatforms).some(Boolean)}
+                  className="flex-1"
+                >
+                  {generatingListing
+                    ? <span className="flex items-center gap-1.5"><Spinner className="h-3.5 w-3.5" /> Generating…</span>
+                    : "Generate Listing"}
                 </Btn>
+                {selectedItem.photo_url && (
+                  <Btn
+                    variant="ghost"
+                    onClick={() => {
+                      const platforms = Object.entries(selectedPlatforms)
+                        .filter(([, v]) => v)
+                        .map(([k]) => k)
+                        .join(",");
+                      const url = `/?item_id=${encodeURIComponent(selectedItem.item_number || "")}&photo_url=${encodeURIComponent(selectedItem.photo_url)}&platforms=${encodeURIComponent(platforms || "general")}`;
+                      window.open(url, "_blank");
+                    }}
+                    className="flex-1"
+                  >
+                    Open in Listing Tool →
+                  </Btn>
+                )}
               </div>
               {selectedItem.listing_title && (
-                <div className="space-y-2">
+                <div className="rounded-[10px] border border-[#E8EDE9] bg-[#F4F9F7] p-3 space-y-2">
+                  <p className="text-xs font-semibold uppercase tracking-[0.12em] text-[#7A8F88]">Last Generated</p>
                   <p className="text-sm font-medium text-[#1A3A32]">{selectedItem.listing_title}</p>
                   <p className="text-sm text-[#4A5568] leading-relaxed line-clamp-3">{selectedItem.listing_description}</p>
                   {selectedItem.listing_generated_at && (
-                    <p className="text-xs text-[#C5D4CC]">Generated {new Date(selectedItem.listing_generated_at).toLocaleDateString()}</p>
+                    <p className="text-xs text-[#C5D4CC]">
+                      {new Date(selectedItem.listing_generated_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+                    </p>
                   )}
                 </div>
               )}

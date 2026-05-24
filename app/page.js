@@ -809,6 +809,45 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
+    if (typeof window === "undefined") return;
+    const params = new URLSearchParams(window.location.search);
+    const photoUrl = params.get("photo_url");
+    const itemId = params.get("item_id");
+    const platforms = params.get("platforms");
+
+    if (!photoUrl) return;
+
+    // Clean URL params
+    const url = new URL(window.location.href);
+    url.searchParams.delete("photo_url");
+    url.searchParams.delete("item_id");
+    url.searchParams.delete("platforms");
+    window.history.replaceState({}, "", `${url.pathname}${url.searchParams.toString() ? `?${url.searchParams.toString()}` : ""}`);
+
+    // Pre-select platforms if specified
+    if (platforms) {
+      const platformList = platforms.split(",").filter(Boolean);
+      startTransition(() => {
+        setSelectedPlatform(platformList[0] || "general");
+      });
+    }
+
+    // Fetch photo and add to upload queue
+    fetch(photoUrl)
+      .then((res) => res.blob())
+      .then((blob) => {
+        const ext = blob.type.includes("png") ? "png" : "jpg";
+        const fileName = itemId ? `${itemId}.${ext}` : `item.${ext}`;
+        const file = new File([blob], fileName, { type: blob.type });
+        startTransition(() => {
+          setFiles([file]);
+          if (itemId) setNotes(`Item: ${itemId}`);
+        });
+      })
+      .catch((e) => console.error("Could not pre-load photo:", e));
+  }, []);
+
+  useEffect(() => {
     if (!currentUser) return;
     supabase.auth.getSession().then(async ({ data: { session } }) => {
       if (!session) return;
@@ -1765,11 +1804,14 @@ export default function Home() {
                   <div className="space-y-3">
                     <div className="flex flex-wrap gap-2">
                       {[
-                        { key: "general", label: "General" },
                         { key: "facebook", label: "Facebook" },
-                        { key: "ebay", label: "eBay" },
                         { key: "poshmark", label: "Poshmark" },
-                      ].map(({ key, label }) => (
+                        { key: "ebay", label: "eBay" },
+                        { key: "general", label: "General" },
+                      ].filter(({ key }) => {
+                        const listing = results.listings?.[key];
+                        return listing?.title || listing?.description;
+                      }).map(({ key, label }) => (
                         <button
                           key={key}
                           type="button"
