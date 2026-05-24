@@ -30,7 +30,7 @@ export default function PrivacyPolicyPage() {
             </Link>
             <p className="text-sm leading-relaxed text-[#3D4A44]">
               Last updated:{" "}
-              <time dateTime="2025-05-15">May 15, 2025</time>
+              <time dateTime="2026-05-24">May 24, 2026</time>
             </p>
           </div>
 
@@ -80,10 +80,11 @@ export default function PrivacyPolicyPage() {
               Your photos and related inputs may be processed by{" "}
               <strong>third-party AI services</strong>, including{" "}
               <strong>Anthropic</strong> and <strong>Photoroom</strong>, to generate listing
-              content and optional enhanced images. We design our integrations so that photos
-              are <strong>not stored permanently</strong> by BrightListed after processing
-              completes; third parties retain data according to their own policies and
-              agreements.
+              content and optional enhanced images. Photos uploaded through the listing tool are{" "}
+              <strong>not stored permanently</strong> after processing completes. Photos uploaded
+              during consignment intake are stored securely to support your consignment agreement
+              and inventory management. Third parties retain data according to their own policies
+              and agreements.
             </p>
           </section>
 
@@ -116,8 +117,7 @@ export default function PrivacyPolicyPage() {
             <p className="leading-relaxed">
               We use browser technologies such as <strong>cookies</strong> and/or{" "}
               <strong>localStorage</strong> as needed to operate the site — for example, to
-              remember your <strong>credit balance</strong> on this device until proper accounts
-              are added. You can clear site data in your browser settings; doing so may reset
+              remember your <strong>credit balance</strong> on this device until you create an account, after which your balance is stored securely in your account. You can clear site data in your browser settings; doing so may reset
               credits shown locally until synced again.
             </p>
           </section>
@@ -143,15 +143,13 @@ export default function PrivacyPolicyPage() {
             <p className="leading-relaxed">
               For privacy questions or requests, contact{" "}
               <a
-                href="mailto:privacy@brightlisted.ai"
+                href="mailto:hello@brightlisted.ai"
                 className="font-semibold text-[#2A6B52] underline decoration-[#2A6B52]/35 underline-offset-2 hover:text-[#1A3A32]"
               >
-                privacy@brightlisted.ai
+                hello@brightlisted.ai
               </a>
               .{" "}
-              <span className="font-medium text-[#1A3A32]">
-                [PLACEHOLDER — UPDATE BEFORE LAUNCH]
-              </span>
+              For privacy-related requests, please use the contact information above.
             </p>
           </section>
         </div>

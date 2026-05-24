@@ -30,7 +30,7 @@ export default function TermsOfServicePage() {
             </Link>
             <p className="text-sm leading-relaxed text-[#3D4A44]">
               Last updated:{" "}
-              <time dateTime="2025-05-15">May 15, 2025</time>
+              <time dateTime="2026-05-24">May 24, 2026</time>
             </p>
           </div>
 
@@ -153,15 +153,13 @@ export default function TermsOfServicePage() {
             <p className="leading-relaxed">
               For questions about these Terms, contact{" "}
               <a
-                href="mailto:legal@brightlisted.ai"
+                href="mailto:hello@brightlisted.ai"
                 className="font-semibold text-[#2A6B52] underline decoration-[#2A6B52]/35 underline-offset-2 hover:text-[#1A3A32]"
               >
-                legal@brightlisted.ai
+                hello@brightlisted.ai
               </a>
               .{" "}
-              <span className="font-medium text-[#1A3A32]">
-                [PLACEHOLDER — UPDATE BEFORE LAUNCH]
-              </span>
+              For legal notices, please use the mailing address on file with the Utah Division of Corporations under Fabs &amp; Belle Co.
             </p>
           </section>
         </div>
