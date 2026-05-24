@@ -609,6 +609,12 @@ export default function Home() {
   const [analyzing, setAnalyzing] = useState(false);
   const [results, setResults] = useState(null);
   const [selectedPlatform, setSelectedPlatform] = useState("general");
+  const [selectedPlatforms, setSelectedPlatforms] = useState({
+    general: true,
+    facebook: false,
+    ebay: false,
+    poshmark: false,
+  });
   const [error, setError] = useState(null);
   const [enhancedImages, setEnhancedImages] = useState(null);
   const [enhanceNotice, setEnhanceNotice] = useState(null);
@@ -896,7 +902,7 @@ export default function Home() {
   }, []);
 
   const canAnalyze =
-    files.length >= 1 && credits >= 1 && !analyzing;
+    files.length >= 1 && credits >= 1 && !analyzing && Object.values(selectedPlatforms).some(Boolean);
 
   const handleAnalyze = async () => {
     if (files.length < 1 || credits < 1) return;
@@ -917,6 +923,10 @@ export default function Home() {
       );
       setAnalysisPhase("upload");
 
+      const activePlatforms = Object.entries(selectedPlatforms)
+        .filter(([, v]) => v)
+        .map(([k]) => k);
+
       const analyzeBody = JSON.stringify({
         images,
         notes: notes.trim() || undefined,
@@ -925,6 +935,7 @@ export default function Home() {
         tagsAttached,
         partsIncluded: partsComplete,
         approximateAge,
+        platforms: activePlatforms,
       });
 
       let analyzeRes;
@@ -969,6 +980,8 @@ export default function Home() {
         return;
       }
 
+      const firstPlatform = Object.entries(selectedPlatforms).find(([, v]) => v)?.[0] || "general";
+      setSelectedPlatform(firstPlatform);
       setResults({
         ...analyzeData,
         listingDescription: appendHomeEnvironmentSuffix(
@@ -1116,6 +1129,7 @@ export default function Home() {
     setManualHeroIndex(null);
     setResults(null);
     setSelectedPlatform("general");
+    setSelectedPlatforms({ general: true, facebook: false, ebay: false, poshmark: false });
     setEnhancedImages(null);
     setEnhanceNotice(null);
     setEnhancingImages(false);
@@ -1705,6 +1719,39 @@ export default function Home() {
                 />
                 Pet-free home
               </label>
+            </div>
+
+            <div>
+              <div className="mb-3 flex min-w-0 items-center gap-3">
+                <span className="shrink-0 text-sm font-medium uppercase leading-none tracking-[0.18em] text-[#4A5568] sm:text-base">
+                  Generate listings for
+                </span>
+                <span className="h-px min-w-[1rem] flex-1 bg-[#E8EDE9]" aria-hidden />
+              </div>
+              <div className="flex flex-wrap gap-3">
+                {[
+                  { key: "general", label: "General (KSL, Craigslist)" },
+                  { key: "facebook", label: "Facebook Marketplace" },
+                  { key: "ebay", label: "eBay" },
+                  { key: "poshmark", label: "Poshmark" },
+                ].map(({ key, label }) => (
+                  <label
+                    key={key}
+                    className="flex min-h-11 cursor-pointer items-center gap-3 text-sm leading-snug text-[#5C6F66]"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={selectedPlatforms[key]}
+                      onChange={(e) => setSelectedPlatforms((prev) => ({ ...prev, [key]: e.target.checked }))}
+                      className="h-5 w-5 shrink-0 rounded border-[#C5D4CC] accent-[#2A6B52] focus:outline-none focus:ring-2 focus:ring-[#2A6B52]/30 focus:ring-offset-2"
+                    />
+                    {label}
+                  </label>
+                ))}
+              </div>
+              {!Object.values(selectedPlatforms).some(Boolean) && (
+                <p className="mt-2 text-sm text-amber-600">Select at least one platform to generate a listing.</p>
+              )}
             </div>
 
             <div>
