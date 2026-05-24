@@ -83,7 +83,7 @@ export default function WelcomePageClient() {
           <div className="grid grid-cols-3 divide-x divide-[#E8EDE9]">
             {[
               { stat: "30 sec", label: "Average analysis time" },
-              { stat: "$0.99", label: "Starting price per listing" },
+              { stat: "$0.99", label: "Or less per analysis" },
               { stat: "3 free", label: "Credits when you sign up" },
             ].map(({ stat, label }) => (
               <div key={stat} className="flex flex-col items-center gap-2 px-4 sm:px-8">
@@ -95,6 +95,58 @@ export default function WelcomePageClient() {
         </div>
       </section>
 
+      {/* LISTING SHOWCASE */}
+      <section className="border-b border-[#E8EDE9] bg-[#FFFFFF]">
+        <div className="mx-auto max-w-5xl px-4 py-20 sm:px-6 sm:py-28">
+          <div className="grid grid-cols-1 gap-16 sm:grid-cols-2 sm:items-center">
+            <div className="flex flex-col gap-6">
+              <p className="text-base font-semibold uppercase tracking-[0.28em] text-[#2A6B52]">No more writer's block</p>
+              <h2 className="font-serif text-4xl font-medium tracking-[0.01em] text-[#1A3A32] sm:text-5xl">
+                Stop staring at a blank description box.
+              </h2>
+              <p className="text-lg leading-relaxed text-[#4A5568]">
+                Most listings go unsold because the description is vague, the title buries the item, or the price is a guess. BrightListed writes optimized, platform-ready listing content the moment you upload a photo — title, description, and pricing, tuned for wherever you sell.
+              </p>
+              <a
+                href="/"
+                className="touch-manipulation mt-2 inline-flex min-h-[52px] w-fit items-center justify-center rounded-[12px] bg-[#2A6B52] px-8 py-3 text-base font-semibold uppercase tracking-[0.18em] text-white transition-opacity hover:opacity-90 shadow-[0_8px_32px_rgba(42,107,82,0.20)]"
+              >
+                Try it now
+              </a>
+            </div>
+            <div className="overflow-hidden rounded-[20px] border-[0.5px] border-[#E8EDE9] bg-[#F4F9F7] shadow-[0_16px_64px_rgba(26,58,50,0.10)]">
+              {/* Replace this div with an <img src="/listing-screenshot.jpg" ... /> when ready */}
+              <div className="flex aspect-[4/5] flex-col gap-0 overflow-hidden">
+                <div className="h-2 w-full bg-[#E8EDE9]" />
+                <div className="flex flex-1 flex-col gap-4 p-6">
+                  <div className="aspect-video w-full overflow-hidden rounded-[12px] bg-[#E8EDE9] flex items-center justify-center">
+                    <p className="text-sm uppercase tracking-[0.16em] text-[#7A8F88]">Listing photo</p>
+                  </div>
+                  <div className="flex flex-col gap-2">
+                    <div className="h-4 w-3/4 rounded-full bg-[#E8EDE9]" />
+                    <div className="h-4 w-1/2 rounded-full bg-[#E8EDE9]" />
+                  </div>
+                  <div className="flex flex-col gap-1.5">
+                    <div className="h-3 w-full rounded-full bg-[#F0EDE6]" />
+                    <div className="h-3 w-full rounded-full bg-[#F0EDE6]" />
+                    <div className="h-3 w-4/5 rounded-full bg-[#F0EDE6]" />
+                    <div className="h-3 w-full rounded-full bg-[#F0EDE6]" />
+                    <div className="h-3 w-2/3 rounded-full bg-[#F0EDE6]" />
+                  </div>
+                  <div className="mt-auto flex items-center justify-between">
+                    <div className="flex flex-col gap-1">
+                      <div className="h-3 w-16 rounded-full bg-[#E8EDE9]" />
+                      <div className="h-5 w-24 rounded-full bg-[#8FCFB0]/60" />
+                    </div>
+                    <div className="h-9 w-24 rounded-[10px] bg-[#2A6B52]/20" />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* BEFORE / AFTER */}
       <section className="border-b border-[#E8EDE9] bg-[#F4F9F7]">
         <div className="mx-auto max-w-5xl px-4 py-20 sm:px-6 sm:py-28">
@@ -102,11 +154,11 @@ export default function WelcomePageClient() {
             <div>
               <p className="text-base font-semibold uppercase tracking-[0.28em] text-[#2A6B52]">See the difference</p>
               <h2 className="font-serif mt-3 text-4xl font-medium tracking-[0.01em] text-[#1A3A32] sm:text-5xl">
-                Your photo. Transformed.
+                Your photos, transformed.
               </h2>
             </div>
             <p className="max-w-sm text-lg leading-relaxed text-[#4A5568]">
-              BrightListed removes cluttered backgrounds with clean background removal, automatically.
+              BrightListed removes cluttered backgrounds automatically, giving your items a clean, professional look.
             </p>
           </div>
           <div className="mt-12 grid grid-cols-1 gap-6 sm:grid-cols-2">
@@ -219,6 +271,15 @@ export default function WelcomePageClient() {
           <p className="mt-4 max-w-xl text-lg leading-relaxed text-[#4A5568]">
             No subscriptions. No monthly fees. Buy credits when you need them — each credit covers one full listing analysis plus enhanced photos.
           </p>
+          <p className="mt-6 text-lg text-[#7A8F88]">
+            New accounts start with 3 free credits — no credit card required.
+          </p>
+          <a
+            href="/"
+            className="mt-4 inline-flex min-h-[48px] items-center justify-center rounded-[12px] bg-[#2A6B52] px-8 py-2.5 text-base font-semibold uppercase tracking-[0.16em] text-white transition-opacity hover:opacity-90"
+          >
+            Get Started
+          </a>
           <div className="mt-12 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {[
               { credits: 1, price: "$0.99", per: "$0.99 per listing", popular: false },
@@ -246,14 +307,11 @@ export default function WelcomePageClient() {
                   href="/"
                   className="mt-auto inline-flex min-h-[48px] items-center justify-center rounded-[12px] bg-[#2A6B52] px-4 py-2.5 text-base font-semibold uppercase tracking-[0.16em] text-white transition-opacity hover:opacity-90"
                 >
-                  Get started
+                  Buy now
                 </a>
               </div>
             ))}
           </div>
-          <p className="mt-8 text-center text-lg text-[#7A8F88]">
-            New accounts start with 3 free credits — no credit card required.
-          </p>
         </div>
       </section>
 
@@ -278,12 +336,6 @@ export default function WelcomePageClient() {
             >
               Start listing for free
             </a>
-            <a
-              href="/book"
-              className="touch-manipulation inline-flex min-h-[48px] items-center justify-center rounded-[12px] border-2 border-white/30 bg-transparent px-8 py-3 text-base font-semibold uppercase tracking-[0.18em] text-white/80 transition-all hover:border-white hover:text-white"
-            >
-              Book a Drop-Off →
-            </a>
             <p className="text-base text-white/40">No credit card required · 3 free credits included</p>
           </div>
         </div>
@@ -291,9 +343,7 @@ export default function WelcomePageClient() {
 
       {/* FOOTER */}
       <footer className="border-t border-[#E8EDE9] bg-[#FFFFFF] py-8 text-center space-y-3">
-        <p className="text-[11px] font-medium uppercase tracking-[0.2em] text-[#7A8F88]">
-          BrightListed · Listings in a Snap
-        </p>
+        <img src="/logo.svg" alt="BrightListed" className="mx-auto h-10 w-auto" />
         <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2">
           <a href="/sell" className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#2A6B52] underline-offset-2 hover:underline transition-colors">
             Sell My Items — Salt Lake County
@@ -314,7 +364,8 @@ export default function WelcomePageClient() {
         <p className="text-[11px] text-[#7A8F88]">
           <a href="/terms" className="underline-offset-2 transition-colors hover:text-[#2A6B52] hover:underline">Terms of Service</a>
           <span className="mx-2">·</span>
-          <a href="/privacy" className="underline-offset-2 transition-colors hover:text-[#2A6B52] hover:underline">Privacy Policy</a>
+          <a href="/privacy" className="underline-offset-2 transition-colors hover:text-[#2A6B52] hover:underline">Privacy Policy</a><span className="mx-2">·</span>
+          <a href="/contact" className="underline-offset-2 transition-colors hover:text-[#2A6B52] hover:underline">Contact</a>
         </p>
       </footer>
 

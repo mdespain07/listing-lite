@@ -2197,9 +2197,7 @@ export default function Home() {
       )}
 
       <footer className="space-y-3 py-8 text-center border-t border-[#E8EDE9] bg-white">
-        <p className="text-[11px] font-medium uppercase tracking-[0.2em] text-[#7A8F88]">
-          BrightListed · Listings in a Snap
-        </p>
+        <img src="/logo.svg" alt="BrightListed" className="mx-auto h-10 w-auto" />
         <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2">
           <a href="/sell" className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#2A6B52] underline-offset-2 hover:underline transition-colors">
             Sell My Items — Salt Lake County
@@ -2220,7 +2218,8 @@ export default function Home() {
         <p className="text-[11px] text-[#7A8F88]">
           <a href="/terms" className="underline-offset-2 transition-colors duration-150 hover:text-[#2A6B52] hover:underline">Terms of Service</a>
           <span className="mx-2">·</span>
-          <a href="/privacy" className="underline-offset-2 transition-colors duration-150 hover:text-[#2A6B52] hover:underline">Privacy Policy</a>
+          <a href="/privacy" className="underline-offset-2 transition-colors duration-150 hover:text-[#2A6B52] hover:underline">Privacy Policy</a><span className="mx-2">·</span>
+          <a href="/contact" className="underline-offset-2 transition-colors hover:text-[#2A6B52] hover:underline">Contact</a>
         </p>
       </footer>
     </div>
