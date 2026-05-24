@@ -62,6 +62,16 @@ export async function POST(request) {
         sold_at: new Date().toISOString(),
       })
       .eq("id", item.id);
+
+    try {
+      await fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/notifications/sale`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ itemId: item.id, salePrice: item.salePrice }),
+      });
+    } catch (e) {
+      console.error("Sale notification failed:", e);
+    }
   }
 
   return NextResponse.json({ success: true, transactionId: transaction.id });

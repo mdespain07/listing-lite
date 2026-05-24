@@ -88,6 +88,18 @@ export async function PATCH(request) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
+  if (updates.status === "sold" && updates.sale_price) {
+    try {
+      await fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/notifications/sale`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ itemId, salePrice: updates.sale_price }),
+      });
+    } catch (e) {
+      console.error("Sale notification failed:", e);
+    }
+  }
+
   return NextResponse.json({ item: data });
 }
 
