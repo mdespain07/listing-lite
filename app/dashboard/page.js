@@ -1,0 +1,630 @@
+"use client";
+
+import { useState, useEffect, useCallback } from "react";
+
+const PIN = "2847";
+const COMMISSION_CLIENT = 0.60;
+const COMMISSION_BRYNN = 0.30;
+const COMMISSION_BL = 0.10;
+const UNSOLD_DAYS = 45;
+
+function formatMoney(n) {
+  if (n == null) return "—";
+  return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(n);
+}
+
+function daysAgo(dateStr) {
+  const diff = Date.now() - new Date(dateStr).getTime();
+  return Math.floor(diff / (1000 * 60 * 60 * 24));
+}
+
+function daysRemaining(dateStr) {
+  return Math.max(0, UNSOLD_DAYS - daysAgo(dateStr));
+}
+
+function statusBadge(status, intakeDate) {
+  const remaining = daysRemaining(intakeDate);
+  const urgent = status === "available" && remaining <= 7;
+  const map = {
+    available: urgent
+      ? "bg-amber-50 border-amber-200 text-amber-800"
+      : "bg-emerald-50 border-emerald-200 text-emerald-800",
+    sold: "bg-blue-50 border-blue-200 text-blue-800",
+    donated: "bg-gray-50 border-gray-200 text-gray-600",
+    picked_up: "bg-gray-50 border-gray-200 text-gray-600",
+  };
+  const labels = {
+    available: urgent ? `⚠ ${remaining}d left` : "Available",
+    sold: "Sold",
+    donated: "Donated",
+    picked_up: "Picked Up",
+  };
+  return { cls: map[status] ?? map.available, label: labels[status] ?? status };
+}
+
+function Spinner({ className = "h-5 w-5" }) {
+  return (
+    <svg className={`${className} animate-spin text-[#2A6B52]`} fill="none" viewBox="0 0 24 24">
+      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+    </svg>
+  );
+}
+
+function Btn({ children, onClick, disabled, variant = "primary", className = "" }) {
+  const base = "touch-manipulation inline-flex items-center justify-center rounded-[10px] px-4 py-2.5 text-sm font-semibold uppercase tracking-[0.14em] transition-all disabled:opacity-40 disabled:cursor-not-allowed";
+  const variants = {
+    primary: "bg-[#2A6B52] text-white hover:opacity-90 min-h-[40px]",
+    outline: "border-2 border-[#2A6B52] text-[#2A6B52] hover:bg-[#F4F9F7] min-h-[40px]",
+    ghost: "border border-[#E8EDE9] text-[#4A5568] hover:bg-[#F4F9F7] min-h-[40px]",
+    danger: "bg-red-50 border border-red-200 text-red-700 hover:bg-red-100 min-h-[40px]",
+    sm: "bg-[#2A6B52] text-white hover:opacity-90 min-h-[34px] text-xs px-3 py-1.5",
+  };
+  return (
+    <button type="button" onClick={onClick} disabled={disabled}
+      className={`${base} ${variants[variant]} ${className}`}>
+      {children}
+    </button>
+  );
+}
+
+function Modal({ open, onClose, title, children }) {
+  useEffect(() => {
+    if (!open) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const onKey = (e) => { if (e.key === "Escape") onClose(); };
+    window.addEventListener("keydown", onKey);
+    return () => { document.body.style.overflow = prev; window.removeEventListener("keydown", onKey); };
+  }, [open, onClose]);
+  if (!open) return null;
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4" onMouseDown={(e) => { if (e.target === e.currentTarget) onClose(); }}>
+      <div className="absolute inset-0 bg-[#1A3A32]/40 backdrop-blur-[2px]" aria-hidden />
+      <div className="relative z-10 w-full max-w-lg max-h-[90dvh] overflow-y-auto rounded-[20px] border border-[#E8EDE9] bg-white shadow-2xl">
+        <div className="flex items-center justify-between border-b border-[#E8EDE9] px-6 py-4">
+          <h3 className="font-serif text-xl font-medium text-[#1A3A32]">{title}</h3>
+          <button type="button" onClick={onClose} className="flex h-8 w-8 items-center justify-center rounded-full hover:bg-[#F4F9F7] text-[#7A8F88]">
+            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+        <div className="px-6 py-5">{children}</div>
+      </div>
+    </div>
+  );
+}
+
+export default function DashboardPage() {
+  const [authed, setAuthed] = useState(false);
+  const [pin, setPin] = useState("");
+  const [pinError, setPinError] = useState("");
+  const [sessions, setSessions] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  // Filters
+  const [filterStatus, setFilterStatus] = useState("all");
+  const [filterClient, setFilterClient] = useState("");
+  const [sortBy, setSortBy] = useState("intake_date");
+
+  // Selected item for detail modal
+  const [selectedItem, setSelectedItem] = useState(null);
+  const [selectedSession, setSelectedSession] = useState(null);
+
+  // Mark sold modal
+  const [soldModal, setSoldModal] = useState(false);
+  const [salePrice, setSalePrice] = useState("");
+  const [soldBusy, setSoldBusy] = useState(false);
+
+  // Generate listing
+  const [generatingListing, setGeneratingListing] = useState(false);
+
+  // Listing URLs
+  const [listingUrls, setListingUrls] = useState(["", "", "", ""]);
+  const [savingUrls, setSavingUrls] = useState(false);
+
+  const fetchData = useCallback(async () => {
+    setLoading(true);
+    setError("");
+    try {
+      const res = await fetch("/api/dashboard");
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to load");
+      setSessions(data.sessions || []);
+    } catch (e) {
+      setError(e.message);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (authed) fetchData();
+  }, [authed, fetchData]);
+
+  const handlePin = () => {
+    if (pin === PIN) { setAuthed(true); setPinError(""); }
+    else { setPinError("Incorrect PIN."); setPin(""); }
+  };
+
+  // Flatten all items with session info
+  const allItems = sessions.flatMap((s) =>
+    (s.intake_items || []).map((item) => ({ ...item, session: s }))
+  );
+
+  // Filter + sort
+  const filteredItems = allItems
+    .filter((item) => {
+      if (filterStatus !== "all" && item.status !== filterStatus) return false;
+      if (filterClient && !item.session.client_name.toLowerCase().includes(filterClient.toLowerCase())) return false;
+      return true;
+    })
+    .sort((a, b) => {
+      if (sortBy === "intake_date") return new Date(b.created_at) - new Date(a.created_at);
+      if (sortBy === "deadline") return daysRemaining(a.created_at) - daysRemaining(b.created_at);
+      if (sortBy === "client") return a.session.client_name.localeCompare(b.session.client_name);
+      if (sortBy === "status") return a.status.localeCompare(b.status);
+      return 0;
+    });
+
+  // Stats
+  const availableItems = allItems.filter((i) => i.status === "available");
+  const soldItems = allItems.filter((i) => i.status === "sold");
+  const totalRevenue = soldItems.reduce((sum, i) => sum + (i.sale_price || 0), 0);
+  const brynnEarnings = totalRevenue * COMMISSION_BRYNN;
+  const blEarnings = totalRevenue * COMMISSION_BL;
+  const urgentItems = availableItems.filter((i) => daysRemaining(i.created_at) <= 7);
+
+  const openItem = (item) => {
+    setSelectedItem(item);
+    setSelectedSession(item.session);
+    setListingUrls([
+      item.listing_url_1 || "",
+      item.listing_url_2 || "",
+      item.listing_url_3 || "",
+      item.listing_url_4 || "",
+    ]);
+    setSoldModal(false);
+    setSalePrice("");
+  };
+
+  const closeItem = () => { setSelectedItem(null); setSelectedSession(null); };
+
+  const patchItem = async (itemId, updates) => {
+    const res = await fetch("/api/dashboard", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ itemId, updates }),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || "Update failed");
+    return data.item;
+  };
+
+  const handleMarkSold = async () => {
+    if (!salePrice || !selectedItem) return;
+    setSoldBusy(true);
+    try {
+      const updated = await patchItem(selectedItem.id, {
+        status: "sold",
+        sale_price: parseFloat(salePrice),
+        sold_at: new Date().toISOString(),
+      });
+      await fetchData();
+      setSelectedItem((prev) => ({ ...prev, ...updated }));
+      setSoldModal(false);
+      setSalePrice("");
+    } catch (e) {
+      alert(e.message);
+    } finally {
+      setSoldBusy(false);
+    }
+  };
+
+  const handleMarkResolved = async (status) => {
+    if (!selectedItem) return;
+    try {
+      const updated = await patchItem(selectedItem.id, {
+        status,
+        resolved_at: new Date().toISOString(),
+      });
+      await fetchData();
+      setSelectedItem((prev) => ({ ...prev, ...updated }));
+    } catch (e) {
+      alert(e.message);
+    }
+  };
+
+  const handleGenerateListing = async () => {
+    if (!selectedItem?.photo_url) {
+      alert("No photo available for this item. Upload a photo to generate a listing.");
+      return;
+    }
+    setGeneratingListing(true);
+    try {
+      const res = await fetch("/api/analyze", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ images: [selectedItem.photo_url] }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Analysis failed");
+      const updated = await patchItem(selectedItem.id, {
+        listing_title: data.listingTitle,
+        listing_description: data.listingDescription,
+        listing_generated_at: new Date().toISOString(),
+      });
+      await fetchData();
+      setSelectedItem((prev) => ({ ...prev, ...updated }));
+    } catch (e) {
+      alert(e.message);
+    } finally {
+      setGeneratingListing(false);
+    }
+  };
+
+  const handleSaveUrls = async () => {
+    if (!selectedItem) return;
+    setSavingUrls(true);
+    try {
+      const updated = await patchItem(selectedItem.id, {
+        listing_url_1: listingUrls[0] || null,
+        listing_url_2: listingUrls[1] || null,
+        listing_url_3: listingUrls[2] || null,
+        listing_url_4: listingUrls[3] || null,
+      });
+      await fetchData();
+      setSelectedItem((prev) => ({ ...prev, ...updated }));
+    } catch (e) {
+      alert(e.message);
+    } finally {
+      setSavingUrls(false);
+    }
+  };
+
+  // Commission for a session
+  const sessionCommission = (session) => {
+    const sold = (session.intake_items || []).filter((i) => i.status === "sold");
+    const total = sold.reduce((sum, i) => sum + (i.sale_price || 0), 0);
+    return {
+      total,
+      client: total * COMMISSION_CLIENT,
+      brynn: total * COMMISSION_BRYNN,
+      bl: total * COMMISSION_BL,
+    };
+  };
+
+  // PIN SCREEN
+  if (!authed) {
+    return (
+      <div className="min-h-dvh bg-[#F4F9F7] font-sans text-[#1A3A32] antialiased flex flex-col">
+        <header className="border-b border-[#E8EDE9] bg-white px-4 py-4">
+          <div className="mx-auto max-w-6xl">
+            <img src="/logo.svg" alt="BrightListed" className="h-10 w-auto" />
+          </div>
+        </header>
+        <div className="flex flex-1 flex-col items-center justify-center gap-6 px-4">
+          <div className="text-center">
+            <p className="text-xs font-semibold uppercase tracking-[0.28em] text-[#2A6B52]">BrightListed</p>
+            <h1 className="font-serif mt-3 text-4xl font-medium text-[#1A3A32]">Inventory Dashboard</h1>
+            <p className="mt-2 text-lg text-[#7A8F88]">Enter your PIN to continue</p>
+          </div>
+          <div className="w-full max-w-xs space-y-4">
+            {pinError && <p className="rounded-[10px] bg-red-50 px-4 py-3 text-base text-red-700">{pinError}</p>}
+            <input
+              type="password" inputMode="numeric" value={pin}
+              onChange={(e) => setPin(e.target.value)}
+              onKeyDown={(e) => { if (e.key === "Enter") handlePin(); }}
+              placeholder="••••"
+              className="min-h-[56px] w-full rounded-[12px] border border-[#E8EDE9] bg-white px-4 py-3 text-center text-2xl tracking-[0.5em] text-[#1A3A32] focus:outline-none focus:ring-2 focus:ring-[#2A6B52]/30"
+            />
+            <button type="button" onClick={handlePin}
+              className="w-full min-h-[52px] rounded-[12px] bg-[#2A6B52] text-white text-base font-semibold uppercase tracking-[0.16em] hover:opacity-90">
+              Unlock
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-dvh bg-[#F4F9F7] font-sans text-[#1A3A32] antialiased">
+      <header className="border-b border-[#E8EDE9] bg-white px-4 py-4 sticky top-0 z-10">
+        <div className="mx-auto max-w-6xl flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <img src="/logo.svg" alt="BrightListed" className="h-10 w-auto" />
+            <span className="hidden sm:block text-sm font-semibold uppercase tracking-[0.18em] text-[#7A8F88]">Inventory Dashboard</span>
+          </div>
+          <div className="flex items-center gap-3">
+            <a href="/intake" className="text-sm font-semibold uppercase tracking-[0.14em] text-[#2A6B52] hover:underline underline-offset-2">
+              + New Intake
+            </a>
+            <button type="button" onClick={fetchData} className="flex h-9 w-9 items-center justify-center rounded-full border border-[#E8EDE9] hover:bg-[#F4F9F7] text-[#7A8F88]">
+              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+              </svg>
+            </button>
+          </div>
+        </div>
+      </header>
+
+      <main className="mx-auto max-w-6xl px-4 py-8 space-y-8">
+        {error && <p className="rounded-[10px] bg-red-50 px-4 py-3 text-base text-red-700">{error}</p>}
+
+        {/* STATS */}
+        <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+          {[
+            { label: "Active Items", value: availableItems.length, sub: `${urgentItems.length} expiring soon`, urgent: urgentItems.length > 0 },
+            { label: "Sold Items", value: soldItems.length, sub: "all time" },
+            { label: "Total Revenue", value: formatMoney(totalRevenue), sub: "from sales" },
+            { label: "Brynn Earnings", value: formatMoney(brynnEarnings), sub: `BL: ${formatMoney(blEarnings)}` },
+          ].map(({ label, value, sub, urgent }) => (
+            <div key={label} className={`rounded-[16px] border bg-white p-5 ${urgent ? "border-amber-200 bg-amber-50/50" : "border-[#E8EDE9]"}`}>
+              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#7A8F88]">{label}</p>
+              <p className={`font-serif mt-2 text-3xl font-medium ${urgent ? "text-amber-700" : "text-[#1A3A32]"}`}>{value}</p>
+              <p className="mt-1 text-sm text-[#7A8F88]">{sub}</p>
+            </div>
+          ))}
+        </div>
+
+        {/* FILTERS */}
+        <div className="flex flex-wrap gap-3 items-center">
+          <input
+            type="text" value={filterClient}
+            onChange={(e) => setFilterClient(e.target.value)}
+            placeholder="Search by client name…"
+            className="min-h-[40px] rounded-[10px] border border-[#E8EDE9] bg-white px-4 py-2 text-sm text-[#1A3A32] placeholder:text-[#C5D4CC] focus:outline-none focus:ring-1 focus:ring-[#2A6B52]/30 w-56"
+          />
+          <select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)}
+            className="min-h-[40px] rounded-[10px] border border-[#E8EDE9] bg-white px-3 py-2 text-sm text-[#1A3A32] focus:outline-none focus:ring-1 focus:ring-[#2A6B52]/30">
+            <option value="all">All Statuses</option>
+            <option value="available">Available</option>
+            <option value="sold">Sold</option>
+            <option value="donated">Donated</option>
+            <option value="picked_up">Picked Up</option>
+          </select>
+          <select value={sortBy} onChange={(e) => setSortBy(e.target.value)}
+            className="min-h-[40px] rounded-[10px] border border-[#E8EDE9] bg-white px-3 py-2 text-sm text-[#1A3A32] focus:outline-none focus:ring-1 focus:ring-[#2A6B52]/30">
+            <option value="intake_date">Sort: Newest First</option>
+            <option value="deadline">Sort: Deadline Soonest</option>
+            <option value="client">Sort: Client Name</option>
+            <option value="status">Sort: Status</option>
+          </select>
+          {loading && <Spinner />}
+        </div>
+
+        {/* ITEMS GRID */}
+        {filteredItems.length === 0 && !loading ? (
+          <div className="rounded-[16px] border border-[#E8EDE9] bg-white p-12 text-center">
+            <p className="text-lg text-[#7A8F88]">No items found.</p>
+            <a href="/intake" className="mt-4 inline-block text-sm font-semibold text-[#2A6B52] underline-offset-2 hover:underline">Start a new intake →</a>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {filteredItems.map((item) => {
+              const { cls, label } = statusBadge(item.status, item.created_at);
+              const remaining = daysRemaining(item.created_at);
+              return (
+                <button
+                  key={item.id}
+                  type="button"
+                  onClick={() => openItem(item)}
+                  className="text-left rounded-[16px] border border-[#E8EDE9] bg-white overflow-hidden hover:shadow-[0_4px_20px_rgba(26,58,50,0.10)] hover:border-[#8FCFB0]/60 transition-all"
+                >
+                  <div className="aspect-[4/3] bg-[#F4F9F7] overflow-hidden">
+                    {item.photo_url ? (
+                      <img src={item.photo_url} alt={item.item_title} className="h-full w-full object-cover" />
+                    ) : (
+                      <div className="flex h-full items-center justify-center">
+                        <svg className="h-10 w-10 text-[#C5D4CC]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5zm10.5-11.25h.008v.008h-.008V8.25zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
+                        </svg>
+                      </div>
+                    )}
+                  </div>
+                  <div className="p-4 space-y-2">
+                    <div className="flex items-start justify-between gap-2">
+                      <p className="font-medium text-[#1A3A32] leading-snug line-clamp-2">{item.item_title}</p>
+                      <span className={`shrink-0 rounded-full border px-2.5 py-0.5 text-xs font-semibold ${cls}`}>{label}</span>
+                    </div>
+                    <p className="text-sm text-[#7A8F88]">{item.session.client_name}</p>
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-[#4A5568]">{formatMoney(item.price_floor)} – {formatMoney(item.price_ceiling)}</span>
+                      {item.status === "available" && (
+                        <span className={`text-xs ${remaining <= 7 ? "text-amber-600 font-semibold" : "text-[#7A8F88]"}`}>
+                          {remaining}d left
+                        </span>
+                      )}
+                      {item.status === "sold" && (
+                        <span className="text-blue-600 font-semibold text-xs">Sold {formatMoney(item.sale_price)}</span>
+                      )}
+                    </div>
+                    <p className="text-xs text-[#C5D4CC]">
+                      Intake: {new Date(item.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+                    </p>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        )}
+
+        {/* CLIENT COMMISSION SUMMARY */}
+        {sessions.length > 0 && (
+          <div>
+            <h2 className="font-serif text-2xl font-medium text-[#1A3A32] mb-4">Client Payouts</h2>
+            <div className="rounded-[16px] border border-[#E8EDE9] bg-white overflow-hidden">
+              <table className="w-full text-sm">
+                <thead className="border-b border-[#E8EDE9] bg-[#F4F9F7]">
+                  <tr>
+                    {["Client", "Items", "Sold", "Client Owes", "Brynn", "BrightListed", "Status"].map((h) => (
+                      <th key={h} className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-[0.14em] text-[#7A8F88]">{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {sessions.map((s) => {
+                    const comm = sessionCommission(s);
+                    const itemCount = (s.intake_items || []).length;
+                    const soldCount = (s.intake_items || []).filter((i) => i.status === "sold").length;
+                    return (
+                      <tr key={s.id} className="border-b border-[#E8EDE9] last:border-0 hover:bg-[#F4F9F7]/50">
+                        <td className="px-4 py-3">
+                          <p className="font-medium text-[#1A3A32]">{s.client_name}</p>
+                          <p className="text-xs text-[#7A8F88]">{s.client_email}</p>
+                        </td>
+                        <td className="px-4 py-3 text-[#4A5568]">{itemCount}</td>
+                        <td className="px-4 py-3 text-[#4A5568]">{soldCount}</td>
+                        <td className="px-4 py-3 font-semibold text-[#1A3A32]">{formatMoney(comm.client)}</td>
+                        <td className="px-4 py-3 text-[#4A5568]">{formatMoney(comm.brynn)}</td>
+                        <td className="px-4 py-3 text-[#4A5568]">{formatMoney(comm.bl)}</td>
+                        <td className="px-4 py-3">
+                          <span className={`rounded-full border px-2.5 py-0.5 text-xs font-semibold ${s.payout_date ? "border-emerald-200 bg-emerald-50 text-emerald-700" : "border-[#E8EDE9] bg-[#F4F9F7] text-[#7A8F88]"}`}>
+                            {s.payout_date ? "Paid" : "Pending"}
+                          </span>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+      </main>
+
+      {/* ITEM DETAIL MODAL */}
+      <Modal open={!!selectedItem} onClose={closeItem} title={selectedItem?.item_title || "Item Detail"}>
+        {selectedItem && (
+          <div className="space-y-5">
+            {/* Photo */}
+            {selectedItem.photo_url ? (
+              <img src={selectedItem.photo_url} alt={selectedItem.item_title} className="w-full rounded-[12px] object-cover max-h-64" />
+            ) : (
+              <div className="flex h-40 items-center justify-center rounded-[12px] bg-[#F4F9F7] border border-[#E8EDE9]">
+                <p className="text-sm text-[#7A8F88]">No photo available</p>
+              </div>
+            )}
+
+            {/* Status badge */}
+            {(() => {
+              const { cls, label } = statusBadge(selectedItem.status, selectedItem.created_at);
+              return <span className={`inline-flex rounded-full border px-3 py-1 text-sm font-semibold ${cls}`}>{label}</span>;
+            })()}
+
+            {/* Details */}
+            <div className="space-y-2 text-sm">
+              <div className="flex justify-between">
+                <span className="text-[#7A8F88]">Client</span>
+                <span className="font-medium text-[#1A3A32]">{selectedSession?.client_name}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-[#7A8F88]">Contact</span>
+                <span className="text-[#4A5568]">{selectedSession?.client_phone}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-[#7A8F88]">Intake Date</span>
+                <span className="text-[#4A5568]">{new Date(selectedItem.created_at).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-[#7A8F88]">Price Range</span>
+                <span className="text-[#4A5568]">{formatMoney(selectedItem.price_floor)} – {formatMoney(selectedItem.price_ceiling)}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-[#7A8F88]">If Unsold</span>
+                <span className="text-[#4A5568]">{selectedItem.if_unsold === "donate" ? "Donate" : "Client Pickup"}</span>
+              </div>
+              {selectedItem.status === "available" && (
+                <div className="flex justify-between">
+                  <span className="text-[#7A8F88]">Days Remaining</span>
+                  <span className={`font-semibold ${daysRemaining(selectedItem.created_at) <= 7 ? "text-amber-600" : "text-[#2A6B52]"}`}>
+                    {daysRemaining(selectedItem.created_at)} days
+                  </span>
+                </div>
+              )}
+              {selectedItem.status === "sold" && (
+                <>
+                  <div className="flex justify-between">
+                    <span className="text-[#7A8F88]">Sale Price</span>
+                    <span className="font-semibold text-[#1A3A32]">{formatMoney(selectedItem.sale_price)}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-[#7A8F88]">Client Payout</span>
+                    <span className="font-semibold text-[#2A6B52]">{formatMoney((selectedItem.sale_price || 0) * COMMISSION_CLIENT)}</span>
+                  </div>
+                </>
+              )}
+            </div>
+
+            {/* Actions */}
+            {selectedItem.status === "available" && (
+              <div className="flex flex-wrap gap-2 border-t border-[#E8EDE9] pt-4">
+                <Btn onClick={() => setSoldModal(true)}>Mark Sold</Btn>
+                <Btn variant="ghost" onClick={() => handleMarkResolved("donated")}>Mark Donated</Btn>
+                <Btn variant="ghost" onClick={() => handleMarkResolved("picked_up")}>Mark Picked Up</Btn>
+              </div>
+            )}
+
+            {/* Mark Sold inline */}
+            {soldModal && selectedItem.status === "available" && (
+              <div className="rounded-[12px] border border-[#E8EDE9] bg-[#F4F9F7] p-4 space-y-3">
+                <p className="text-sm font-semibold uppercase tracking-[0.14em] text-[#2A6B52]">Enter Sale Price</p>
+                <div className="flex gap-2">
+                  <input
+                    type="number" min="0" step="0.01"
+                    value={salePrice} onChange={(e) => setSalePrice(e.target.value)}
+                    placeholder="0.00"
+                    className="flex-1 min-h-[40px] rounded-[10px] border border-[#E8EDE9] bg-white px-4 py-2 text-base text-[#1A3A32] focus:outline-none focus:ring-1 focus:ring-[#2A6B52]/30"
+                  />
+                  <Btn onClick={handleMarkSold} disabled={soldBusy || !salePrice}>
+                    {soldBusy ? <Spinner className="h-4 w-4" /> : "Confirm"}
+                  </Btn>
+                </div>
+              </div>
+            )}
+
+            {/* Generate Listing */}
+            <div className="border-t border-[#E8EDE9] pt-4 space-y-3">
+              <div className="flex items-center justify-between">
+                <p className="text-sm font-semibold uppercase tracking-[0.14em] text-[#7A8F88]">Listing</p>
+                <Btn variant="sm" onClick={handleGenerateListing} disabled={generatingListing}>
+                  {generatingListing ? <span className="flex items-center gap-1.5"><Spinner className="h-3.5 w-3.5" /> Generating…</span> : "Generate Listing"}
+                </Btn>
+              </div>
+              {selectedItem.listing_title && (
+                <div className="space-y-2">
+                  <p className="text-sm font-medium text-[#1A3A32]">{selectedItem.listing_title}</p>
+                  <p className="text-sm text-[#4A5568] leading-relaxed line-clamp-3">{selectedItem.listing_description}</p>
+                  {selectedItem.listing_generated_at && (
+                    <p className="text-xs text-[#C5D4CC]">Generated {new Date(selectedItem.listing_generated_at).toLocaleDateString()}</p>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* Listing URLs */}
+            <div className="space-y-2">
+              <p className="text-sm font-semibold uppercase tracking-[0.14em] text-[#7A8F88]">Live Listing URLs</p>
+              {listingUrls.map((url, i) => (
+                <input
+                  key={i}
+                  type="url"
+                  value={url}
+                  onChange={(e) => setListingUrls((prev) => prev.map((u, j) => j === i ? e.target.value : u))}
+                  placeholder={`Listing URL ${i + 1}`}
+                  className="w-full min-h-[40px] rounded-[10px] border border-[#E8EDE9] bg-white px-3 py-2 text-sm text-[#1A3A32] placeholder:text-[#C5D4CC] focus:outline-none focus:ring-1 focus:ring-[#2A6B52]/30"
+                />
+              ))}
+              <Btn variant="ghost" onClick={handleSaveUrls} disabled={savingUrls} className="w-full">
+                {savingUrls ? "Saving…" : "Save URLs"}
+              </Btn>
+            </div>
+          </div>
+        )}
+      </Modal>
+    </div>
+  );
+}
