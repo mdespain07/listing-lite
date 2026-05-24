@@ -27,8 +27,8 @@ export default function SellPage() {
 
       {/* HERO */}
       <section className="relative min-h-[95vh] flex items-center overflow-hidden">
-        <div className="absolute inset-0 z-0 bg-gradient-to-br from-[#0D1F18] via-[#1A3A32] to-[#0D2218]">
-          {/* Replace with: <img src="/sell-hero.jpg" alt="" className="h-full w-full object-cover object-center opacity-60" /> */}
+        <div className="absolute inset-0 z-0">
+          <img src="/sell-hero.jpg" alt="" className="h-full w-full object-cover object-center" />
           <div className="absolute inset-0 bg-gradient-to-r from-[#0D1F18]/90 via-[#1A3A32]/50 to-transparent" />
         </div>
         <div className="relative z-10 mx-auto w-full max-w-5xl px-4 pb-16 pt-32 sm:px-6 sm:pt-40">
@@ -96,14 +96,8 @@ export default function SellPage() {
               </p>
             </div>
             {/* Image placeholder */}
-            <div className="relative overflow-hidden rounded-[24px] bg-[#F0EDE6] border border-[#E8EDE9]" style={{ minHeight: "420px" }}>
-              <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 p-8 text-center">
-                <svg className="h-12 w-12 text-[#C5D4CC]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5z" />
-                </svg>
-                <p className="text-sm text-[#C5D4CC]">Photo: cluttered corner / unsold pile</p>
-                <p className="text-xs text-[#C5D4CC]">src="/sell-pile.jpg"</p>
-              </div>
+            <div className="relative overflow-hidden rounded-[24px]" style={{ minHeight: "420px" }}>
+              <img src="/sell-pile.jpg" alt="Items waiting to be sold" className="h-full w-full object-cover object-center absolute inset-0" />
             </div>
           </div>
         </div>
@@ -231,14 +225,8 @@ export default function SellPage() {
               </div>
             </div>
             {/* Image placeholder */}
-            <div className="relative overflow-hidden rounded-[24px] bg-[#F4F9F7] border border-[#E8EDE9]" style={{ minHeight: "520px" }}>
-              <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 p-8 text-center">
-                <svg className="h-12 w-12 text-[#C5D4CC]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5z" />
-                </svg>
-                <p className="text-sm text-[#C5D4CC]">Photo: person relaxed, payment notification on phone</p>
-                <p className="text-xs text-[#C5D4CC]">src="/sell-relief.jpg"</p>
-              </div>
+            <div className="relative overflow-hidden rounded-[24px]" style={{ minHeight: "520px" }}>
+              <img src="/sell-relief.jpg" alt="Peace of mind knowing your items are being sold" className="h-full w-full object-cover object-center absolute inset-0" />
             </div>
           </div>
         </div>
