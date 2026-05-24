@@ -150,6 +150,22 @@ export default function IntakePage() {
       setItemFloor(data.priceLow ? String(data.priceLow) : "");
       setItemCeiling(data.priceHigh ? String(data.priceHigh) : "");
       setItemPhoto(dataUrl);
+      try {
+        const uploadRes = await fetch("/api/intake/upload-photo", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            imageDataUrl: dataUrl,
+            fileName: file.name || "photo.jpg",
+          }),
+        });
+        const uploadData = await uploadRes.json();
+        if (uploadRes.ok && uploadData.url) {
+          setItemPhoto(uploadData.url);
+        }
+      } catch {
+        // silently fall back to data URL if upload fails
+      }
     } catch (e) {
       setItemError(e.message || "Could not analyze photo. Try again.");
     } finally {

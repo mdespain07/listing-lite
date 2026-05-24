@@ -129,7 +129,7 @@ export async function POST(request) {
   // Insert items
   const itemRows = items.map((item) => ({
     session_id: session.id,
-    photo_url: null,
+    photo_url: typeof item.photo === "string" && item.photo.startsWith("http") ? item.photo : null,
     item_title: item.title,
     price_floor: item.floor,
     price_ceiling: item.ceiling,
