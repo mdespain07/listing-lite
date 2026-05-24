@@ -82,7 +82,7 @@ export async function POST(request) {
     return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
   }
 
-  const { client, items, signature } = body;
+  const { client, items, signature, consignmentType } = body;
 
   if (!client?.name || !client?.email || !items?.length) {
     return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
@@ -103,6 +103,7 @@ export async function POST(request) {
       mailing_address: client.paymentPref === "check" ? client.address : null,
       status: "complete",
       completed_at: new Date().toISOString(),
+      consignment_type: consignmentType || "dropoff",
     })
     .select("id")
     .single();
@@ -119,6 +120,7 @@ export async function POST(request) {
     price_floor: item.floor,
     price_ceiling: item.ceiling,
     if_unsold: item.unsold,
+    days_listed: item.daysListed || 45,
   }));
 
   const { data: insertedItems, error: itemsError } = await supabase

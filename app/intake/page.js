@@ -8,6 +8,10 @@ const COMMISSION_CLIENT = 60;
 const COMMISSION_BRYNN = 30;
 const COMMISSION_BL = 10;
 const UNSOLD_DAYS = 45;
+const COMMISSION_CLIENT_DROPOFF = 60;
+const COMMISSION_CLIENT_PICKUP = 45;
+const DEFAULT_DAYS_LISTED = 45;
+const OVERSIZED_FEE = 30;
 
 function compressImage(file) {
   return new Promise((resolve, reject) => {
@@ -108,6 +112,8 @@ export default function IntakePage() {
     name: "", phone: "", email: "",
     paymentPref: "venmo", venmo: "", address: "",
   });
+  const [consignmentType, setConsignmentType] = useState("dropoff");
+  const [oversizedFee, setOversizedFee] = useState(false);
 
   // Items
   const [items, setItems] = useState([]);
@@ -121,6 +127,7 @@ export default function IntakePage() {
   const [itemCeiling, setItemCeiling] = useState("");
   const [itemTitle, setItemTitle] = useState("");
   const [itemUnsold, setItemUnsold] = useState("donate");
+  const [itemDaysListed, setItemDaysListed] = useState(DEFAULT_DAYS_LISTED);
   const [itemError, setItemError] = useState("");
   const [manualMode, setManualMode] = useState(false);
 
@@ -212,6 +219,7 @@ export default function IntakePage() {
     setItemCeiling("");
     setItemTitle("");
     setItemUnsold("donate");
+    setItemDaysListed(DEFAULT_DAYS_LISTED);
     setItemError("");
     setManualMode(false);
   };
@@ -228,6 +236,7 @@ export default function IntakePage() {
       floor: parseFloat(itemFloor),
       ceiling: parseFloat(itemCeiling),
       unsold: itemUnsold,
+      daysListed: itemDaysListed,
     }]);
     resetItemForm();
     setScreen(SCREEN.ITEMS);
@@ -243,7 +252,7 @@ export default function IntakePage() {
       const res = await fetch("/api/intake/submit", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ client, items, signature }),
+        body: JSON.stringify({ client, items, signature, consignmentType }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Submission failed");
@@ -335,6 +344,25 @@ export default function IntakePage() {
                       className={`flex-1 min-h-[48px] rounded-[10px] border text-base font-semibold uppercase tracking-[0.14em] transition-colors ${client.paymentPref === pref ? "border-[#2A6B52] bg-[#2A6B52] text-white" : "border-[#E8EDE9] bg-white text-[#1A3A32]"}`}
                     >
                       {pref === "venmo" ? "Venmo" : "Check"}
+                    </button>
+                  ))}
+                </div>
+              </Field>
+              <Field label="Consignment Type">
+                <div className="flex flex-col gap-2">
+                  {[
+                    { value: "dropoff", label: "Drop-Off", desc: "Client brings items to BrightListed · 60% to seller" },
+                    { value: "pickup", label: "Local Pickup", desc: "Brynn picks up within 15 miles · 45% to seller" },
+                    { value: "pickup_oversized", label: "Oversized Pickup", desc: `Requires truck/trailer · 45% to seller + $${OVERSIZED_FEE} pickup fee` },
+                  ].map(({ value, label, desc }) => (
+                    <button
+                      key={value}
+                      type="button"
+                      onClick={() => setConsignmentType(value)}
+                      className={`flex flex-col items-start rounded-[10px] border p-4 text-left transition-colors ${consignmentType === value ? "border-[#2A6B52] bg-[#F4F9F7]" : "border-[#E8EDE9] bg-white hover:border-[#8FCFB0]/60"}`}
+                    >
+                      <p className={`text-base font-semibold ${consignmentType === value ? "text-[#2A6B52]" : "text-[#1A3A32]"}`}>{label}</p>
+                      <p className="mt-0.5 text-sm text-[#7A8F88]">{desc}</p>
                     </button>
                   ))}
                 </div>
@@ -538,6 +566,34 @@ export default function IntakePage() {
                   ))}
                 </div>
               </Field>
+
+              <Field label="Listing Duration">
+                <div className="flex gap-2">
+                  {[
+                    { days: 45, label: "45 days (standard)" },
+                    { days: 60, label: "60 days" },
+                    { days: 90, label: "90 days" },
+                  ].map(({ days, label }) => (
+                    <button
+                      key={days}
+                      type="button"
+                      onClick={() => setItemDaysListed(days)}
+                      className={`flex-1 min-h-[48px] rounded-[10px] border text-sm font-semibold transition-colors ${itemDaysListed === days ? "border-[#2A6B52] bg-[#2A6B52] text-white" : "border-[#E8EDE9] bg-white text-[#1A3A32]"}`}
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </div>
+                <input
+                  type="number"
+                  min="1"
+                  max="365"
+                  value={itemDaysListed}
+                  onChange={(e) => setItemDaysListed(Number(e.target.value))}
+                  className="mt-2 min-h-[44px] w-full rounded-[10px] border border-[#E8EDE9] bg-white px-4 py-2 text-base text-[#1A3A32] focus:outline-none focus:ring-1 focus:ring-[#2A6B52]/30"
+                  placeholder="Or enter custom days"
+                />
+              </Field>
             </div>
 
             <div className="flex gap-3">
@@ -597,16 +653,33 @@ export default function IntakePage() {
               <p className="text-sm font-semibold uppercase tracking-[0.16em] text-[#2A6B52]">Commission Agreement</p>
               <div className="space-y-2">
                 <div className="flex justify-between text-base">
+                  <span className="text-[#4A5568]">Consignment type</span>
+                  <span className="font-semibold text-[#1A3A32]">
+                    {consignmentType === "dropoff" ? "Drop-Off" : consignmentType === "pickup" ? "Local Pickup" : "Oversized Pickup"}
+                  </span>
+                </div>
+                <div className="flex justify-between text-base">
                   <span className="text-[#4A5568]">Seller receives</span>
-                  <span className="font-semibold text-[#2A6B52]">60%</span>
+                  <span className="font-semibold text-[#2A6B52]">
+                    {consignmentType === "dropoff" ? "60%" : "45%"}
+                  </span>
                 </div>
                 <div className="flex justify-between text-base">
                   <span className="text-[#4A5568]">BrightListed commission</span>
-                  <span className="font-semibold text-[#1A3A32]">40%</span>
+                  <span className="font-semibold text-[#1A3A32]">
+                    {consignmentType === "dropoff" ? "40%" : "55%"}
+                  </span>
                 </div>
+                {consignmentType === "pickup_oversized" && (
+                  <div className="flex justify-between text-base">
+                    <span className="text-[#4A5568]">Oversized pickup fee</span>
+                    <span className="font-semibold text-[#1A3A32]">${OVERSIZED_FEE} (due at scheduling)</span>
+                  </div>
+                )}
               </div>
               <p className="text-sm text-[#7A8F88] border-t border-[#E8EDE9] pt-3">
-                Items not sold within {UNSOLD_DAYS} days will be handled per client preference above. Payment issued within 7 days of sale.
+                Items listed per agreed duration per item. Payment issued within 7 days of sale.
+                {consignmentType !== "dropoff" && " Pickup fee due at time of scheduling."}
               </p>
             </div>
 
