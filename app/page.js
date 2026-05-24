@@ -2153,24 +2153,31 @@ export default function Home() {
         />
       )}
 
-      <footer className="space-y-2 py-6 text-center">
+      <footer className="space-y-3 py-8 text-center border-t border-[#E8EDE9] bg-white">
         <p className="text-[11px] font-medium uppercase tracking-[0.2em] text-[#7A8F88]">
           BrightListed · Listings in a Snap
         </p>
+        <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2">
+          <a href="/sell" className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#2A6B52] underline-offset-2 hover:underline transition-colors">
+            Sell My Items — Salt Lake County
+          </a>
+          <span className="text-[#E8EDE9]">·</span>
+          <a href="/book" className="text-[11px] uppercase tracking-[0.14em] text-[#7A8F88] underline-offset-2 hover:text-[#2A6B52] hover:underline transition-colors">
+            Schedule Drop-Off
+          </a>
+          <span className="text-[#E8EDE9]">·</span>
+          <a href="/book/pickup" className="text-[11px] uppercase tracking-[0.14em] text-[#7A8F88] underline-offset-2 hover:text-[#2A6B52] hover:underline transition-colors">
+            Pick Up Items
+          </a>
+          <span className="text-[#E8EDE9]">·</span>
+          <a href="/book/buy" className="text-[11px] uppercase tracking-[0.14em] text-[#7A8F88] underline-offset-2 hover:text-[#2A6B52] hover:underline transition-colors">
+            Shop BrightListed
+          </a>
+        </div>
         <p className="text-[11px] text-[#7A8F88]">
-          <a
-            href="/terms"
-            className="underline-offset-2 transition-colors duration-150 hover:text-[#2A6B52] hover:underline"
-          >
-            Terms of Service
-          </a>
+          <a href="/terms" className="underline-offset-2 transition-colors duration-150 hover:text-[#2A6B52] hover:underline">Terms of Service</a>
           <span className="mx-2">·</span>
-          <a
-            href="/privacy"
-            className="underline-offset-2 transition-colors duration-150 hover:text-[#2A6B52] hover:underline"
-          >
-            Privacy Policy
-          </a>
+          <a href="/privacy" className="underline-offset-2 transition-colors duration-150 hover:text-[#2A6B52] hover:underline">Privacy Policy</a>
         </p>
       </footer>
     </div>
