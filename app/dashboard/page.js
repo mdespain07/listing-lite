@@ -156,6 +156,10 @@ export default function DashboardPage() {
   // Listing URLs
   const [listingUrls, setListingUrls] = useState(["", "", "", ""]);
   const [savingUrls, setSavingUrls] = useState(false);
+  const [cart, setCart] = useState([]);
+  const [cartOpen, setCartOpen] = useState(false);
+  const [checkoutBusy, setCheckoutBusy] = useState(false);
+  const [checkoutSuccess, setCheckoutSuccess] = useState(null);
   const [selectedClientSession, setSelectedClientSession] = useState(null);
 
   const fetchData = useCallback(async () => {
@@ -283,6 +287,58 @@ export default function DashboardPage() {
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || "Delete failed");
     return data;
+  };
+
+  const addToCart = (item) => {
+    if (cart.find((c) => c.id === item.id)) return;
+    setCart((prev) => [...prev, {
+      id: item.id,
+      item_number: item.item_number,
+      item_title: item.item_title,
+      photo_url: item.photo_url,
+      price_floor: item.price_floor,
+      price_ceiling: item.price_ceiling,
+      current_price: item.current_price || item.price_ceiling,
+      session: item.session,
+      salePrice: item.current_price || item.price_ceiling,
+    }]);
+    setCartOpen(true);
+  };
+
+  const removeFromCart = (itemId) => {
+    setCart((prev) => prev.filter((c) => c.id !== itemId));
+  };
+
+  const updateCartPrice = (itemId, price) => {
+    setCart((prev) => prev.map((c) => c.id === itemId ? { ...c, salePrice: price } : c));
+  };
+
+  const cartTotal = cart.reduce((sum, c) => sum + (parseFloat(c.salePrice) || 0), 0);
+
+  const handleCheckout = async (paymentMethod) => {
+    if (cart.length === 0) return;
+    setCheckoutBusy(true);
+    try {
+      const res = await fetch("/api/dashboard/transaction", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          items: cart.map((c) => ({ id: c.id, salePrice: parseFloat(c.salePrice) || 0 })),
+          paymentMethod,
+          total: cartTotal,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Checkout failed");
+      setCheckoutSuccess(paymentMethod);
+      setCart([]);
+      await fetchData();
+      setTimeout(() => { setCheckoutSuccess(null); setCartOpen(false); }, 3000);
+    } catch (e) {
+      alert(e.message);
+    } finally {
+      setCheckoutBusy(false);
+    }
   };
 
   const handleMarkSold = async () => {
@@ -445,6 +501,21 @@ export default function DashboardPage() {
               <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
               </svg>
+            </button>
+            <button
+              type="button"
+              onClick={() => setCartOpen(true)}
+              className="relative flex h-9 items-center gap-2 rounded-full border border-[#E8EDE9] px-3 hover:bg-[#F4F9F7] text-[#1A3A32] transition-colors"
+            >
+              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437M7.5 14.25a3 3 0 00-3 3h15.75m-12.75-3h11.218c1.121-2.3 2.1-4.684 2.924-7.138a60.114 60.114 0 00-16.536-1.84M7.5 14.25L5.106 5.272M6 20.25a.75.75 0 11-1.5 0 .75.75 0 011.5 0zm12.75 0a.75.75 0 11-1.5 0 .75.75 0 011.5 0z" />
+              </svg>
+              <span className="text-sm font-semibold">Sale</span>
+              {cart.length > 0 && (
+                <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-[#2A6B52] text-[10px] font-bold text-white">
+                  {cart.length}
+                </span>
+              )}
             </button>
           </div>
         </div>
@@ -749,7 +820,10 @@ export default function DashboardPage() {
             {/* Actions */}
             {selectedItem.status === "available" && (
               <div className="flex flex-wrap gap-2 border-t border-[#E8EDE9] pt-4">
-                <Btn onClick={() => setSoldModal(true)}>Mark Sold</Btn>
+                <Btn onClick={() => { addToCart(selectedItem); closeItem(); }} className="w-full">
+                  {cart.find((c) => c.id === selectedItem.id) ? "✓ Already in Sale" : "Add to Sale"}
+                </Btn>
+                <Btn onClick={() => setSoldModal(true)} variant="outline">Mark Sold Online</Btn>
                 <Btn variant="ghost" onClick={() => handleMarkResolved("donated")}>Mark Donated</Btn>
                 <Btn variant="ghost" onClick={() => handleMarkResolved("picked_up")}>Mark Picked Up</Btn>
               </div>
@@ -1127,6 +1201,136 @@ export default function DashboardPage() {
           );
         })()}
       </Modal>
+
+      {/* CART PANEL */}
+      {cartOpen && (
+        <div className="fixed inset-0 z-50 flex justify-end">
+          <div className="absolute inset-0 bg-[#1A3A32]/30 backdrop-blur-[2px]" onClick={() => setCartOpen(false)} />
+          <div className="relative z-10 flex h-full w-full max-w-md flex-col bg-white shadow-2xl">
+            <div className="flex items-center justify-between border-b border-[#E8EDE9] px-6 py-4">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#7A8F88]">BrightListed</p>
+                <h3 className="font-serif text-2xl font-medium text-[#1A3A32]">Current Sale</h3>
+              </div>
+              <button type="button" onClick={() => setCartOpen(false)} className="flex h-9 w-9 items-center justify-center rounded-full border border-[#E8EDE9] hover:bg-[#F4F9F7] text-[#7A8F88]">
+                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            <div className="flex-1 overflow-y-auto px-6 py-4 space-y-4">
+              {checkoutSuccess ? (
+                <div className="flex flex-col items-center gap-4 pt-12 text-center">
+                  <div className="flex h-20 w-20 items-center justify-center rounded-full bg-[#2A6B52]/10 border border-[#8FCFB0]/40">
+                    <svg className="h-10 w-10 text-[#2A6B52]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                    </svg>
+                  </div>
+                  <p className="font-serif text-2xl font-medium text-[#1A3A32]">Sale Complete!</p>
+                  <p className="text-base text-[#7A8F88]">
+                    Payment received via {checkoutSuccess}. Items marked as sold and client payouts queued.
+                  </p>
+                </div>
+              ) : cart.length === 0 ? (
+                <div className="flex flex-col items-center gap-3 pt-12 text-center">
+                  <svg className="h-12 w-12 text-[#C5D4CC]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437M7.5 14.25a3 3 0 00-3 3h15.75m-12.75-3h11.218c1.121-2.3 2.1-4.684 2.924-7.138a60.114 60.114 0 00-16.536-1.84M7.5 14.25L5.106 5.272M6 20.25a.75.75 0 11-1.5 0 .75.75 0 011.5 0zm12.75 0a.75.75 0 11-1.5 0 .75.75 0 011.5 0z" />
+                  </svg>
+                  <p className="text-lg font-medium text-[#1A3A32]">No items in sale</p>
+                  <p className="text-sm text-[#7A8F88]">Open an item and tap "Add to Sale" to get started.</p>
+                </div>
+              ) : (
+                cart.map((cartItem) => (
+                  <div key={cartItem.id} className="rounded-[14px] border border-[#E8EDE9] bg-[#F4F9F7] p-4">
+                    <div className="flex items-start gap-3">
+                      {cartItem.photo_url ? (
+                        <img src={cartItem.photo_url} alt={cartItem.item_title} className="h-14 w-14 rounded-[8px] object-cover shrink-0" />
+                      ) : (
+                        <div className="h-14 w-14 rounded-[8px] bg-[#E8EDE9] shrink-0" />
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs font-semibold uppercase tracking-[0.12em] text-[#7A8F88]">{cartItem.item_number}</p>
+                        <p className="text-sm font-medium text-[#1A3A32] leading-snug truncate">{cartItem.item_title}</p>
+                        <p className="text-xs text-[#7A8F88] mt-0.5">{cartItem.session?.client_name}</p>
+                      </div>
+                      <button type="button" onClick={() => removeFromCart(cartItem.id)} className="shrink-0 text-[#7A8F88] hover:text-red-500 transition-colors p-1">
+                        <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                      </button>
+                    </div>
+                    <div className="mt-3 flex items-center gap-3">
+                      <div className="flex-1">
+                        <p className="text-xs font-semibold uppercase tracking-[0.12em] text-[#7A8F88] mb-1">Sale Price</p>
+                        <div className="relative">
+                          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-[#7A8F88]">$</span>
+                          <input
+                            type="number"
+                            min={cartItem.price_floor}
+                            max={cartItem.price_ceiling * 2}
+                            step="0.01"
+                            value={cartItem.salePrice}
+                            onChange={(e) => updateCartPrice(cartItem.id, e.target.value)}
+                            className="w-full min-h-[40px] rounded-[8px] border border-[#E8EDE9] bg-white pl-7 pr-3 py-2 text-base font-medium text-[#1A3A32] focus:outline-none focus:ring-1 focus:ring-[#2A6B52]/30"
+                          />
+                        </div>
+                      </div>
+                      <div className="text-right shrink-0">
+                        <p className="text-xs font-semibold uppercase tracking-[0.12em] text-[#7A8F88] mb-1">Client Gets</p>
+                        <p className="text-base font-semibold text-[#2A6B52]">
+                          {formatMoney((parseFloat(cartItem.salePrice) || 0) * 0.60)}
+                        </p>
+                      </div>
+                    </div>
+                    {parseFloat(cartItem.salePrice) < cartItem.price_floor && (
+                      <p className="mt-2 text-xs text-amber-600 font-medium">
+                        Below agreed minimum of {formatMoney(cartItem.price_floor)}
+                      </p>
+                    )}
+                  </div>
+                ))
+              )}
+            </div>
+
+            {!checkoutSuccess && cart.length > 0 && (
+              <div className="border-t border-[#E8EDE9] px-6 py-5 space-y-4">
+                <div className="flex items-center justify-between">
+                  <p className="text-base font-semibold text-[#1A3A32]">Total</p>
+                  <p className="font-serif text-3xl font-medium text-[#1A3A32]">{formatMoney(cartTotal)}</p>
+                </div>
+                <div className="space-y-2">
+                  <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#7A8F88]">Payment Method</p>
+                  <div className="grid grid-cols-3 gap-2">
+                    {[
+                      { method: "cash", label: "Cash" },
+                      { method: "venmo", label: "Venmo" },
+                      { method: "card", label: "Card (coming soon)", disabled: true },
+                    ].map(({ method, label, disabled }) => (
+                      <button
+                        key={method}
+                        type="button"
+                        disabled={checkoutBusy || disabled}
+                        onClick={() => !disabled && handleCheckout(method)}
+                        className={`min-h-[52px] rounded-[10px] border text-sm font-semibold uppercase tracking-[0.12em] transition-colors disabled:opacity-40 disabled:cursor-not-allowed ${disabled ? "border-[#E8EDE9] bg-[#F4F9F7] text-[#C5D4CC]" : "border-[#2A6B52] bg-[#2A6B52] text-white hover:opacity-90"}`}
+                      >
+                        {checkoutBusy ? <Spinner className="h-4 w-4 mx-auto" /> : label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setCart([])}
+                  className="w-full text-center text-sm text-[#7A8F88] hover:text-red-500 transition-colors"
+                >
+                  Clear sale
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
