@@ -596,6 +596,7 @@ function appendHomeEnvironmentSuffix(description, smokeFree, petFree) {
 
 export default function Home() {
   const [files, setFiles] = useState([]);
+  const [manualHeroIndex, setManualHeroIndex] = useState(null);
   const [notes, setNotes] = useState("");
   const [category, setCategory] = useState("");
   const [packagingIncluded, setPackagingIncluded] = useState("no");
@@ -983,9 +984,8 @@ export default function Home() {
         images,
         category: enhanceCategory,
         heroIndex: (() => {
+          if (manualHeroIndex !== null) return manualHeroIndex;
           if (files.length <= 1) return 0;
-          // Pick the largest file by size — full-length shots are
-          // almost always larger than closeups
           let largestIndex = 0;
           let largestSize = 0;
           for (let i = 0; i < files.length; i++) {
@@ -1074,6 +1074,7 @@ export default function Home() {
 
   const resetNewListing = useCallback(() => {
     setFiles([]);
+    setManualHeroIndex(null);
     setResults(null);
     setSelectedPlatform("general");
     setEnhancedImages(null);
@@ -1491,7 +1492,7 @@ export default function Home() {
                   {files.map((file, index) => (
                     <li
                       key={`${file.name}-${file.lastModified}-${index}`}
-                      className="group relative aspect-square overflow-hidden rounded-[12px] border-[0.5px] border-[#E8EDE9] bg-[#F4F9F7]"
+                      className={`group relative aspect-square overflow-hidden rounded-[12px] border-[0.5px] bg-[#F4F9F7] transition-all ${manualHeroIndex === index ? "border-[#2A6B52] ring-2 ring-[#2A6B52]/40" : "border-[#E8EDE9]"}`}
                     >
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img
@@ -1518,6 +1519,14 @@ export default function Home() {
                             d="M6 18L18 6M6 6l12 12"
                           />
                         </svg>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setManualHeroIndex(index === manualHeroIndex ? null : index)}
+                        className={`absolute bottom-1 left-1 z-20 flex touch-manipulation items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide shadow-sm transition-colors ${manualHeroIndex === index ? "bg-[#2A6B52] text-white" : "bg-white/90 text-[#1A3A32] hover:bg-[#2A6B52] hover:text-white"}`}
+                        aria-label={`Set as main photo`}
+                      >
+                        {manualHeroIndex === index ? "★ Main" : "Set main"}
                       </button>
                     </li>
                   ))}
@@ -1772,12 +1781,24 @@ export default function Home() {
                       ))}
                     </div>
                     <CopyableField
-                      label="LISTING TITLE"
+                      label={
+                        selectedPlatform === "general" ? "RECOMMENDED TITLE — GENERAL LISTINGS" :
+                        selectedPlatform === "facebook" ? "RECOMMENDED TITLE — FACEBOOK MARKETPLACE" :
+                        selectedPlatform === "ebay" ? "RECOMMENDED TITLE — EBAY" :
+                        selectedPlatform === "poshmark" ? "RECOMMENDED TITLE — POSHMARK" :
+                        "LISTING TITLE"
+                      }
                       text={String(results.listings?.[selectedPlatform]?.title || results.listingTitle || "")}
                     />
                   </div>
                   <CopyableField
-                    label="LISTING DESCRIPTION"
+                    label={
+                      selectedPlatform === "general" ? "RECOMMENDED DESCRIPTION — GENERAL LISTINGS" :
+                      selectedPlatform === "facebook" ? "RECOMMENDED DESCRIPTION — FACEBOOK MARKETPLACE" :
+                      selectedPlatform === "ebay" ? "RECOMMENDED DESCRIPTION — EBAY" :
+                      selectedPlatform === "poshmark" ? "RECOMMENDED DESCRIPTION — POSHMARK" :
+                      "LISTING DESCRIPTION"
+                    }
                     text={String(results.listings?.[selectedPlatform]?.description || results.listingDescription || "")}
                   />
 
