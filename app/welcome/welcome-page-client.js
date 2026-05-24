@@ -106,7 +106,7 @@ export default function WelcomePageClient() {
               </h2>
             </div>
             <p className="max-w-sm text-lg leading-relaxed text-[#4A5568]">
-              BrightListed removes cluttered backgrounds, fills in ghost mannequins, and stages items in lifestyle scenes — automatically.
+              BrightListed removes cluttered backgrounds with clean background removal, automatically.
             </p>
           </div>
           <div className="mt-12 grid grid-cols-1 gap-6 sm:grid-cols-2">
@@ -138,7 +138,7 @@ export default function WelcomePageClient() {
                   </div>
                   <div>
                     <p className="text-lg font-semibold text-[#2A6B52]">Sales-ready image</p>
-                    <p className="mt-1 text-base text-[#4A5568]">Clean background · ghost mannequin · lifestyle staging</p>
+                    <p className="mt-1 text-base text-[#4A5568]">Clean background · professional presentation</p>
                   </div>
                 </div>
                 <div className="absolute top-4 left-4 rounded-full bg-[#2A6B52] px-3 py-1">

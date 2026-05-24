@@ -1585,7 +1585,7 @@ export default function Home() {
                 </p>
               )}
               <p className="mt-4 text-sm leading-relaxed text-[#7A8F88] italic">
-                💡 For clothing, lay items flat on a clean surface — no hangers — and include one full-length shot for the best results.
+                💡 For best results, include one full-length photo of your item.
               </p>
             </div>
 
@@ -1998,7 +1998,7 @@ export default function Home() {
                 </p>
                 {enhancingImages && (
                   <p className="mt-2 max-w-xl text-sm leading-relaxed text-[#5C6F66] sm:text-base">
-                    💡 For best results, include one full-length photo of clothing items.
+                    💡 For best results, include one full-length photo of your item.
                   </p>
                 )}
                 {enhanceNotice && !enhancingImages ? (
@@ -2039,11 +2039,7 @@ export default function Home() {
                             />
                           </div>
                           <div className="flex flex-col gap-2 border-t border-[#E8EDE9]/80 p-3 pt-3">
-                            {card.label === "ghost_mannequin" ? (
-                              <p className="text-[10px] text-center text-[#7A8F88] px-2 pb-1">
-                                AI-generated — verify details match your item
-                              </p>
-                            ) : null}
+                            {null}
                             <div className="flex gap-2">
                               <button
                                 type="button"

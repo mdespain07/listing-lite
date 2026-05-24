@@ -350,56 +350,29 @@ async function processOneImage(
   let outputs = [];
 
   if (isHero && clothing) {
-    const [cleanUrl, ghostUrl] = await Promise.all([
-      photoroomCleanBackground(apiKey, data, media_type).catch((e) => {
-        errorsOut.push({
-          index,
-          label: "clean",
-          message: e instanceof Error ? e.message : "Enhancement failed",
-        });
-        return null;
-      }),
-      photoroomGhostMannequin(apiKey, data, media_type).catch((e) => {
-        errorsOut.push({
-          index,
-          label: "ghost_mannequin",
-          message: e instanceof Error ? e.message : "Enhancement failed",
-        });
-        return null;
-      }),
-    ]);
-    outputs = [
-      { label: "clean", url: cleanUrl },
-      { label: "ghost_mannequin", url: ghostUrl },
-    ];
+    // PAUSED: Ghost mannequin requires Photoroom Plus ($100/mo) — re-enable when upgraded
+    // const [cleanUrl, ghostUrl] = await Promise.all([
+    //   photoroomCleanBackground(apiKey, data, media_type).catch(...),
+    //   photoroomGhostMannequin(apiKey, data, media_type).catch(...),
+    // ]);
+    // outputs = [{ label: "clean", url: cleanUrl }, { label: "ghost_mannequin", url: ghostUrl }];
+    const cleanUrl = await photoroomCleanBackground(apiKey, data, media_type).catch((e) => {
+      errorsOut.push({ index, label: "clean", message: e instanceof Error ? e.message : "Enhancement failed" });
+      return null;
+    });
+    outputs = [{ label: "clean", url: cleanUrl }];
   } else if (isHero && !clothing) {
-    const [cleanUrl, stagedUrl] = await Promise.all([
-      photoroomCleanBackground(apiKey, data, media_type).catch((e) => {
-        errorsOut.push({
-          index,
-          label: "clean",
-          message: e instanceof Error ? e.message : "Enhancement failed",
-        });
-        return null;
-      }),
-      photoroomLifestyleStaging(
-        apiKey,
-        data,
-        media_type,
-        getStagingPrompt(category)
-      ).catch((e) => {
-        errorsOut.push({
-          index,
-          label: "staged",
-          message: e instanceof Error ? e.message : "Enhancement failed",
-        });
-        return null;
-      }),
-    ]);
-    outputs = [
-      { label: "clean", url: cleanUrl },
-      { label: "staged", url: stagedUrl },
-    ];
+    // PAUSED: Lifestyle staging requires Photoroom Plus ($100/mo) — re-enable when upgraded
+    // const [cleanUrl, stagedUrl] = await Promise.all([
+    //   photoroomCleanBackground(apiKey, data, media_type).catch(...),
+    //   photoroomLifestyleStaging(apiKey, data, media_type, getStagingPrompt(category)).catch(...),
+    // ]);
+    // outputs = [{ label: "clean", url: cleanUrl }, { label: "staged", url: stagedUrl }];
+    const cleanUrl = await photoroomCleanBackground(apiKey, data, media_type).catch((e) => {
+      errorsOut.push({ index, label: "clean", message: e instanceof Error ? e.message : "Enhancement failed" });
+      return null;
+    });
+    outputs = [{ label: "clean", url: cleanUrl }];
   } else {
     // Non-hero images: clean background only
     outputs = [];
