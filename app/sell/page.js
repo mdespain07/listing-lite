@@ -9,16 +9,16 @@ export default function SellPage() {
     <div className="flex min-h-dvh flex-col bg-[#F4F9F7] font-sans text-[#1A3A32] antialiased">
 
       {/* HEADER */}
-      <header className="absolute top-0 left-0 right-0 z-20">
-        <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-5 sm:px-6">
+      <header className="absolute top-0 left-0 right-0 z-20 bg-white/95 backdrop-blur-sm border-b border-[#E8EDE9]">
+        <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-4 sm:px-6">
           <a href="/">
-            <img src="/logo.svg" alt="BrightListed" className="h-12 w-auto brightness-0 invert sm:h-14" />
+            <img src="/logo.svg" alt="BrightListed" className="h-12 w-auto sm:h-14" />
           </a>
           <div className="flex items-center gap-3">
-            <a href="/my-items" className="touch-manipulation min-h-[44px] inline-flex items-center rounded-full border-2 border-white/30 bg-transparent px-5 py-1.5 text-xs font-semibold uppercase tracking-[0.14em] text-white/80 transition-colors hover:border-white hover:text-white">
+            <a href="/my-items" className="touch-manipulation min-h-[44px] inline-flex items-center rounded-full border-2 border-[#7A8F88] bg-transparent px-5 py-1.5 text-xs font-semibold uppercase tracking-[0.14em] text-[#7A8F88] transition-colors hover:bg-[#F4F9F7]">
               My Items
             </a>
-            <a href="/book" className="touch-manipulation min-h-[44px] inline-flex items-center rounded-full bg-[#8FCFB0] px-5 py-1.5 text-xs font-semibold uppercase tracking-[0.14em] text-[#1A3A32] transition-opacity hover:opacity-90">
+            <a href="/book" className="touch-manipulation min-h-[44px] inline-flex items-center rounded-full bg-[#2A6B52] px-5 py-1.5 text-xs font-semibold uppercase tracking-[0.14em] text-white transition-opacity hover:opacity-90">
               Book Drop-Off
             </a>
           </div>
@@ -31,23 +31,43 @@ export default function SellPage() {
           <img src="/sell-hero.jpg" alt="" className="h-full w-full object-cover object-center" />
           <div className="absolute inset-0 bg-gradient-to-r from-[#0D1F18]/90 via-[#1A3A32]/50 to-transparent" />
         </div>
-        <div className="relative z-10 mx-auto w-full max-w-5xl px-4 pb-16 pt-32 sm:px-6 sm:pt-40">
-          <div className="max-w-xl">
-            <div className="inline-flex items-center gap-2 rounded-full border border-[#8FCFB0]/30 bg-[#8FCFB0]/10 px-4 py-1.5 backdrop-blur-sm mb-8">
-              <span className="h-1.5 w-1.5 rounded-full bg-[#8FCFB0]" />
-              <p className="text-xs font-semibold uppercase tracking-[0.28em] text-[#8FCFB0]">Salt Lake County</p>
+        <div className="relative z-10 mx-auto w-full max-w-5xl px-4 pb-16 pt-28 sm:px-6 sm:pt-40">
+          {/* Mobile: white content box below image feel */}
+          <div className="sm:hidden bg-white/95 backdrop-blur-sm rounded-[20px] p-6 mx-0 mt-4 shadow-lg">
+            <div className="inline-flex items-center gap-2 rounded-full border border-[#2A6B52]/20 bg-[#F4F9F7] px-4 py-1.5 mb-5">
+              <span className="h-1.5 w-1.5 rounded-full bg-[#2A6B52]" />
+              <p className="text-xs font-semibold uppercase tracking-[0.28em] text-[#2A6B52]">Salt Lake County</p>
             </div>
-            <h1 className="font-serif text-[3.25rem] font-medium leading-[1.05] tracking-[0.01em] text-white sm:text-[5.5rem]">
+            <h1 className="font-serif text-[2.75rem] font-medium leading-[1.05] tracking-[0.01em] text-[#1A3A32]">
               Drop it off.<br />Get paid.
             </h1>
-            <p className="mt-6 text-xl leading-relaxed text-white/70 max-w-md">
-              You keep 60% of every sale. We handle the photos, listings, and selling — across every major platform. You just show up.
+            <p className="mt-4 text-lg leading-relaxed text-[#4A5568]">
+              You keep 60% of every sale. We handle the photos, listings, and selling across every major platform. You just show up.
             </p>
-            <div className="mt-10 flex flex-col gap-3 sm:flex-row sm:items-center">
-              <a href="/book" className="touch-manipulation inline-flex min-h-[56px] items-center justify-center rounded-[12px] bg-[#8FCFB0] px-10 py-3 text-base font-semibold uppercase tracking-[0.18em] text-[#1A3A32] transition-opacity hover:opacity-90 shadow-[0_8px_32px_rgba(143,207,176,0.25)]">
+            <div className="mt-6 flex flex-col gap-3">
+              <a href="/book" className="touch-manipulation inline-flex min-h-[52px] items-center justify-center rounded-[12px] bg-[#2A6B52] px-8 py-3 text-base font-semibold uppercase tracking-[0.18em] text-white transition-opacity hover:opacity-90">
                 Schedule a Free Drop-Off
               </a>
-              <p className="text-sm text-white/50">No fees to get started</p>
+              <p className="text-sm text-[#7A8F88] text-center">No fees to get started</p>
+            </div>
+          </div>
+          {/* Desktop: text on the light left side of image */}
+          <div className="hidden sm:block max-w-xl">
+            <div className="inline-flex items-center gap-2 rounded-full border border-[#1A3A32]/20 bg-white/80 px-4 py-1.5 backdrop-blur-sm mb-8">
+              <span className="h-1.5 w-1.5 rounded-full bg-[#2A6B52]" />
+              <p className="text-xs font-semibold uppercase tracking-[0.28em] text-[#1A3A32]">Salt Lake County</p>
+            </div>
+            <h1 className="font-serif text-[5.5rem] font-medium leading-[1.05] tracking-[0.01em] text-[#1A3A32]">
+              Drop it off.<br />Get paid.
+            </h1>
+            <p className="mt-6 text-xl leading-relaxed text-[#1A3A32]/70 max-w-md">
+              You keep 60% of every sale. We handle the photos, listings, and selling across every major platform. You just show up.
+            </p>
+            <div className="mt-10 flex items-center gap-4">
+              <a href="/book" className="touch-manipulation inline-flex min-h-[56px] items-center justify-center rounded-[12px] bg-[#2A6B52] px-10 py-3 text-base font-semibold uppercase tracking-[0.18em] text-white transition-opacity hover:opacity-90 shadow-[0_8px_32px_rgba(42,107,82,0.20)]">
+                Schedule a Free Drop-Off
+              </a>
+              <p className="text-sm text-[#1A3A32]/50">No fees to get started</p>
             </div>
           </div>
         </div>
@@ -64,7 +84,7 @@ export default function SellPage() {
           <div className="grid grid-cols-3 divide-x divide-white/10">
             {[
               { stat: "60%", label: "Yours on every sale" },
-              { stat: "7 days", label: "Payment after sale" },
+              { stat: "7 days", label: "Money to you after sale" },
               { stat: "4+", label: "Platforms we list on" },
             ].map(({ stat, label }) => (
               <div key={stat} className="flex flex-col items-center gap-1.5 px-4 sm:px-8">
@@ -76,7 +96,7 @@ export default function SellPage() {
         </div>
       </section>
 
-      {/* PAIN POINT — The pile */}
+      {/* PAIN POINT - The pile */}
       <section className="border-b border-[#E8EDE9] bg-[#FFFFFF]">
         <div className="mx-auto max-w-5xl px-4 py-16 sm:px-6 sm:py-28">
           <div className="grid grid-cols-1 gap-16 sm:grid-cols-2 sm:items-center">
@@ -86,7 +106,7 @@ export default function SellPage() {
                 The pile that was supposed to be listed "this weekend."
               </h2>
               <p className="mt-6 text-lg leading-relaxed text-[#4A5568]">
-                You know it's worth good money. You just never seem to get around to it. The photos, the descriptions, the low-ball offers, the no-shows — it's exhausting before you even start.
+                You know it's worth good money. You just never seem to get around to it. The photos, the descriptions, the low-ball offers, the no-shows. It's exhausting before you even start.
               </p>
               <p className="mt-4 text-lg leading-relaxed text-[#4A5568]">
                 So it sits. Months go by. Eventually it ends up at Goodwill for nothing.
@@ -117,7 +137,7 @@ export default function SellPage() {
               {
                 step: "01",
                 title: "Schedule a drop-off",
-                body: "Book a free 30-minute appointment online. Bring what you want to sell — we'll handle everything from there.",
+                body: "Book a free 30-minute appointment online. Bring what you want to sell. We'll handle everything from there.",
                 icon: (
                   <svg className="h-6 w-6 text-[#2A6B52]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5" />
@@ -137,7 +157,7 @@ export default function SellPage() {
               {
                 step: "03",
                 title: "We sell it",
-                body: "Professional photos, polished listings, active selling on Facebook Marketplace, eBay, Poshmark, and more — all done for you.",
+                body: "Professional photos, polished descriptions, and active selling on Facebook Marketplace, eBay, Poshmark, and more. All done for you.",
                 icon: (
                   <svg className="h-6 w-6 text-[#2A6B52]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 21v-7.5a.75.75 0 01.75-.75h3a.75.75 0 01.75.75V21m-4.5 0H2.36m11.14 0H18m0 0h3.64m-1.39 0V9.349m-16.5 11.65V9.35m0 0a3.001 3.001 0 003.75-.615A2.993 2.993 0 009.75 9.75c.896 0 1.7-.393 2.25-1.016a2.993 2.993 0 002.25 1.016c.896 0 1.7-.393 2.25-1.016a3.001 3.001 0 003.75.614m-16.5 0a3.004 3.004 0 01-.621-4.72L4.318 3.44A1.5 1.5 0 015.378 3h13.243a1.5 1.5 0 011.06.44l1.19 1.189a3 3 0 01-.621 4.72m-13.5 8.65h3.75a.75.75 0 00.75-.75V13.5a.75.75 0 00-.75-.75H6.75a.75.75 0 00-.75.75v3.75c0 .415.336.75.75.75z" />
@@ -182,7 +202,7 @@ export default function SellPage() {
                 Your space back.<br />Your money in.
               </h2>
               <p className="mt-6 text-lg leading-relaxed text-[#4A5568]">
-                Most consignment shops feel like a black hole — you drop things off and hope for the best. BrightListed is built on transparency.
+                Most consignment shops feel like a black hole. You drop things off and hope for the best. BrightListed is built on transparency.
               </p>
               <div className="mt-10 space-y-6">
                 {[
@@ -193,22 +213,22 @@ export default function SellPage() {
                   },
                   {
                     title: "Real-time status on every item",
-                    body: "Log into your personal portal anytime. See what's listed, what's sold, and what's pending — no waiting for a call.",
+                    body: "Log into your personal portal anytime. See what's listed, what's sold, and what's pending. No waiting for a call.",
                     icon: <svg className="h-5 w-5 text-[#2A6B52]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}><path strokeLinecap="round" strokeLinejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" /></svg>,
                   },
                   {
-                    title: "Notified the moment it sells",
-                    body: "You'll know before we do. Sale notifications go straight to your phone.",
+                    title: "Instant sale notifications",
+                    body: "The moment an item sells, you get a notification. No wondering, no waiting for a call.",
                     icon: <svg className="h-5 w-5 text-[#2A6B52]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}><path strokeLinecap="round" strokeLinejoin="round" d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75v-.7V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0" /></svg>,
                   },
                   {
                     title: "We come to you",
-                    body: "The BrightListed team offers pickup within 15 miles of Salt Lake County. You don't have to move a thing.",
+                    body: "The BrightListed team offers pickup throughout Salt Lake County. You don't have to move a thing.",
                     icon: <svg className="h-5 w-5 text-[#2A6B52]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}><path strokeLinecap="round" strokeLinejoin="round" d="M8.25 18.75a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h6m-9 0H3.375a1.125 1.125 0 01-1.125-1.125V14.25m17.25 4.5a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h1.125c.621 0 1.129-.504 1.09-1.124a17.902 17.902 0 00-3.213-9.193 2.056 2.056 0 00-1.58-.86H14.25M16.5 18.75h-2.25m0-11.177v-.958c0-.568-.422-1.048-.987-1.106a48.554 48.554 0 00-10.026 0 1.106 1.106 0 00-.987 1.106v7.635m12-6.677v6.677m0 4.5v-4.5m0 0h-12" /></svg>,
                   },
                   {
                     title: "Nothing donated without your say-so",
-                    body: "Unsold items are donated to a local charity or returned to you — you choose at drop-off. Nothing leaves without your permission.",
+                    body: "Unsold items are donated to a local charity or returned to you, your choice at drop-off. Nothing leaves without your permission.",
                     icon: <svg className="h-5 w-5 text-[#2A6B52]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}><path strokeLinecap="round" strokeLinejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z" /></svg>,
                   },
                 ].map(({ title, body, icon }) => (
@@ -235,56 +255,31 @@ export default function SellPage() {
       {/* WHAT WE ACCEPT */}
       <section className="border-b border-[#E8EDE9] bg-[#F4F9F7]">
         <div className="mx-auto max-w-5xl px-4 py-16 sm:px-6 sm:py-20">
-          <div className="grid grid-cols-1 gap-12 sm:grid-cols-2">
-            <div>
-              <p className="text-sm font-semibold uppercase tracking-[0.28em] text-[#2A6B52]">What we accept</p>
-              <h2 className="font-serif mt-4 text-4xl font-medium text-[#1A3A32]">Most items welcome.</h2>
-              <p className="mt-4 text-lg leading-relaxed text-[#4A5568]">If it's in good condition and someone would buy it, we probably sell it.</p>
-              <div className="mt-8 grid grid-cols-1 gap-3">
-                {[
-                  { emoji: "👗", label: "Clothing & Accessories" },
-                  { emoji: "📱", label: "Electronics & Tech" },
-                  { emoji: "🏠", label: "Furniture & Home Decor" },
-                  { emoji: "🧸", label: "Collectibles & Toys" },
-                  { emoji: "👶", label: "Baby & Kids" },
-                  { emoji: "🏋️", label: "Sporting Goods" },
-                  { emoji: "📚", label: "Books & Media" },
-                  { emoji: "💍", label: "Jewelry & Watches (under $500)" },
-                  { emoji: "🔧", label: "Tools & Equipment" },
-                ].map(({ emoji, label }) => (
-                  <div key={label} className="flex items-center gap-3 rounded-[12px] border border-[#E8EDE9] bg-white px-4 py-3">
-                    <span className="text-xl">{emoji}</span>
-                    <p className="text-base text-[#1A3A32]">{label}</p>
-                  </div>
-                ))}
-              </div>
+          <div className="max-w-2xl">
+            <p className="text-sm font-semibold uppercase tracking-[0.28em] text-[#2A6B52]">What we accept</p>
+            <h2 className="font-serif mt-4 text-4xl font-medium text-[#1A3A32]">Most items welcome.</h2>
+            <p className="mt-4 text-lg leading-relaxed text-[#4A5568]">If it's in good condition and someone would buy it, we probably sell it. Not sure? Email us before scheduling.</p>
+            <div className="mt-8 grid grid-cols-1 gap-3 sm:grid-cols-2">
+              {[
+                { emoji: "👗", label: "Clothing & Accessories" },
+                { emoji: "📱", label: "Electronics & Tech" },
+                { emoji: "🏠", label: "Furniture & Home Decor" },
+                { emoji: "🧸", label: "Collectibles & Toys" },
+                { emoji: "👶", label: "Baby & Kids" },
+                { emoji: "🏋️", label: "Sporting Goods" },
+                { emoji: "📚", label: "Books & Media" },
+                { emoji: "💍", label: "Jewelry & Watches (under $500)" },
+                { emoji: "🔧", label: "Tools & Equipment" },
+              ].map(({ emoji, label }) => (
+                <div key={label} className="flex items-center gap-3 rounded-[12px] border border-[#E8EDE9] bg-white px-4 py-3">
+                  <span className="text-xl">{emoji}</span>
+                  <p className="text-base text-[#1A3A32]">{label}</p>
+                </div>
+              ))}
             </div>
-            <div>
-              <p className="text-sm font-semibold uppercase tracking-[0.28em] text-[#7A8F88]">What we don't accept</p>
-              <h2 className="font-serif mt-4 text-4xl font-medium text-[#1A3A32]">A few exceptions.</h2>
-              <p className="mt-4 text-lg leading-relaxed text-[#4A5568]">Not sure about your item? Email us before scheduling.</p>
-              <div className="mt-8 space-y-3">
-                {[
-                  "Vehicles, RVs, UTVs, or motorized equipment",
-                  "Jewelry valued over $500",
-                  "Mattresses or large appliances",
-                  "Recalled, hazardous, or unsafe items",
-                  "Weapons of any kind",
-                  "Perishables or opened consumables",
-                  "Items without proof of ownership",
-                ].map((item) => (
-                  <div key={item} className="flex items-center gap-3">
-                    <svg className="h-4 w-4 shrink-0 text-[#C5D4CC]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                    <p className="text-base text-[#4A5568]">{item}</p>
-                  </div>
-                ))}
-              </div>
-              <a href="mailto:hello@brightlisted.ai" className="mt-6 inline-flex items-center gap-2 text-sm font-semibold text-[#2A6B52] underline-offset-2 hover:underline">
-                Email us with questions →
-              </a>
-            </div>
+            <a href="mailto:hello@brightlisted.ai" className="mt-6 inline-flex items-center gap-2 text-sm font-semibold text-[#2A6B52] underline-offset-2 hover:underline">
+              Not sure about your item? Email us →
+            </a>
           </div>
         </div>
       </section>
@@ -294,7 +289,7 @@ export default function SellPage() {
         <div className="mx-auto max-w-5xl px-4 py-16 sm:px-6 sm:py-24">
           <p className="text-sm font-semibold uppercase tracking-[0.28em] text-[#2A6B52]">Pricing</p>
           <h2 className="font-serif mt-4 text-4xl font-medium text-[#1A3A32] sm:text-5xl">No upfront costs. Ever.</h2>
-          <p className="mt-4 max-w-lg text-lg leading-relaxed text-[#4A5568]">We only make money when you make money. No listing fees, no monthly charges, no surprises.</p>
+          <p className="mt-4 max-w-lg text-lg leading-relaxed text-[#4A5568]">We only make money when you make money. No listing fees, no monthly charges, and no surprises.</p>
           <div className="mt-12 grid grid-cols-1 gap-6 sm:grid-cols-2">
             <div className="rounded-[20px] border-2 border-[#2A6B52] bg-[#FFFFFF] p-8 shadow-[0_8px_40px_rgba(42,107,82,0.10)]">
               <div className="flex items-center justify-between mb-6">
@@ -311,7 +306,7 @@ export default function SellPage() {
                   "45-day listing period",
                   "Paid within 7 days of sale",
                   "Real-time tracking portal",
-                  "Unsold items donated or returned — your choice",
+                  "Unsold items donated or returned, your choice",
                 ].map((item) => (
                   <div key={item} className="flex items-start gap-3">
                     <svg className="mt-0.5 h-4 w-4 shrink-0 text-[#2A6B52]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
@@ -333,13 +328,13 @@ export default function SellPage() {
               <p className="mt-3 text-xl font-medium text-[#1A3A32]">yours on every sale</p>
               <div className="mt-8 space-y-3">
                 {[
-                  "The BrightListed team comes to you (within 15 miles)",
+                  "The BrightListed team comes to you throughout Salt Lake County",
                   "Professional AI-enhanced photos",
                   "Listed on 4+ resale platforms",
                   "45-day listing period",
                   "Paid within 7 days of sale",
                   "Real-time tracking portal",
-                  "Unsold items donated or returned — your choice",
+                  "Unsold items donated or returned, your choice",
                 ].map((item) => (
                   <div key={item} className="flex items-start gap-3">
                     <svg className="mt-0.5 h-4 w-4 shrink-0 text-[#2A6B52]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
@@ -376,23 +371,27 @@ export default function SellPage() {
               },
               {
                 q: "What's the minimum price you'll sell my item for?",
-                a: "You set it. At drop-off we agree on a price floor — the lowest we'll ever sell your item for. We may suggest a markdown after 14 days if something hasn't sold, but we'll never go below your floor without your approval.",
+                a: "You set it. At drop-off we agree on a price floor, the lowest we'll ever sell your item for. We may suggest a markdown after 14 days if something hasn't sold. We will never go below your floor without your approval.",
               },
               {
                 q: "How do I track what's happening with my items?",
-                a: "After drop-off you'll receive a link to your personal My Items portal. You can check the status, current price, and earnings for every single item — anytime, from your phone. No calling, no waiting.",
+                a: "After drop-off you'll receive a link to your personal My Items portal. You can check the status, current price, and earnings for every single item, anytime from your phone. No calling, no waiting.",
               },
               {
                 q: "When and how do I get paid?",
-                a: "Within 7 days of each sale, we send your 60% via Venmo or check — whichever you prefer. You'll also get a notification the moment an item sells so you always know what's coming.",
+                a: "Within 7 days of each sale, we send your 60% via Venmo or check, whichever you prefer. You'll also get a notification the moment an item sells so you always know what's coming.",
               },
               {
                 q: "What if my items don't sell?",
-                a: "After your agreed listing period (typically 45 days), any unsold items are either donated to a local charity or returned to you — your choice at drop-off. We'll never dispose of your items without your explicit permission.",
+                a: "After your agreed listing period (typically 45 days), any unsold items are either donated to a local charity or returned to you, per your choice at drop-off. We'll never dispose of your items without your explicit permission.",
               },
               {
                 q: "Can you come to me instead?",
-                a: "Yes — the BrightListed team offers pickup within 15 miles of Salt Lake County. The commission adjusts to 45% to cover travel and handling. Email us at hello@brightlisted.ai to schedule.",
+                a: "Yes. The BrightListed team offers pickup throughout Salt Lake County. The commission is 45% to cover travel and handling. Email us at hello@brightlisted.ai to schedule.",
+              },
+              {
+                q: "Are there items you won't accept?",
+                a: "Yes. We don't accept vehicles, RVs, UTVs, or motorized equipment; jewelry valued over $500; mattresses or large appliances like washers, dryers, or refrigerators; recalled or hazardous items; weapons; perishables or opened consumables; or items without proof of ownership. Not sure about your item? Email us at hello@brightlisted.ai before scheduling.",
               },
             ].map(({ q, a }, i) => (
               <div key={i} className="overflow-hidden rounded-[16px] border border-[#E8EDE9] bg-white">
