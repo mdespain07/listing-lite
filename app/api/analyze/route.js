@@ -46,9 +46,11 @@ listings (object): Generate four platform-specific listing variations. Each vari
 modelDetails (string): Include style name/number if visible on label, fabric content percentages from care label if visible, country of manufacture if on label, and anything else from tags or labels that is factual but too technical for the main description. Note what could NOT be determined.
 visibleAccessories (array of short strings, [] if none),
 caveat (string): Write this note TO THE SELLER, not the buyer. If details could not be clearly read from the photos, tell the seller what to verify and suggest they use the correction box to fix it. Example: 'The size tag was difficult to read clearly — please confirm the size and add it in the Something look off box if needed.' If everything was clear, write an empty string.
-heroIndex (number): CRITICAL — always pick the photo showing the most complete view of the ENTIRE item from furthest away. For clothing: always pick the full-length view over any closeup, detail shot, or partial view — even if the closeup is sharper. For all items: prefer the photo where the complete item is visible with the least cropping. If uncertain, pick index 0. Never pick a closeup or detail photo as hero.`;
+heroIndex (number): CRITICAL — always pick the photo showing the most complete view of the ENTIRE item from furthest away. For clothing: always pick the full-length view over any closeup, detail shot, or partial view — even if the closeup is sharper. For all items: prefer the photo where the complete item is visible with the least cropping. If uncertain, pick index 0. Never pick a closeup or detail photo as hero.
 
-const REQUIRED_KEYS = [
+If the request includes mode=intake, respond with only these keys: itemName, brand, condition, conditionExplanation, priceLow, priceHigh, sweetSpotPrice, listingTitle (general only, under 70 chars), modelDetails, visibleAccessories, caveat, heroIndex. Skip the full listings object entirely.`;
+
+const FULL_REQUIRED_KEYS = [
   "itemName",
   "brand",
   "condition",
@@ -57,6 +59,21 @@ const REQUIRED_KEYS = [
   "priceHigh",
   "sweetSpotPrice",
   "listings",
+  "modelDetails",
+  "visibleAccessories",
+  "caveat",
+  "heroIndex",
+];
+
+const INTAKE_REQUIRED_KEYS = [
+  "itemName",
+  "brand",
+  "condition",
+  "conditionExplanation",
+  "priceLow",
+  "priceHigh",
+  "sweetSpotPrice",
+  "listingTitle",
   "modelDetails",
   "visibleAccessories",
   "caveat",
@@ -249,18 +266,18 @@ function parseModelJson(text) {
  * @param {unknown} parsed
  * @returns {string[]}
  */
-function missingKeys(parsed) {
+function missingKeys(parsed, requiredKeys) {
   if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
-    return [...REQUIRED_KEYS];
+    return [...requiredKeys];
   }
-  return REQUIRED_KEYS.filter((k) => !(k in parsed));
+  return requiredKeys.filter((k) => !(k in parsed));
 }
 
 /**
  * Normalize model output for the client (strings, visibleAccessories as string list).
  * @param {Record<string, unknown>} parsed
  */
-function normalizeAnalysisResponse(parsed) {
+function normalizeAnalysisResponse(parsed, isIntakeMode = false) {
   const vis = parsed.visibleAccessories;
   let visibleAccessories = "";
   if (Array.isArray(vis)) {
@@ -272,7 +289,12 @@ function normalizeAnalysisResponse(parsed) {
     visibleAccessories = String(vis).trim();
   }
 
-  const listings = parsed.listings && typeof parsed.listings === "object" ? {
+  const listings = isIntakeMode ? {
+    facebook: { title: String(parsed.listingTitle ?? ""), description: "" },
+    ebay: { title: String(parsed.listingTitle ?? ""), description: "" },
+    poshmark: { title: String(parsed.listingTitle ?? ""), description: "" },
+    general: { title: String(parsed.listingTitle ?? ""), description: "" },
+  } : parsed.listings && typeof parsed.listings === "object" ? {
     facebook: {
       title: String(parsed.listings.FACEBOOK_MARKETPLACE?.title ?? parsed.listings.facebook?.title ?? ""),
       description: String(parsed.listings.FACEBOOK_MARKETPLACE?.description ?? parsed.listings.facebook?.description ?? ""),
@@ -342,7 +364,10 @@ export async function POST(request) {
     partsIncluded,
     approximateAge,
     correction,
+    mode,
   } = body;
+
+  const isIntakeMode = mode === "intake";
 
   const correctionText =
     typeof correction === "string" ? correction.trim() : "";
@@ -413,7 +438,9 @@ export async function POST(request) {
     },
   }));
 
-  const instructionText = `Please analyze the photos in this message for a classified listing. Respond with only a single JSON object using the exact keys from your system instructions. Do not wrap the JSON in markdown code fences and do not add any text before or after the JSON.`;
+  const instructionText = isIntakeMode
+    ? `Please analyze the photos in this message for a quick consignment intake. Respond with only a single JSON object with these keys: itemName, brand, condition, conditionExplanation, priceLow, priceHigh, sweetSpotPrice, listingTitle (general, under 70 chars), modelDetails, visibleAccessories, caveat, heroIndex. Do not include the full listings object. Do not wrap in markdown.`
+    : `Please analyze the photos in this message for a classified listing. Respond with only a single JSON object using the exact keys from your system instructions. Do not wrap the JSON in markdown code fences and do not add any text before or after the JSON.`;
 
   /** @type {Array<{ type: string; text?: string; source?: unknown }>} */
   const userContent = [
@@ -512,7 +539,8 @@ export async function POST(request) {
     );
   }
 
-  const missing = missingKeys(parsed);
+  const REQUIRED_KEYS = isIntakeMode ? INTAKE_REQUIRED_KEYS : FULL_REQUIRED_KEYS;
+  const missing = missingKeys(parsed, REQUIRED_KEYS);
   if (missing.length > 0) {
     return NextResponse.json(
       {
@@ -523,5 +551,5 @@ export async function POST(request) {
     );
   }
 
-  return NextResponse.json(normalizeAnalysisResponse(parsed));
+  return NextResponse.json(normalizeAnalysisResponse(parsed, isIntakeMode));
 }
