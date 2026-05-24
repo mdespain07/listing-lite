@@ -1724,7 +1724,7 @@ export default function Home() {
             <div>
               <div className="mb-3 flex min-w-0 items-center gap-3">
                 <span className="shrink-0 text-sm font-medium uppercase leading-none tracking-[0.18em] text-[#4A5568] sm:text-base">
-                  Generate listings for
+                  Generate content for listing on
                 </span>
                 <span className="h-px min-w-[1rem] flex-1 bg-[#E8EDE9]" aria-hidden />
               </div>
