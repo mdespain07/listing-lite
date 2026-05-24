@@ -123,6 +123,7 @@ export default function IntakePage() {
   const [itemPhotoPreview, setItemPhotoPreview] = useState(null);
   const [itemAnalyzing, setItemAnalyzing] = useState(false);
   const [itemSuggestion, setItemSuggestion] = useState(null);
+  const [priceAccepted, setPriceAccepted] = useState(null);
   const [itemFloor, setItemFloor] = useState("");
   const [itemCeiling, setItemCeiling] = useState("");
   const [itemTitle, setItemTitle] = useState("");
@@ -159,6 +160,7 @@ export default function IntakePage() {
     setItemAnalyzing(true);
     setItemError("");
     setItemSuggestion(null);
+    setPriceAccepted(null);
     try {
       const dataUrl = await compressImage(file);
       setItemPhotoPreview(dataUrl);
@@ -215,6 +217,7 @@ export default function IntakePage() {
     setItemPhoto(null);
     setItemPhotoPreview(null);
     setItemSuggestion(null);
+    setPriceAccepted(null);
     setItemFloor("");
     setItemCeiling("");
     setItemTitle("");
@@ -526,10 +529,102 @@ export default function IntakePage() {
 
               {/* AI Suggestion Banner */}
               {itemSuggestion && !itemAnalyzing && (
-                <div className="rounded-[10px] border border-[#8FCFB0]/60 bg-[#F4F9F7] px-4 py-3">
-                  <p className="text-sm font-semibold uppercase tracking-[0.14em] text-[#2A6B52]">AI Suggestion</p>
-                  <p className="mt-1 text-base font-medium text-[#1A3A32]">{itemSuggestion.itemName}</p>
-                  <p className="text-sm text-[#4A5568]">Suggested range: ${itemSuggestion.priceLow} – ${itemSuggestion.priceHigh}</p>
+                <div className="rounded-[10px] border border-[#8FCFB0]/60 bg-[#F4F9F7] px-4 py-4 space-y-3">
+                  <div>
+                    <p className="text-sm font-semibold uppercase tracking-[0.14em] text-[#2A6B52]">AI Suggestion</p>
+                    <p className="mt-1 text-base font-medium text-[#1A3A32]">{itemSuggestion.itemName}</p>
+                    <p className="text-sm text-[#4A5568]">Suggested range: ${itemSuggestion.priceLow} – ${itemSuggestion.priceHigh}</p>
+                    {itemSuggestion.sweetSpotPrice && (
+                      <p className="text-sm font-semibold text-[#2A6B52]">Sweet spot: ${itemSuggestion.sweetSpotPrice}</p>
+                    )}
+                  </div>
+                  {priceAccepted === null && (
+                    <div>
+                      <p className="text-sm font-medium text-[#4A5568] mb-2">Does this price range work for the client?</p>
+                      <div className="flex gap-2">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setPriceAccepted(true);
+                            setItemFloor(String(itemSuggestion.priceLow));
+                            setItemCeiling(String(itemSuggestion.priceHigh));
+                          }}
+                          className="flex-1 min-h-[44px] rounded-[10px] bg-[#2A6B52] text-sm font-semibold uppercase tracking-[0.14em] text-white hover:opacity-90 transition-opacity"
+                        >
+                          ✓ Accept
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setPriceAccepted(false)}
+                          className="flex-1 min-h-[44px] rounded-[10px] border border-red-200 bg-red-50 text-sm font-semibold uppercase tracking-[0.14em] text-red-700 hover:bg-red-100 transition-colors"
+                        >
+                          ✕ Decline
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                  {priceAccepted === true && (
+                    <div className="flex items-center justify-between">
+                      <p className="text-sm font-semibold text-[#2A6B52]">✓ Price accepted</p>
+                      <button
+                        type="button"
+                        onClick={() => { setPriceAccepted(null); setItemFloor(""); setItemCeiling(""); }}
+                        className="text-xs text-[#7A8F88] underline-offset-2 hover:underline"
+                      >
+                        Change
+                      </button>
+                    </div>
+                  )}
+                  {priceAccepted === false && (
+                    <div className="space-y-3">
+                      <p className="text-sm font-medium text-red-700">Price declined. Enter a custom range or remove this item.</p>
+                      <div className="grid grid-cols-2 gap-2">
+                        <div>
+                          <label className="mb-1 block text-xs font-semibold uppercase tracking-[0.12em] text-[#7A8F88]">Min Price ($)</label>
+                          <input
+                            type="number"
+                            min="0"
+                            step="0.01"
+                            value={itemFloor}
+                            onChange={(e) => setItemFloor(e.target.value)}
+                            placeholder="e.g. 15"
+                            className="min-h-[44px] w-full rounded-[10px] border border-[#E8EDE9] bg-white px-3 py-2 text-base text-[#1A3A32] focus:outline-none focus:ring-1 focus:ring-[#2A6B52]/30"
+                          />
+                        </div>
+                        <div>
+                          <label className="mb-1 block text-xs font-semibold uppercase tracking-[0.12em] text-[#7A8F88]">Max Price ($)</label>
+                          <input
+                            type="number"
+                            min="0"
+                            step="0.01"
+                            value={itemCeiling}
+                            onChange={(e) => setItemCeiling(e.target.value)}
+                            placeholder="e.g. 25"
+                            className="min-h-[44px] w-full rounded-[10px] border border-[#E8EDE9] bg-white px-3 py-2 text-base text-[#1A3A32] focus:outline-none focus:ring-1 focus:ring-[#2A6B52]/30"
+                          />
+                        </div>
+                      </div>
+                      <div className="flex gap-2">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (itemFloor && itemCeiling) setPriceAccepted(true);
+                          }}
+                          disabled={!itemFloor || !itemCeiling}
+                          className="flex-1 min-h-[44px] rounded-[10px] bg-[#2A6B52] text-sm font-semibold uppercase tracking-[0.14em] text-white hover:opacity-90 transition-opacity disabled:opacity-40 disabled:cursor-not-allowed"
+                        >
+                          Use Custom Price
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => { resetItemForm(); setScreen(SCREEN.ITEMS); }}
+                          className="flex-1 min-h-[44px] rounded-[10px] border border-[#E8EDE9] bg-white text-sm font-semibold uppercase tracking-[0.14em] text-[#4A5568] hover:bg-[#F4F9F7] transition-colors"
+                        >
+                          Remove Item
+                        </button>
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
 
@@ -538,15 +633,29 @@ export default function IntakePage() {
                 <Input value={itemTitle} onChange={(e) => setItemTitle(e.target.value)} placeholder="e.g. Blue Linen Button-Down Shirt" disabled={itemAnalyzing} />
               </Field>
 
-              {/* Price Floor / Ceiling */}
-              <div className="grid grid-cols-2 gap-4">
-                <Field label="Minimum Price ($)">
-                  <Input type="number" min="0" step="0.01" value={itemFloor} onChange={(e) => setItemFloor(e.target.value)} placeholder="e.g. 15" disabled={itemAnalyzing} />
-                </Field>
-                <Field label="Maximum Price ($)">
-                  <Input type="number" min="0" step="0.01" value={itemCeiling} onChange={(e) => setItemCeiling(e.target.value)} placeholder="e.g. 25" disabled={itemAnalyzing} />
-                </Field>
-              </div>
+              {/* Price Floor / Ceiling — only show manually when no AI suggestion or price declined */}
+              {(!itemSuggestion || priceAccepted === false) && (
+                <div className="grid grid-cols-2 gap-4">
+                  <Field label="Minimum Price ($)">
+                    <Input type="number" min="0" step="0.01" value={itemFloor} onChange={(e) => setItemFloor(e.target.value)} placeholder="e.g. 15" disabled={itemAnalyzing} />
+                  </Field>
+                  <Field label="Maximum Price ($)">
+                    <Input type="number" min="0" step="0.01" value={itemCeiling} onChange={(e) => setItemCeiling(e.target.value)} placeholder="e.g. 25" disabled={itemAnalyzing} />
+                  </Field>
+                </div>
+              )}
+              {itemSuggestion && priceAccepted === true && (
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="rounded-[10px] border border-[#E8EDE9] bg-[#F4F9F7] px-4 py-3">
+                    <p className="text-xs font-semibold uppercase tracking-[0.12em] text-[#7A8F88]">Min Price</p>
+                    <p className="mt-1 text-lg font-medium text-[#1A3A32]">${itemFloor}</p>
+                  </div>
+                  <div className="rounded-[10px] border border-[#E8EDE9] bg-[#F4F9F7] px-4 py-3">
+                    <p className="text-xs font-semibold uppercase tracking-[0.12em] text-[#7A8F88]">Max Price</p>
+                    <p className="mt-1 text-lg font-medium text-[#1A3A32]">${itemCeiling}</p>
+                  </div>
+                </div>
+              )}
 
               {/* If Unsold */}
               <Field label={`If unsold after ${UNSOLD_DAYS} days`}>
@@ -602,7 +711,7 @@ export default function IntakePage() {
               </Btn>
               <Btn
                 onClick={handleAddItem}
-                disabled={itemAnalyzing || !itemTitle || !itemFloor || !itemCeiling}
+                disabled={itemAnalyzing || !itemTitle || !itemFloor || !itemCeiling || (itemSuggestion && priceAccepted !== true)}
                 className="flex-1"
               >
                 Add Item →
