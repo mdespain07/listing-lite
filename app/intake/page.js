@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useCallback, useEffect } from "react";
+import SignaturePad from "../components/signature-pad";
 
 const PIN = "2847";
 const COMMISSION_CLIENT = 60;
@@ -124,6 +125,8 @@ export default function IntakePage() {
   // Submission
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState("");
+  const [signature, setSignature] = useState(null);
+  const [signatureError, setSignatureError] = useState("");
 
   // PIN
   const handlePin = () => {
@@ -228,7 +231,7 @@ export default function IntakePage() {
       const res = await fetch("/api/intake/submit", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ client, items }),
+        body: JSON.stringify({ client, items, signature }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Submission failed");
@@ -566,11 +569,46 @@ export default function IntakePage() {
               </p>
             </div>
 
+            <div className="rounded-[16px] border border-[#E8EDE9] bg-white p-6 space-y-4">
+              <p className="text-sm font-semibold uppercase tracking-[0.16em] text-[#7A8F88]">Client Signature</p>
+              <p className="text-sm leading-relaxed text-[#4A5568]">
+                By signing below, {client.name} agrees to the consignment terms above, including the 60/30/10 commission split, the {UNSOLD_DAYS}-day sales window, and the selected handling of unsold items.
+              </p>
+              {signatureError && (
+                <p className="rounded-[10px] bg-red-50 px-4 py-3 text-sm text-red-700">{signatureError}</p>
+              )}
+              {signature ? (
+                <div className="space-y-3">
+                  <div className="rounded-[12px] border border-[#8FCFB0]/60 bg-[#F4F9F7] p-3">
+                    <img src={signature} alt="Client signature" className="max-h-24 w-auto" />
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <p className="text-sm text-[#2A6B52] font-semibold">✓ Signed</p>
+                    <button
+                      type="button"
+                      onClick={() => setSignature(null)}
+                      className="text-sm text-[#7A8F88] underline-offset-2 hover:underline"
+                    >
+                      Re-sign
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <SignaturePad
+                  onSave={(dataUrl) => { setSignature(dataUrl); setSignatureError(""); }}
+                  onClear={() => setSignature(null)}
+                />
+              )}
+            </div>
+
             <div className="flex gap-3">
               <Btn variant="ghost" onClick={() => setScreen(SCREEN.ITEMS)} className="flex-1">
                 ← Back
               </Btn>
-              <Btn onClick={handleSubmit} disabled={submitting} className="flex-1">
+              <Btn onClick={() => {
+                if (!signature) { setSignatureError("Please have the client sign before submitting."); return; }
+                handleSubmit();
+              }} disabled={submitting} className="flex-1">
                 {submitting ? <span className="flex items-center gap-2"><Spinner /> Submitting…</span> : "Submit Intake →"}
               </Btn>
             </div>
