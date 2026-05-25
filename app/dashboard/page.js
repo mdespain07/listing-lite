@@ -1041,7 +1041,14 @@ export default function DashboardPage() {
                 onClick={() => {
                   const priceFloor = selectedItem.price_floor ?? "";
                   const priceCeiling = selectedItem.price_ceiling ?? "";
-                  const url = `/?item_id=${encodeURIComponent(selectedItem.item_number || "")}&photo_url=${encodeURIComponent(selectedItem.photo_url || "")}&platforms=${encodeURIComponent("general,facebook,ebay,poshmark")}&price_floor=${encodeURIComponent(priceFloor)}&price_ceiling=${encodeURIComponent(priceCeiling)}&lock_price=true&dashboard_item_id=${encodeURIComponent(selectedItem.id)}`;
+                  const existingPlatforms = selectedItem.listing_data
+                    ? Object.entries(selectedItem.listing_data)
+                        .filter(([, v]) => v?.title || v?.description)
+                        .map(([k]) => k)
+                        .join(",")
+                    : "";
+                  const platformsParam = existingPlatforms || "general,facebook,ebay,poshmark";
+                  const url = `/?item_id=${encodeURIComponent(selectedItem.item_number || "")}&photo_url=${encodeURIComponent(selectedItem.photo_url || "")}&platforms=${encodeURIComponent(platformsParam)}&existing_platforms=${encodeURIComponent(existingPlatforms)}&price_floor=${encodeURIComponent(priceFloor)}&price_ceiling=${encodeURIComponent(priceCeiling)}&lock_price=true&dashboard_item_id=${encodeURIComponent(selectedItem.id)}`;
                   window.location.href = url;
                 }}
                 disabled={!selectedItem.photo_url}

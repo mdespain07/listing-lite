@@ -847,6 +847,7 @@ export default function Home() {
     const priceCeiling = params.get("price_ceiling");
     const lockPrice = params.get("lock_price") === "true";
     const dbItemId = params.get("dashboard_item_id");
+    const existingPlatforms = params.get("existing_platforms");
 
     if (!photoUrl) return;
 
@@ -859,11 +860,13 @@ export default function Home() {
     url.searchParams.delete("price_ceiling");
     url.searchParams.delete("lock_price");
     url.searchParams.delete("dashboard_item_id");
+    url.searchParams.delete("existing_platforms");
     window.history.replaceState({}, "", `${url.pathname}${url.searchParams.toString() ? `?${url.searchParams.toString()}` : ""}`);
 
-    // Pre-select platforms if specified
-    if (platforms) {
-      const platformList = platforms.split(",").filter(Boolean);
+    // Use existing platforms if editing, otherwise use passed platforms
+    const platformSource = existingPlatforms || platforms;
+    if (platformSource) {
+      const platformList = platformSource.split(",").filter(Boolean);
       const platformMap = { general: false, facebook: false, ebay: false, poshmark: false };
       platformList.forEach((p) => { if (p in platformMap) platformMap[p] = true; });
       if (!platformList.some((p) => p in platformMap)) platformMap.general = true;
