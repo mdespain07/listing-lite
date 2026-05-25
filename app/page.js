@@ -806,6 +806,23 @@ export default function Home() {
         setAuthModalOpen(true);
         setAuthModalEmail(resetEmail);
       });
+    } else if (params.get("signup") === "true") {
+      const url = new URL(window.location.href);
+      url.searchParams.delete("signup");
+      const qs = url.searchParams.toString();
+      window.history.replaceState({}, "", `${url.pathname}${qs ? `?${qs}` : ""}`);
+      startTransition(() => {
+        setAuthModalOpen(true);
+      });
+    } else if (params.get("buy") === "true") {
+      const url = new URL(window.location.href);
+      url.searchParams.delete("buy");
+      const qs = url.searchParams.toString();
+      window.history.replaceState({}, "", `${url.pathname}${qs ? `?${qs}` : ""}`);
+      startTransition(() => {
+        setCheckoutClientError(null);
+        setCreditsModalOpen(true);
+      });
     }
 
     localStorage.setItem(CREDITS_STORAGE_KEY, String(next));

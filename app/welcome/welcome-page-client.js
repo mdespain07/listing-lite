@@ -24,16 +24,16 @@ export default function WelcomePageClient() {
               className={`w-auto transition-all duration-300 ${scrolled ? "h-10" : "h-16 sm:h-20"}`}
             />
           </a>
-          <div className="flex w-full items-center justify-end gap-3 sm:w-auto">
+          <div className="flex w-full items-center justify-center gap-3 sm:w-auto sm:justify-end">
             <a
               href="/"
-              className={`touch-manipulation inline-flex items-center rounded-full border-2 border-[#7A8F88] bg-white/60 backdrop-blur-sm font-semibold uppercase tracking-[0.14em] text-[#1A3A32] transition-all hover:bg-white ${scrolled ? "min-h-[36px] px-4 py-1 text-xs" : "min-h-[48px] px-6 py-2 text-sm"}`}
+              className={`touch-manipulation inline-flex items-center rounded-full border-2 border-[#7A8F88] bg-white/60 backdrop-blur-sm font-semibold uppercase tracking-[0.14em] text-[#1A3A32] transition-all hover:bg-white ${scrolled ? "min-h-[36px] px-4 py-1 text-xs" : "min-h-[48px] px-8 py-2 text-sm sm:px-6"}`}
             >
               Sign In
             </a>
             <a
               href="/"
-              className={`touch-manipulation inline-flex items-center rounded-full bg-[#2A6B52] font-semibold uppercase tracking-[0.14em] text-white transition-all hover:opacity-90 ${scrolled ? "min-h-[36px] px-4 py-1 text-xs" : "min-h-[48px] px-6 py-2 text-sm"}`}
+              className={`touch-manipulation inline-flex items-center rounded-full bg-[#2A6B52] font-semibold uppercase tracking-[0.14em] text-white transition-all hover:opacity-90 ${scrolled ? "min-h-[36px] px-4 py-1 text-xs" : "min-h-[48px] px-8 py-2 text-sm sm:px-6"}`}
             >
               Try Free
             </a>
@@ -64,9 +64,9 @@ export default function WelcomePageClient() {
             <p className="mt-6 max-w-lg text-xl leading-relaxed text-[#1A3A32]/70">
               Upload a photo of anything you want to sell. BrightListed writes the title, description, and pricing — and transforms your photo into a sales-ready image. All in under a minute.
             </p>
-            <div className="mt-10 flex flex-row items-center gap-4">
+            <div className="mt-10 flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:gap-4">
               <a
-                href="/"
+                href="/?signup=true"
                 className="touch-manipulation inline-flex min-h-[56px] items-center justify-center rounded-[12px] bg-[#2A6B52] px-6 py-3 text-sm font-semibold uppercase tracking-[0.14em] text-white transition-opacity hover:opacity-90 shadow-[0_8px_32px_rgba(42,107,82,0.25)] whitespace-nowrap"
               >
                 Try free | 3 credits included
@@ -105,10 +105,10 @@ export default function WelcomePageClient() {
                 Stop staring at a blank description box.
               </h2>
               <p className="text-lg leading-relaxed text-[#4A5568]">
-                Most listings go unsold because the description is vague, the title buries the item, or the price is a guess. BrightListed writes optimized, platform-ready listing content the moment you upload a photo — title, description, and pricing, tuned for wherever you sell.
+                The <i>real</i> reason most items don’t sell is because they are never even listed. Writing a description is a chore, pricing is a guess, and taking picture-perfect photos is intimidating. BrightListed takes care of all of that for you in a minute or less. Just snap a photo and get a polished title, description, photos, and price — all optimized precisely for your sales platform of choice.
               </p>
               <a
-                href="/"
+                href="/?signup=true"
                 className="touch-manipulation mt-2 inline-flex min-h-[52px] w-fit items-center justify-center rounded-[12px] bg-[#2A6B52] px-8 py-3 text-base font-semibold uppercase tracking-[0.18em] text-white transition-opacity hover:opacity-90 shadow-[0_8px_32px_rgba(42,107,82,0.20)]"
               >
                 Try it now
@@ -275,7 +275,7 @@ export default function WelcomePageClient() {
             New accounts start with 3 free credits — no credit card required.
           </p>
           <a
-            href="/"
+            href="/?signup=true"
             className="mt-4 inline-flex min-h-[48px] items-center justify-center rounded-[12px] bg-[#2A6B52] px-8 py-2.5 text-base font-semibold uppercase tracking-[0.16em] text-white transition-opacity hover:opacity-90"
           >
             Get Started
@@ -304,7 +304,7 @@ export default function WelcomePageClient() {
                   <p className="mt-1.5 text-base text-[#7A8F88]">{per}</p>
                 </div>
                 <a
-                  href="/"
+                  href="/?buy=true"
                   className="mt-auto inline-flex min-h-[48px] items-center justify-center rounded-[12px] bg-[#2A6B52] px-4 py-2.5 text-base font-semibold uppercase tracking-[0.16em] text-white transition-opacity hover:opacity-90"
                 >
                   Buy now
@@ -331,7 +331,7 @@ export default function WelcomePageClient() {
               Create an account in seconds and start turning your items into polished listings today.
             </p>
             <a
-              href="/"
+              href="/?signup=true"
               className="touch-manipulation mt-4 inline-flex min-h-[56px] items-center justify-center rounded-[12px] bg-white px-12 py-3 text-base font-semibold uppercase tracking-[0.18em] text-[#1A3A32] transition-opacity hover:opacity-90 shadow-[0_8px_32px_rgba(255,255,255,0.15)]"
             >
               Start listing for free

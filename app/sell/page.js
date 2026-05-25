@@ -9,46 +9,48 @@ export default function SellPage() {
     <div className="flex min-h-dvh flex-col bg-[#F4F9F7] font-sans text-[#1A3A32] antialiased">
 
       {/* HEADER */}
-      <header className="absolute top-0 left-0 right-0 z-20 bg-white/95 backdrop-blur-sm border-b border-[#E8EDE9]">
-        <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-4 sm:px-6">
-          <a href="/">
-            <img src="/logo.svg" alt="BrightListed" className="h-12 w-auto sm:h-14" />
-          </a>
-          <div className="flex items-center gap-3">
-            <a href="/my-items" className="touch-manipulation min-h-[44px] inline-flex items-center rounded-full border-2 border-[#7A8F88] bg-transparent px-5 py-1.5 text-xs font-semibold uppercase tracking-[0.14em] text-[#7A8F88] transition-colors hover:bg-[#F4F9F7]">
-              My Items
+      <div className="absolute top-0 left-0 right-0 z-20">
+        <div className="bg-[#2A6B52] py-2 text-center">
+          <a href="/my-items" className="text-xs font-semibold uppercase tracking-[0.2em] text-white/90 hover:text-white transition-colors">My Items →</a>
+        </div>
+        <header className="bg-white/95 backdrop-blur-sm border-b border-[#E8EDE9]">
+          <div className="mx-auto flex max-w-5xl flex-col items-center gap-3 px-4 py-4 sm:flex-row sm:justify-between sm:gap-4 sm:px-6">
+            <a href="/">
+              <img src="/logo.svg" alt="BrightListed" className="h-12 w-auto sm:h-14" />
             </a>
-            <a href="/book" className="touch-manipulation min-h-[44px] inline-flex items-center rounded-full bg-[#2A6B52] px-5 py-1.5 text-xs font-semibold uppercase tracking-[0.14em] text-white transition-opacity hover:opacity-90">
+            <a href="/book" className="touch-manipulation min-h-[44px] inline-flex items-center justify-center rounded-full bg-[#2A6B52] px-10 py-1.5 text-xs font-semibold uppercase tracking-[0.14em] text-white transition-opacity hover:opacity-90 sm:px-5">
               Book Drop-Off
             </a>
           </div>
-        </div>
-      </header>
+        </header>
+      </div>
 
       {/* HERO */}
       <section className="relative min-h-[95vh] flex items-center overflow-hidden">
         <div className="absolute inset-0 z-0">
           <img src="/sell-hero.jpg" alt="" className="h-full w-full object-cover object-center" />
-          <div className="absolute inset-0 bg-gradient-to-r from-[#0D1F18]/90 via-[#1A3A32]/50 to-transparent" />
         </div>
-        <div className="relative z-10 mx-auto w-full max-w-5xl px-4 pb-16 pt-28 sm:px-6 sm:pt-40">
-          {/* Mobile: white content box below image feel */}
-          <div className="sm:hidden bg-white/95 backdrop-blur-sm rounded-[20px] p-6 mx-0 mt-4 shadow-lg">
-            <div className="inline-flex items-center gap-2 rounded-full border border-[#2A6B52]/20 bg-[#F4F9F7] px-4 py-1.5 mb-5">
-              <span className="h-1.5 w-1.5 rounded-full bg-[#2A6B52]" />
-              <p className="text-xs font-semibold uppercase tracking-[0.28em] text-[#2A6B52]">Salt Lake County</p>
-            </div>
-            <h1 className="font-serif text-[2.75rem] font-medium leading-[1.05] tracking-[0.01em] text-[#1A3A32]">
-              Drop it off.<br />Get paid.
-            </h1>
-            <p className="mt-4 text-lg leading-relaxed text-[#4A5568]">
-              You keep 60% of every sale. We handle the photos, listings, and selling across every major platform. You just show up.
-            </p>
-            <div className="mt-6 flex flex-col gap-3">
-              <a href="/book" className="touch-manipulation inline-flex min-h-[52px] items-center justify-center rounded-[12px] bg-[#2A6B52] px-8 py-3 text-base font-semibold uppercase tracking-[0.18em] text-white transition-opacity hover:opacity-90">
-                Schedule a Free Drop-Off
-              </a>
-              <p className="text-sm text-[#7A8F88] text-center">No fees to get started</p>
+        <div className="relative z-10 mx-auto w-full max-w-5xl px-4 pb-16 pt-36 sm:px-6 sm:pt-48">
+          {/* Mobile: white content box with new hero image on top */}
+          <div className="sm:hidden bg-white rounded-[20px] overflow-hidden shadow-lg mx-0 mt-4">
+            <img src="/sell-mobile-hero.jpg" alt="BrightListed consignment" className="w-full object-cover" style={{ maxHeight: "260px" }} />
+            <div className="p-6">
+              <div className="inline-flex items-center gap-2 rounded-full border border-[#2A6B52]/20 bg-[#F4F9F7] px-4 py-1.5 mb-5">
+                <span className="h-1.5 w-1.5 rounded-full bg-[#2A6B52]" />
+                <p className="text-xs font-semibold uppercase tracking-[0.28em] text-[#2A6B52]">Salt Lake County</p>
+              </div>
+              <h1 className="font-serif text-[2.75rem] font-medium leading-[1.05] tracking-[0.01em] text-[#1A3A32]">
+                Drop it off.<br />Get paid.
+              </h1>
+              <p className="mt-4 text-lg leading-relaxed text-[#4A5568]">
+                Ready to get rid of your "to sell" pile for good? Drop off your items, and we'll handle everything from photos and listing to selling. You keep 60% of every sale and get your space back.
+              </p>
+              <div className="mt-6 flex flex-col gap-3">
+                <a href="/book" className="touch-manipulation inline-flex min-h-[52px] items-center justify-center rounded-[12px] bg-[#2A6B52] px-8 py-3 text-base font-semibold uppercase tracking-[0.18em] text-white transition-opacity hover:opacity-90">
+                  Schedule a Free Drop-Off
+                </a>
+                <a href="#pickup" className="text-sm text-[#2A6B52] font-semibold text-center underline-offset-2 hover:underline transition-colors">Pickup available →</a>
+              </div>
             </div>
           </div>
           {/* Desktop: text on the light left side of image */}
@@ -61,34 +63,33 @@ export default function SellPage() {
               Drop it off.<br />Get paid.
             </h1>
             <p className="mt-6 text-xl leading-relaxed text-[#1A3A32]/70 max-w-md">
-              You keep 60% of every sale. We handle the photos, listings, and selling across every major platform. You just show up.
+              Ready to get rid of your "to sell" pile for good? Drop off your items, and we'll handle everything from photos and listing to selling. You keep 60% of every sale and get your space back.
             </p>
-            <div className="mt-10 flex items-center gap-4">
+            <div className="mt-10 flex flex-col gap-3 items-start">
               <a href="/book" className="touch-manipulation inline-flex min-h-[56px] items-center justify-center rounded-[12px] bg-[#2A6B52] px-10 py-3 text-base font-semibold uppercase tracking-[0.18em] text-white transition-opacity hover:opacity-90 shadow-[0_8px_32px_rgba(42,107,82,0.20)]">
                 Schedule a Free Drop-Off
               </a>
-              <p className="text-sm text-[#1A3A32]/50">No fees to get started</p>
+              <a href="#pickup" className="text-sm text-[#1A3A32]/60 font-semibold underline-offset-2 hover:underline hover:text-[#2A6B52] transition-colors">Pickup available →</a>
             </div>
           </div>
         </div>
         {/* Scroll indicator */}
         <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-10 flex flex-col items-center gap-2">
-          <p className="text-xs font-medium uppercase tracking-[0.2em] text-white/40">Scroll</p>
-          <div className="h-8 w-px bg-gradient-to-b from-white/30 to-transparent" />
+          <p className="text-xs font-medium uppercase tracking-[0.2em] text-[#1A3A32]/40">Scroll</p>
+          <div className="h-8 w-px bg-gradient-to-b from-[#1A3A32]/30 to-transparent" />
         </div>
       </section>
 
       {/* SOCIAL PROOF BAR */}
       <section className="border-b border-[#E8EDE9] bg-[#1A3A32]">
         <div className="mx-auto max-w-5xl px-4 py-6 sm:px-6">
-          <div className="grid grid-cols-3 divide-x divide-white/10">
+          <div className="grid grid-cols-2 divide-x divide-white/10">
             {[
-              { stat: "60%", label: "Yours on every sale" },
-              { stat: "7 days", label: "Money to you after sale" },
-              { stat: "4+", label: "Platforms we list on" },
+              { stat: "60%", label: "You keep 60% of every item sold" },
+              { stat: "7 days", label: "Your earnings will be sent to you within 7 days of each sale" },
             ].map(({ stat, label }) => (
               <div key={stat} className="flex flex-col items-center gap-1.5 px-4 sm:px-8">
-                <p className="font-serif text-3xl font-medium text-[#8FCFB0] sm:text-4xl">{stat}</p>
+                <p className="font-serif text-3xl font-medium text-white sm:text-4xl">{stat}</p>
                 <p className="text-center text-xs font-medium uppercase tracking-[0.16em] text-white/50 sm:text-sm">{label}</p>
               </div>
             ))}
@@ -136,8 +137,8 @@ export default function SellPage() {
             {[
               {
                 step: "01",
-                title: "Schedule a drop-off",
-                body: "Book a free 30-minute appointment online. Bring what you want to sell. We'll handle everything from there.",
+                title: "Hand off your items",
+                body: "Schedule a drop-off (or pick-up) online to hand off your items to our team. We'll handle everything from there.",
                 icon: (
                   <svg className="h-6 w-6 text-[#2A6B52]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5" />
@@ -167,7 +168,7 @@ export default function SellPage() {
               {
                 step: "04",
                 title: "You get paid",
-                body: "60% of every sale, sent to you within 7 days. Watch it happen in real time from your phone.",
+                body: "Your percentage of each sale will be sent to you within 7 days. Monitor the status of each item in real-time from your phone.",
                 icon: (
                   <svg className="h-6 w-6 text-[#2A6B52]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 18.75a60.07 60.07 0 0115.797 2.101c.727.198 1.453-.342 1.453-1.096V18.75M3.75 4.5v.75A.75.75 0 013 6h-.75m0 0v-.375c0-.621.504-1.125 1.125-1.125H20.25M2.25 6v9m18-10.5v.75c0 .414.336.75.75.75h.75m-1.5-1.5h.375c.621 0 1.125.504 1.125 1.125v9.75c0 .621-.504 1.125-1.125 1.125h-.375m1.5-1.5H21a.75.75 0 00-.75.75v.75m0 0H3.75m0 0h-.375a1.125 1.125 0 01-1.125-1.125V15m1.5 1.5v-.75A.75.75 0 003 15h-.75M15 10.5a3 3 0 11-6 0 3 3 0 016 0zm3 0h.008v.008H18V10.5zm-12 0h.008v.008H6V10.5z" />
@@ -180,7 +181,10 @@ export default function SellPage() {
                   <div className="flex h-12 w-12 items-center justify-center rounded-[12px] bg-[#F4F9F7] border border-[#E8EDE9]">
                     {icon}
                   </div>
-                  <span className="font-serif text-5xl font-medium text-[#E8EDE9]">{step}</span>
+                  <div className="flex flex-col items-end">
+                    <span className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[#2A6B52]">Step</span>
+                    <span className="font-serif text-4xl font-medium text-[#1A3A32]">{step}</span>
+                  </div>
                 </div>
                 <div>
                   <h3 className="font-serif text-xl font-medium text-[#1A3A32]">{title}</h3>
@@ -193,13 +197,13 @@ export default function SellPage() {
       </section>
 
       {/* BENEFITS + IMAGE */}
-      <section className="border-b border-[#E8EDE9] bg-[#FFFFFF]">
+      <section id="pickup" className="border-b border-[#E8EDE9] bg-[#FFFFFF]">
         <div className="mx-auto max-w-5xl px-4 py-16 sm:px-6 sm:py-28">
           <div className="grid grid-cols-1 gap-16 sm:grid-cols-2 sm:items-center">
             <div>
               <p className="text-sm font-semibold uppercase tracking-[0.28em] text-[#2A6B52]">What you get</p>
               <h2 className="font-serif mt-4 text-4xl font-medium leading-tight text-[#1A3A32] sm:text-5xl">
-                Your space back.<br />Your money in.
+                Never wonder while you wait.
               </h2>
               <p className="mt-6 text-lg leading-relaxed text-[#4A5568]">
                 Most consignment shops feel like a black hole. You drop things off and hope for the best. BrightListed is built on transparency.
@@ -207,23 +211,23 @@ export default function SellPage() {
               <div className="mt-10 space-y-6">
                 {[
                   {
-                    title: "60% of every sale, guaranteed",
+                    title: "60% of every sale, guaranteed*",
                     body: "Paid within 7 days via Venmo or check. We only make money when you do.",
                     icon: <svg className="h-5 w-5 text-[#2A6B52]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}><path strokeLinecap="round" strokeLinejoin="round" d="M2.25 18.75a60.07 60.07 0 0115.797 2.101c.727.198 1.453-.342 1.453-1.096V18.75M3.75 4.5v.75A.75.75 0 013 6h-.75m0 0v-.375c0-.621.504-1.125 1.125-1.125H20.25M2.25 6v9m18-10.5v.75c0 .414.336.75.75.75h.75m-1.5-1.5h.375c.621 0 1.125.504 1.125 1.125v9.75c0 .621-.504 1.125-1.125 1.125h-.375m1.5-1.5H21a.75.75 0 00-.75.75v.75m0 0H3.75m0 0h-.375a1.125 1.125 0 01-1.125-1.125V15m1.5 1.5v-.75A.75.75 0 003 15h-.75M15 10.5a3 3 0 11-6 0 3 3 0 016 0zm3 0h.008v.008H18V10.5zm-12 0h.008v.008H6V10.5z" /></svg>,
                   },
                   {
                     title: "Real-time status on every item",
-                    body: "Log into your personal portal anytime. See what's listed, what's sold, and what's pending. No waiting for a call.",
+                    body: "Log into your personal portal anytime. See what's listed, what's sold, and what's pending.",
                     icon: <svg className="h-5 w-5 text-[#2A6B52]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}><path strokeLinecap="round" strokeLinejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" /></svg>,
                   },
                   {
                     title: "Instant sale notifications",
-                    body: "The moment an item sells, you get a notification. No wondering, no waiting for a call.",
+                    body: "The moment an item sells, you get a notification. No wondering, no waiting.",
                     icon: <svg className="h-5 w-5 text-[#2A6B52]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}><path strokeLinecap="round" strokeLinejoin="round" d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75v-.7V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0" /></svg>,
                   },
                   {
                     title: "We come to you",
-                    body: "The BrightListed team offers pickup throughout Salt Lake County. You don't have to move a thing.",
+                    body: "Pickup services available almost anywhere in Salt Lake County. Pickup items subject to an additional 15% convenience fee.",
                     icon: <svg className="h-5 w-5 text-[#2A6B52]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}><path strokeLinecap="round" strokeLinejoin="round" d="M8.25 18.75a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h6m-9 0H3.375a1.125 1.125 0 01-1.125-1.125V14.25m17.25 4.5a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h1.125c.621 0 1.129-.504 1.09-1.124a17.902 17.902 0 00-3.213-9.193 2.056 2.056 0 00-1.58-.86H14.25M16.5 18.75h-2.25m0-11.177v-.958c0-.568-.422-1.048-.987-1.106a48.554 48.554 0 00-10.026 0 1.106 1.106 0 00-.987 1.106v7.635m12-6.677v6.677m0 4.5v-4.5m0 0h-12" /></svg>,
                   },
                   {
@@ -243,8 +247,8 @@ export default function SellPage() {
                   </div>
                 ))}
               </div>
+              <p className="mt-8 text-sm text-[#7A8F88]">* Pickup items subject to additional 15% convenience fee.</p>
             </div>
-            {/* Image placeholder */}
             <div className="relative overflow-hidden rounded-[24px]" style={{ minHeight: "520px" }}>
               <img src="/sell-relief.jpg" alt="Peace of mind knowing your items are being sold" className="h-full w-full object-cover object-center absolute inset-0" />
             </div>
@@ -258,7 +262,7 @@ export default function SellPage() {
           <div className="max-w-2xl">
             <p className="text-sm font-semibold uppercase tracking-[0.28em] text-[#2A6B52]">What we accept</p>
             <h2 className="font-serif mt-4 text-4xl font-medium text-[#1A3A32]">Most items welcome.</h2>
-            <p className="mt-4 text-lg leading-relaxed text-[#4A5568]">If it's in good condition and someone would buy it, we probably sell it. Not sure? Email us before scheduling.</p>
+            <p className="mt-4 text-lg leading-relaxed text-[#4A5568]">If it's in good condition and someone would buy it, we probably sell it! For a list of items we don't sell, check out our FAQs below or <a href="/contact" className="font-semibold text-[#2A6B52] underline-offset-2 hover:underline">send us a message</a>.</p>
             <div className="mt-8 grid grid-cols-1 gap-3 sm:grid-cols-2">
               {[
                 { emoji: "👗", label: "Clothing & Accessories" },
@@ -288,25 +292,25 @@ export default function SellPage() {
       <section className="border-b border-[#E8EDE9] bg-[#FFFFFF]">
         <div className="mx-auto max-w-5xl px-4 py-16 sm:px-6 sm:py-24">
           <p className="text-sm font-semibold uppercase tracking-[0.28em] text-[#2A6B52]">Pricing</p>
-          <h2 className="font-serif mt-4 text-4xl font-medium text-[#1A3A32] sm:text-5xl">No upfront costs. Ever.</h2>
-          <p className="mt-4 max-w-lg text-lg leading-relaxed text-[#4A5568]">We only make money when you make money. No listing fees, no monthly charges, and no surprises.</p>
+          <h2 className="font-serif mt-4 text-4xl font-medium text-[#1A3A32] sm:text-5xl">We only make money when you do.</h2>
+          <p className="mt-4 max-w-lg text-lg leading-relaxed text-[#4A5568]">No listing fees, no monthly charges, no surprises. Our commission comes out of the sale — never your pocket.</p>
           <div className="mt-12 grid grid-cols-1 gap-6 sm:grid-cols-2">
             <div className="rounded-[20px] border-2 border-[#2A6B52] bg-[#FFFFFF] p-8 shadow-[0_8px_40px_rgba(42,107,82,0.10)]">
               <div className="flex items-center justify-between mb-6">
-                <p className="text-sm font-semibold uppercase tracking-[0.16em] text-[#7A8F88]">Drop-Off</p>
+                <p className="text-sm font-semibold uppercase tracking-[0.16em] text-[#7A8F88]">Drop-Off — 40% commission fee</p>
                 <span className="rounded-full bg-[#2A6B52] px-3 py-1 text-xs font-semibold uppercase tracking-[0.12em] text-white">Most popular</span>
               </div>
               <p className="font-serif text-7xl font-medium text-[#2A6B52] leading-none">60%</p>
               <p className="mt-3 text-xl font-medium text-[#1A3A32]">yours on every sale</p>
               <div className="mt-8 space-y-3">
                 {[
+                  "You receive 60% of every sale",
                   "You bring items to our Salt Lake County location",
-                  "Professional AI-enhanced photos",
-                  "Listed on 4+ resale platforms",
+                  "Professional-quality photos",
                   "45-day listing period",
-                  "Paid within 7 days of sale",
+                  "Receive your payout within 7 days of sale",
                   "Real-time tracking portal",
-                  "Unsold items donated or returned, your choice",
+                  "Unsold items donated; or returned to you — your choice",
                 ].map((item) => (
                   <div key={item} className="flex items-start gap-3">
                     <svg className="mt-0.5 h-4 w-4 shrink-0 text-[#2A6B52]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
@@ -322,19 +326,19 @@ export default function SellPage() {
             </div>
             <div className="rounded-[20px] border border-[#E8EDE9] bg-[#FFFFFF] p-8">
               <div className="flex items-center justify-between mb-6">
-                <p className="text-sm font-semibold uppercase tracking-[0.16em] text-[#7A8F88]">Pickup</p>
+                <p className="text-sm font-semibold uppercase tracking-[0.16em] text-[#7A8F88]">Pickup — 55% commission fee</p>
               </div>
               <p className="font-serif text-7xl font-medium text-[#2A6B52] leading-none">45%</p>
               <p className="mt-3 text-xl font-medium text-[#1A3A32]">yours on every sale</p>
               <div className="mt-8 space-y-3">
                 {[
-                  "The BrightListed team comes to you throughout Salt Lake County",
-                  "Professional AI-enhanced photos",
-                  "Listed on 4+ resale platforms",
+                  "You receive 45% of every sale",
+                  "Pickup services available almost anywhere in Salt Lake County",
+                  "Professional-quality photos",
                   "45-day listing period",
-                  "Paid within 7 days of sale",
+                  "Receive your payout within 7 days of sale",
                   "Real-time tracking portal",
-                  "Unsold items donated or returned, your choice",
+                  "Unsold items donated; or returned to you — your choice",
                 ].map((item) => (
                   <div key={item} className="flex items-start gap-3">
                     <svg className="mt-0.5 h-4 w-4 shrink-0 text-[#2A6B52]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
@@ -347,10 +351,10 @@ export default function SellPage() {
                   <svg className="mt-0.5 h-4 w-4 shrink-0 text-[#7A8F88]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
                   </svg>
-                  <p className="text-base text-[#7A8F88]">$30 flat fee for oversized items requiring a truck</p>
+                  <p className="text-base text-[#7A8F88]">$30 flat fee for oversized items requiring a trailer</p>
                 </div>
               </div>
-              <a href="mailto:hello@brightlisted.ai" className="mt-8 inline-flex min-h-[52px] w-full items-center justify-center rounded-[12px] border-2 border-[#2A6B52] text-base font-semibold uppercase tracking-[0.16em] text-[#2A6B52] transition-colors hover:bg-[#F4F9F7]">
+              <a href="/contact" className="mt-8 inline-flex min-h-[52px] w-full items-center justify-center rounded-[12px] border-2 border-[#2A6B52] text-base font-semibold uppercase tracking-[0.16em] text-[#2A6B52] transition-colors hover:bg-[#F4F9F7]">
                 Contact for Pickup →
               </a>
             </div>
@@ -434,9 +438,6 @@ export default function SellPage() {
             <div className="flex flex-col gap-4 sm:flex-row sm:items-center mt-4">
               <a href="/book" className="touch-manipulation inline-flex min-h-[56px] items-center justify-center rounded-[12px] bg-white px-10 py-3 text-base font-semibold uppercase tracking-[0.18em] text-[#1A3A32] transition-opacity hover:opacity-90 shadow-[0_8px_32px_rgba(255,255,255,0.15)]">
                 Book My Free Drop-Off
-              </a>
-              <a href="/my-items" className="text-base text-white/50 hover:text-white/70 transition-colors underline-offset-2 hover:underline">
-                Already a client? →
               </a>
             </div>
           </div>
