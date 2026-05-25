@@ -832,12 +832,21 @@ export default function Home() {
     });
   }, []);
 
+  const [lockedPriceFloor, setLockedPriceFloor] = useState(null);
+  const [lockedPriceCeiling, setLockedPriceCeiling] = useState(null);
+  const [dashboardItemId, setDashboardItemId] = useState(null);
+  const [listingSaved, setListingSaved] = useState(false);
+
   useEffect(() => {
     if (typeof window === "undefined") return;
     const params = new URLSearchParams(window.location.search);
     const photoUrl = params.get("photo_url");
     const itemId = params.get("item_id");
     const platforms = params.get("platforms");
+    const priceFloor = params.get("price_floor");
+    const priceCeiling = params.get("price_ceiling");
+    const lockPrice = params.get("lock_price") === "true";
+    const dbItemId = params.get("dashboard_item_id");
 
     if (!photoUrl) return;
 
@@ -846,14 +855,33 @@ export default function Home() {
     url.searchParams.delete("photo_url");
     url.searchParams.delete("item_id");
     url.searchParams.delete("platforms");
+    url.searchParams.delete("price_floor");
+    url.searchParams.delete("price_ceiling");
+    url.searchParams.delete("lock_price");
+    url.searchParams.delete("dashboard_item_id");
     window.history.replaceState({}, "", `${url.pathname}${url.searchParams.toString() ? `?${url.searchParams.toString()}` : ""}`);
 
     // Pre-select platforms if specified
     if (platforms) {
       const platformList = platforms.split(",").filter(Boolean);
+      const platformMap = { general: false, facebook: false, ebay: false, poshmark: false };
+      platformList.forEach((p) => { if (p in platformMap) platformMap[p] = true; });
+      if (!platformList.some((p) => p in platformMap)) platformMap.general = true;
       startTransition(() => {
+        setSelectedPlatforms(platformMap);
         setSelectedPlatform(platformList[0] || "general");
       });
+    }
+
+    if (lockPrice && priceFloor && priceCeiling) {
+      startTransition(() => {
+        setLockedPriceFloor(parseFloat(priceFloor));
+        setLockedPriceCeiling(parseFloat(priceCeiling));
+      });
+    }
+
+    if (dbItemId) {
+      startTransition(() => setDashboardItemId(dbItemId));
     }
 
     // Fetch photo and add to upload queue
@@ -1001,20 +1029,41 @@ export default function Home() {
 
       const firstPlatform = Object.entries(selectedPlatforms).find(([, v]) => v)?.[0] || "general";
       setSelectedPlatform(firstPlatform);
-      setResults({
+      const enrichedResults = {
         ...analyzeData,
         listingDescription: appendHomeEnvironmentSuffix(
           String(analyzeData.listingDescription ?? ""),
           smokeFreeHome,
           petFreeHome
         ),
-      });
+      };
+      setResults(enrichedResults);
       requestAnimationFrame(() => {
         resultsSectionRef.current?.scrollIntoView({
           behavior: "smooth",
           block: "start",
         });
       });
+
+      // Save listing back to dashboard item if we came from dashboard
+      if (dashboardItemId) {
+        fetch("/api/dashboard", {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            itemId: dashboardItemId,
+            updates: {
+              listing_title: analyzeData.listingTitle,
+              listing_description: analyzeData.listingDescription,
+              listing_data: analyzeData.listings ?? null,
+              listing_generated_at: new Date().toISOString(),
+              listing_stage: "ready_to_post",
+            },
+          }),
+        })
+        .then(() => setListingSaved(true))
+        .catch((e) => console.error("Could not save listing to dashboard:", e));
+      }
       setCredits((c) => Math.max(0, c - 1));
       supabase.auth.getSession().then(async ({ data: { session } }) => {
         if (!session) {
@@ -1168,6 +1217,10 @@ export default function Home() {
     setCorrectionFlash(false);
     setAnalysisPhase(null);
     setAnalyzing(false);
+    setLockedPriceFloor(null);
+    setLockedPriceCeiling(null);
+    setDashboardItemId(null);
+    setListingSaved(false);
     prevFilesLengthRef.current = 0;
     window.scrollTo({ top: 0, behavior: "smooth" });
   }, []);
@@ -1816,6 +1869,14 @@ export default function Home() {
                   </div>
                 </div>
               )}
+              {lockedPriceFloor !== null && lockedPriceCeiling !== null && (
+                <div className="mt-3 rounded-[10px] border border-[#8FCFB0]/60 bg-[#F4F9F7] px-4 py-3 flex items-center justify-between">
+                  <p className="text-sm text-[#2A6B52] font-medium">
+                    Agreed price range: {formatMoney(lockedPriceFloor)} – {formatMoney(lockedPriceCeiling)}
+                  </p>
+                  <span className="text-xs font-semibold uppercase tracking-[0.12em] text-[#7A8F88]">Locked</span>
+                </div>
+              )}
               {!canAnalyze && !analyzing && files.length < 1 && (
                 <p className="mt-3 text-center text-sm text-[#4A5568]">
                   Upload at least one photo to continue
@@ -2034,15 +2095,16 @@ export default function Home() {
                   <div>
                     <div className="mb-3 flex min-w-0 items-center gap-3">
                       <span className="shrink-0 text-sm font-medium uppercase tracking-[0.18em] text-[#4A5568] sm:text-base">
-                        Estimated price range
+                        {lockedPriceFloor !== null ? "Agreed price range" : "Estimated price range"}
                       </span>
                       <span className="h-px min-w-[1rem] flex-1 bg-[#E8EDE9]" aria-hidden />
                     </div>
                     <p className="font-serif text-4xl font-medium tracking-tight text-[#1A3A32] sm:text-5xl">
-                      {formatMoney(results.priceLow)} –{" "}
-                      {formatMoney(results.priceHigh)}
+                      {lockedPriceFloor !== null
+                        ? `${formatMoney(lockedPriceFloor)} – ${formatMoney(lockedPriceCeiling)}`
+                        : `${formatMoney(results.priceLow)} – ${formatMoney(results.priceHigh)}`}
                     </p>
-                    {(results.recommendedFirstPrice || results.recommendedDiscountPrice) && (
+                    {lockedPriceFloor === null && (results.recommendedFirstPrice || results.recommendedDiscountPrice) && (
                       <div className="mt-4 flex flex-col gap-3 sm:flex-row">
                         {results.recommendedFirstPrice && (
                           <div className="flex-1 inline-flex flex-col gap-1 rounded-[12px] border-[0.5px] border-[#8FCFB0]/80 bg-[#F4F9F7] px-4 py-3">
@@ -2184,10 +2246,23 @@ export default function Home() {
 
             {results ? (
               <div className="border-t-[0.5px] border-[#E8EDE9] px-6 py-6 sm:px-8">
-                <p className="text-center text-sm leading-relaxed text-[#4A5568]">
-                  Ready to list? Download your sales-ready images, then copy and paste the title and description for your listing!
-                </p>
-                <div className="mt-16">
+                {listingSaved && (
+                  <div className="mb-4 rounded-[10px] border border-[#8FCFB0]/60 bg-[#F4F9F7] px-4 py-3 flex items-center justify-between">
+                    <p className="text-sm font-medium text-[#2A6B52]">✓ Listing saved to dashboard</p>
+                    <a
+                      href="/dashboard"
+                      className="text-sm font-semibold text-[#2A6B52] underline-offset-2 hover:underline transition-colors"
+                    >
+                      Back to Dashboard →
+                    </a>
+                  </div>
+                )}
+                {!dashboardItemId && (
+                  <p className="text-center text-sm leading-relaxed text-[#4A5568]">
+                    Ready to list? Download your sales-ready images, then copy and paste the title and description for your listing!
+                  </p>
+                )}
+                <div className="mt-6">
                   <button
                     type="button"
                     onClick={resetNewListing}

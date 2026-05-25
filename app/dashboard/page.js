@@ -7,6 +7,22 @@ const COMMISSION_CLIENT = 0.60;
 const COMMISSION_BRYNN = 0.30;
 const COMMISSION_BL = 0.10;
 const UNSOLD_DAYS = 45;
+const LISTING_STAGE = {
+  PENDING: "pending",
+  READY_TO_POST: "ready_to_post",
+  LIVE: "live",
+};
+
+function listingStageBadge(stage) {
+  switch (stage) {
+    case LISTING_STAGE.READY_TO_POST:
+      return { cls: "border-blue-200 bg-blue-50 text-blue-700", label: "Ready to Post" };
+    case LISTING_STAGE.LIVE:
+      return { cls: "border-emerald-200 bg-emerald-50 text-emerald-700", label: "Live" };
+    default:
+      return { cls: "border-amber-200 bg-amber-50 text-amber-700", label: "Pending" };
+  }
+}
 
 function formatMoney(n) {
   if (n == null) return "—";
@@ -202,6 +218,8 @@ export default function DashboardPage() {
   );
 
   // Filter + sort
+  const stageOrder = { pending: 0, ready_to_post: 1, live: 2 };
+
   const filteredItems = allItems
     .filter((item) => {
       if (filterStatus !== "all" && item.status !== filterStatus) return false;
@@ -209,7 +227,12 @@ export default function DashboardPage() {
       return true;
     })
     .sort((a, b) => {
-      if (sortBy === "intake_date") return new Date(b.created_at) - new Date(a.created_at);
+      if (sortBy === "intake_date") {
+        const stageA = stageOrder[a.listing_stage || "pending"] ?? 0;
+        const stageB = stageOrder[b.listing_stage || "pending"] ?? 0;
+        if (stageA !== stageB) return stageA - stageB;
+        return new Date(b.created_at) - new Date(a.created_at);
+      }
       if (sortBy === "intake_date_asc") return new Date(a.created_at) - new Date(b.created_at);
       if (sortBy === "deadline") return daysUntilDeadline(a) - daysUntilDeadline(b);
       if (sortBy === "client") return a.session.client_name.localeCompare(b.session.client_name);
@@ -690,12 +713,19 @@ export default function DashboardPage() {
                     <div className="flex items-start justify-between gap-2">
                       <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#7A8F88] mb-0.5">{item.item_number || "—"}</p>
                       <p className="font-medium text-[#1A3A32] leading-snug line-clamp-2">{item.item_title}</p>
-                      <span className={`shrink-0 rounded-full border px-2.5 py-0.5 text-xs font-semibold ${cls}`}>{label}</span>
-                      {markdownStatus(item) && (
-                        <span className="shrink-0 rounded-full border border-orange-200 bg-orange-50 px-2.5 py-0.5 text-xs font-semibold text-orange-700">
-                          {markdownStatus(item) === "first" ? "1st Markdown" : "Final Markdown"}
-                        </span>
-                      )}
+                      <div className="flex flex-col items-end gap-1 shrink-0">
+                        <span className={`rounded-full border px-2.5 py-0.5 text-xs font-semibold ${cls}`}>{label}</span>
+                        {item.status === "available" && (
+                          <span className={`rounded-full border px-2.5 py-0.5 text-xs font-semibold ${listingStageBadge(item.listing_stage).cls}`}>
+                            {listingStageBadge(item.listing_stage).label}
+                          </span>
+                        )}
+                        {markdownStatus(item) && (
+                          <span className="rounded-full border border-orange-200 bg-orange-50 px-2.5 py-0.5 text-xs font-semibold text-orange-700">
+                            {markdownStatus(item) === "first" ? "1st Markdown" : "Final Markdown"}
+                          </span>
+                        )}
+                      </div>
                     </div>
                     <p className="text-sm text-[#7A8F88]">{item.session.client_name}</p>
                     <div className="flex items-center justify-between text-sm">
@@ -984,9 +1014,11 @@ export default function DashboardPage() {
               </div>
             )}
 
-            {/* Generate Listing */}
+            {/* Generate / Edit Listing */}
             <div className="border-t border-[#E8EDE9] pt-4 space-y-4">
-              <p className="text-sm font-semibold uppercase tracking-[0.14em] text-[#7A8F88]">Generate Listing</p>
+              <p className="text-sm font-semibold uppercase tracking-[0.14em] text-[#7A8F88]">
+                {selectedItem.listing_stage === LISTING_STAGE.PENDING ? "Generate Listing" : "Edit Listing"}
+              </p>
               <div className="space-y-2">
                 <p className="text-xs text-[#7A8F88] uppercase tracking-[0.12em] font-semibold">Select platforms:</p>
                 {[
@@ -1006,34 +1038,26 @@ export default function DashboardPage() {
                   </label>
                 ))}
               </div>
-              <div className="flex gap-2">
-                <Btn
-                  variant="sm"
-                  onClick={handleGenerateListing}
-                  disabled={generatingListing || !Object.values(selectedPlatforms).some(Boolean)}
-                  className="flex-1"
-                >
-                  {generatingListing
-                    ? <span className="flex items-center gap-1.5"><Spinner className="h-3.5 w-3.5" /> Generating…</span>
-                    : "Generate Listing"}
-                </Btn>
-                {selectedItem.photo_url && (
-                  <Btn
-                    variant="ghost"
-                    onClick={() => {
-                      const platforms = Object.entries(selectedPlatforms)
-                        .filter(([, v]) => v)
-                        .map(([k]) => k)
-                        .join(",");
-                      const url = `/?item_id=${encodeURIComponent(selectedItem.item_number || "")}&photo_url=${encodeURIComponent(selectedItem.photo_url)}&platforms=${encodeURIComponent(platforms || "general")}`;
-                      window.open(url, "_blank");
-                    }}
-                    className="flex-1"
-                  >
-                    Open in Listing Tool →
-                  </Btn>
-                )}
-              </div>
+              <Btn
+                variant={selectedItem.listing_stage === LISTING_STAGE.PENDING ? "primary" : "outline"}
+                onClick={() => {
+                  const platforms = Object.entries(selectedPlatforms)
+                    .filter(([, v]) => v)
+                    .map(([k]) => k)
+                    .join(",");
+                  const priceFloor = selectedItem.price_floor ?? "";
+                  const priceCeiling = selectedItem.price_ceiling ?? "";
+                  const url = `/?item_id=${encodeURIComponent(selectedItem.item_number || "")}&photo_url=${encodeURIComponent(selectedItem.photo_url || "")}&platforms=${encodeURIComponent(platforms || "general")}&price_floor=${encodeURIComponent(priceFloor)}&price_ceiling=${encodeURIComponent(priceCeiling)}&lock_price=true&dashboard_item_id=${encodeURIComponent(selectedItem.id)}`;
+                  window.location.href = url;
+                }}
+                disabled={!selectedItem.photo_url}
+                className="w-full"
+              >
+                {selectedItem.listing_stage === LISTING_STAGE.PENDING ? "Generate Listing →" : "Edit Listing →"}
+              </Btn>
+              {!selectedItem.photo_url && (
+                <p className="text-xs text-[#7A8F88]">No photo available — add a photo during intake to enable listing generation.</p>
+              )}
               {selectedItem.listing_title && (
                 <div className="rounded-[10px] border border-[#E8EDE9] bg-[#F4F9F7] p-3 space-y-3">
                   <div className="flex items-center justify-between">
