@@ -58,21 +58,26 @@ function markdownStatus(item) {
 function statusBadge(status, item) {
   const remaining = typeof item === "object" ? daysUntilDeadline(item) : Math.max(0, (45) - daysAgo(item));
   const urgent = status === "available" && remaining <= 7;
+  const listingStage = typeof item === "object" ? (item.listing_stage || "pending") : "pending";
+  const stageBadge = listingStageBadge(listingStage);
+
+  if (status === "available") {
+    if (urgent) {
+      return { cls: "bg-amber-50 border-amber-200 text-amber-800", label: `⚠ ${remaining}d left` };
+    }
+    return { cls: stageBadge.cls, label: stageBadge.label };
+  }
   const map = {
-    available: urgent
-      ? "bg-amber-50 border-amber-200 text-amber-800"
-      : "bg-emerald-50 border-emerald-200 text-emerald-800",
     sold: "bg-blue-50 border-blue-200 text-blue-800",
     donated: "bg-gray-50 border-gray-200 text-gray-600",
     picked_up: "bg-gray-50 border-gray-200 text-gray-600",
   };
   const labels = {
-    available: urgent ? `⚠ ${remaining}d left` : "Available",
     sold: "Sold",
     donated: "Donated",
     picked_up: "Picked Up",
   };
-  return { cls: map[status] ?? map.available, label: labels[status] ?? status };
+  return { cls: map[status] ?? "border-[#E8EDE9] bg-[#F4F9F7] text-[#7A8F88]", label: labels[status] ?? status };
 }
 
 function Spinner({ className = "h-5 w-5" }) {
@@ -427,8 +432,12 @@ export default function DashboardPage() {
   const handleMarkListed = async () => {
     if (!selectedItem) return;
     try {
+      const now = new Date();
+      const newDeadline = new Date(now.getTime() + (selectedItem.days_listed || 45) * 24 * 60 * 60 * 1000);
       const updated = await patchItem(selectedItem.id, {
-        listed_at: new Date().toISOString(),
+        listed_at: now.toISOString(),
+        listing_stage: LISTING_STAGE.LIVE,
+        deadline_date: newDeadline.toISOString(),
       });
       await fetchData();
       setSelectedItem((prev) => ({ ...prev, ...updated }));
@@ -715,11 +724,6 @@ export default function DashboardPage() {
                       <p className="font-medium text-[#1A3A32] leading-snug line-clamp-2">{item.item_title}</p>
                       <div className="flex flex-col items-end gap-1 shrink-0">
                         <span className={`rounded-full border px-2.5 py-0.5 text-xs font-semibold ${cls}`}>{label}</span>
-                        {item.status === "available" && (
-                          <span className={`rounded-full border px-2.5 py-0.5 text-xs font-semibold ${listingStageBadge(item.listing_stage).cls}`}>
-                            {listingStageBadge(item.listing_stage).label}
-                          </span>
-                        )}
                         {markdownStatus(item) && (
                           <span className="rounded-full border border-orange-200 bg-orange-50 px-2.5 py-0.5 text-xs font-semibold text-orange-700">
                             {markdownStatus(item) === "first" ? "1st Markdown" : "Final Markdown"}
@@ -900,12 +904,21 @@ export default function DashboardPage() {
             {/* Actions */}
             {selectedItem.status === "available" && (
               <div className="flex flex-wrap gap-2 border-t border-[#E8EDE9] pt-4">
-                <Btn onClick={() => { addToCart(selectedItem); closeItem(); }} className="w-full">
-                  {cart.find((c) => c.id === selectedItem.id) ? "✓ Already in Sale" : "Add to Sale"}
-                </Btn>
-                <Btn onClick={() => setSoldModal(true)} variant="outline">Mark Sold Online</Btn>
-                <Btn variant="ghost" onClick={() => handleMarkResolved("donated")}>Mark Donated</Btn>
-                <Btn variant="ghost" onClick={() => handleMarkResolved("picked_up")}>Mark Picked Up</Btn>
+                <div className="flex gap-2 w-full">
+                  <button
+                    type="button"
+                    onClick={() => { addToCart(selectedItem); closeItem(); }}
+                    className={`inline-flex items-center gap-2 rounded-[10px] border px-4 py-2.5 text-sm font-semibold uppercase tracking-[0.14em] transition-all min-h-[40px] ${cart.find((c) => c.id === selectedItem.id) ? "border-emerald-200 bg-emerald-50 text-emerald-700" : "border-[#E8EDE9] bg-white text-[#4A5568] hover:bg-[#F4F9F7]"}`}
+                  >
+                    <svg className="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437M7.5 14.25a3 3 0 00-3 3h15.75m-12.75-3h11.218c1.121-2.3 2.1-4.684 2.924-7.138a60.114 60.114 0 00-16.536-1.84M7.5 14.25L5.106 5.272M6 20.25a.75.75 0 11-1.5 0 .75.75 0 011.5 0zm12.75 0a.75.75 0 11-1.5 0 .75.75 0 011.5 0z" />
+                    </svg>
+                    {cart.find((c) => c.id === selectedItem.id) ? "✓ In Sale" : "+ Sale"}
+                  </button>
+                  <Btn onClick={() => setSoldModal(true)} variant="outline" className="flex-1">Mark as Sold</Btn>
+                </div>
+                <Btn variant="ghost" onClick={() => handleMarkResolved("donated")} className="flex-1">Mark Donated</Btn>
+                <Btn variant="ghost" onClick={() => handleMarkResolved("picked_up")} className="flex-1">Mark Picked Up</Btn>
               </div>
             )}
 
@@ -966,21 +979,6 @@ export default function DashboardPage() {
               </div>
             )}
 
-            {selectedItem.status === "available" && (
-              <div className="border-t border-[#E8EDE9] pt-4">
-                <Btn variant="danger" className="w-full" onClick={async () => {
-                  if (!confirm("Delete this item? This cannot be undone.")) return;
-                  try {
-                    await deleteItem(selectedItem.id);
-                    await fetchData();
-                    closeItem();
-                  } catch (e) { alert(e.message); }
-                }}>
-                  Delete Item
-                </Btn>
-              </div>
-            )}
-
             {/* Mark Sold inline */}
             {soldModal && selectedItem.status === "available" && (
               <div className="rounded-[12px] border border-[#E8EDE9] bg-[#F4F9F7] p-4 space-y-3">
@@ -999,61 +997,23 @@ export default function DashboardPage() {
               </div>
             )}
 
-            {selectedItem.status !== "available" && (
-              <div className="border-t border-[#E8EDE9] pt-4">
-                <Btn variant="danger" className="w-full" onClick={async () => {
-                  if (!confirm("Delete this item? This cannot be undone.")) return;
-                  try {
-                    await deleteItem(selectedItem.id);
-                    await fetchData();
-                    closeItem();
-                  } catch (e) { alert(e.message); }
-                }}>
-                  Delete Item
-                </Btn>
-              </div>
-            )}
-
             {/* Generate / Edit Listing */}
             <div className="border-t border-[#E8EDE9] pt-4 space-y-4">
               <p className="text-sm font-semibold uppercase tracking-[0.14em] text-[#7A8F88]">
-                {selectedItem.listing_stage === LISTING_STAGE.PENDING ? "Generate Listing" : "Edit Listing"}
+                {selectedItem.listing_title ? "Edit Listing" : "Generate Listing"}
               </p>
-              <div className="space-y-2">
-                <p className="text-xs text-[#7A8F88] uppercase tracking-[0.12em] font-semibold">Select platforms:</p>
-                {[
-                  { key: "facebook", label: "Facebook Marketplace" },
-                  { key: "poshmark", label: "Poshmark" },
-                  { key: "ebay", label: "eBay" },
-                  { key: "general", label: "General (KSL, Craigslist, etc.)" },
-                ].map(({ key, label }) => (
-                  <label key={key} className="flex items-center gap-3 cursor-pointer min-h-[36px]">
-                    <input
-                      type="checkbox"
-                      checked={selectedPlatforms[key]}
-                      onChange={(e) => setSelectedPlatforms((prev) => ({ ...prev, [key]: e.target.checked }))}
-                      className="h-4 w-4 rounded border-[#C5D4CC] accent-[#2A6B52]"
-                    />
-                    <span className="text-sm text-[#1A3A32]">{label}</span>
-                  </label>
-                ))}
-              </div>
               <Btn
-                variant={selectedItem.listing_stage === LISTING_STAGE.PENDING ? "primary" : "outline"}
+                variant={selectedItem.listing_title ? "outline" : "primary"}
                 onClick={() => {
-                  const platforms = Object.entries(selectedPlatforms)
-                    .filter(([, v]) => v)
-                    .map(([k]) => k)
-                    .join(",");
                   const priceFloor = selectedItem.price_floor ?? "";
                   const priceCeiling = selectedItem.price_ceiling ?? "";
-                  const url = `/?item_id=${encodeURIComponent(selectedItem.item_number || "")}&photo_url=${encodeURIComponent(selectedItem.photo_url || "")}&platforms=${encodeURIComponent(platforms || "general")}&price_floor=${encodeURIComponent(priceFloor)}&price_ceiling=${encodeURIComponent(priceCeiling)}&lock_price=true&dashboard_item_id=${encodeURIComponent(selectedItem.id)}`;
+                  const url = `/?item_id=${encodeURIComponent(selectedItem.item_number || "")}&photo_url=${encodeURIComponent(selectedItem.photo_url || "")}&platforms=${encodeURIComponent("general,facebook,ebay,poshmark")}&price_floor=${encodeURIComponent(priceFloor)}&price_ceiling=${encodeURIComponent(priceCeiling)}&lock_price=true&dashboard_item_id=${encodeURIComponent(selectedItem.id)}`;
                   window.location.href = url;
                 }}
                 disabled={!selectedItem.photo_url}
                 className="w-full"
               >
-                {selectedItem.listing_stage === LISTING_STAGE.PENDING ? "Generate Listing →" : "Edit Listing →"}
+                {selectedItem.listing_title ? "Edit Listing →" : "Generate Listing →"}
               </Btn>
               {!selectedItem.photo_url && (
                 <p className="text-xs text-[#7A8F88]">No photo available — add a photo during intake to enable listing generation.</p>
@@ -1164,6 +1124,20 @@ export default function DashboardPage() {
               ))}
               <Btn variant="ghost" onClick={handleSaveUrls} disabled={savingUrls} className="w-full">
                 {savingUrls ? "Saving…" : "Save URLs"}
+              </Btn>
+            </div>
+
+            {/* Delete Item — always at bottom */}
+            <div className="border-t border-[#E8EDE9] pt-4">
+              <Btn variant="danger" className="w-full" onClick={async () => {
+                if (!confirm("Delete this item? This cannot be undone.")) return;
+                try {
+                  await deleteItem(selectedItem.id);
+                  await fetchData();
+                  closeItem();
+                } catch (e) { alert(e.message); }
+              }}>
+                Delete Item
               </Btn>
             </div>
           </div>
