@@ -91,25 +91,58 @@ export async function POST(request) {
   const supabase = makeServiceSupabase();
   const signedAt = new Date().toLocaleString("en-US", { timeZone: "America/Denver" }) + " MT";
 
-  // Insert session
-  const { data: session, error: sessionError } = await supabase
+  // Check for existing session with same email — merge if found
+  const { data: existingSession } = await supabase
     .from("intake_sessions")
-    .insert({
-      client_name: client.name,
-      client_phone: client.phone,
-      client_email: client.email,
-      payment_preference: client.paymentPref,
-      venmo_username: client.paymentPref === "venmo" ? client.venmo : null,
-      mailing_address: client.paymentPref === "check" ? client.address : null,
-      status: "complete",
-      completed_at: new Date().toISOString(),
-      consignment_type: consignmentType || "dropoff",
-    })
     .select("id")
-    .single();
+    .eq("client_email", client.email.trim().toLowerCase())
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
 
-  if (sessionError) {
-    return NextResponse.json({ error: sessionError.message }, { status: 500 });
+  let session;
+
+  if (existingSession) {
+    // Update contact info in case anything changed
+    const { data: updatedSession, error: updateError } = await supabase
+      .from("intake_sessions")
+      .update({
+        client_name: client.name,
+        client_phone: client.phone,
+        payment_preference: client.paymentPref,
+        venmo_username: client.paymentPref === "venmo" ? client.venmo : null,
+        mailing_address: client.paymentPref === "check" ? client.address : null,
+        completed_at: new Date().toISOString(),
+        consignment_type: consignmentType || "dropoff",
+      })
+      .eq("id", existingSession.id)
+      .select("id")
+      .single();
+    if (updateError) {
+      return NextResponse.json({ error: updateError.message }, { status: 500 });
+    }
+    session = updatedSession;
+  } else {
+    // Create new session
+    const { data: newSession, error: sessionError } = await supabase
+      .from("intake_sessions")
+      .insert({
+        client_name: client.name,
+        client_phone: client.phone,
+        client_email: client.email.trim().toLowerCase(),
+        payment_preference: client.paymentPref,
+        venmo_username: client.paymentPref === "venmo" ? client.venmo : null,
+        mailing_address: client.paymentPref === "check" ? client.address : null,
+        status: "complete",
+        completed_at: new Date().toISOString(),
+        consignment_type: consignmentType || "dropoff",
+      })
+      .select("id")
+      .single();
+    if (sessionError) {
+      return NextResponse.json({ error: sessionError.message }, { status: 500 });
+    }
+    session = newSession;
   }
 
   // Insert items
