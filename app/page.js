@@ -947,12 +947,15 @@ export default function Home() {
     return () => subscription.unsubscribe();
   }, []);
 
+  const isDashboardMode = dashboardItemId !== null;
   const canAnalyze =
-    files.length >= 1 && credits >= 1 && !analyzing && Object.values(selectedPlatforms).some(Boolean);
+    files.length >= 1 && !analyzing && Object.values(selectedPlatforms).some(Boolean) &&
+    (isDashboardMode || credits >= 1);
 
   const handleAnalyze = async () => {
-    if (files.length < 1 || credits < 1) return;
-    if (!currentUser) {
+    if (files.length < 1) return;
+    if (!isDashboardMode && credits < 1) return;
+    if (!isDashboardMode && !currentUser) {
       setAuthModalOpen(true);
       return;
     }
@@ -1045,7 +1048,6 @@ export default function Home() {
         });
       });
 
-      // Save listing back to dashboard item if we came from dashboard
       if (dashboardItemId) {
         fetch("/api/dashboard", {
           method: "PATCH",
@@ -1061,36 +1063,38 @@ export default function Home() {
             },
           }),
         })
+        .then((res) => res.json())
         .then(() => setListingSaved(true))
         .catch((e) => console.error("Could not save listing to dashboard:", e));
       }
-      setCredits((c) => Math.max(0, c - 1));
-      supabase.auth.getSession().then(async ({ data: { session } }) => {
-        if (!session) {
-          // not logged in — fall back to localStorage
-          setCredits((c) => {
-            if (typeof window !== "undefined") {
-              localStorage.setItem(CREDITS_STORAGE_KEY, String(c));
-            }
-            return c;
-          });
-          return;
-        }
-        try {
-          const res = await fetch("/api/credits", {
-            method: "POST",
-            headers: { Authorization: `Bearer ${session.access_token}` },
-          });
-          if (!res.ok) return;
-          const data = await res.json();
-          if (typeof data.balance === "number") {
-            setCredits(data.balance);
-            localStorage.setItem(CREDITS_STORAGE_KEY, String(data.balance));
+      if (!isDashboardMode) {
+        setCredits((c) => Math.max(0, c - 1));
+        supabase.auth.getSession().then(async ({ data: { session } }) => {
+          if (!session) {
+            setCredits((c) => {
+              if (typeof window !== "undefined") {
+                localStorage.setItem(CREDITS_STORAGE_KEY, String(c));
+              }
+              return c;
+            });
+            return;
           }
-        } catch {
-          // silently fall back — credit already decremented in UI
-        }
-      });
+          try {
+            const res = await fetch("/api/credits", {
+              method: "POST",
+              headers: { Authorization: `Bearer ${session.access_token}` },
+            });
+            if (!res.ok) return;
+            const data = await res.json();
+            if (typeof data.balance === "number") {
+              setCredits(data.balance);
+              localStorage.setItem(CREDITS_STORAGE_KEY, String(data.balance));
+            }
+          } catch {
+            // silently fall back
+          }
+        });
+      }
 
       const enhanceCategory = String(
         (typeof analyzeData.category === "string"
@@ -1425,7 +1429,7 @@ export default function Home() {
             />
           </div>
           <div className="flex w-full shrink-0 flex-row justify-center gap-5 sm:w-auto sm:justify-end">
-            {!currentUser && (
+            {!currentUser && !isDashboardMode && (
               <button
                 type="button"
                 onClick={() => setAuthModalOpen(true)}
@@ -1434,17 +1438,19 @@ export default function Home() {
                 Sign In
               </button>
             )}
-            <button
-              type="button"
-              onClick={() => {
-                setCheckoutClientError(null);
-                setCreditsModalOpen(true);
-              }}
-              className="touch-manipulation min-h-[44px] self-start rounded-full border-2 border-[#2A6B52] bg-transparent px-6 py-1.5 text-sm sm:text-xs sm:px-4 sm:py-1 font-semibold uppercase tracking-[0.14em] text-[#2A6B52] transition-colors hover:bg-[#F4F9F7] focus:outline-none focus:ring-1 focus:ring-[#2A6B52]/35"
-            >
-              Buy Credits
-            </button>
-            {currentUser && (
+            {!isDashboardMode && (
+              <button
+                type="button"
+                onClick={() => {
+                  setCheckoutClientError(null);
+                  setCreditsModalOpen(true);
+                }}
+                className="touch-manipulation min-h-[44px] self-start rounded-full border-2 border-[#2A6B52] bg-transparent px-6 py-1.5 text-sm sm:text-xs sm:px-4 sm:py-1 font-semibold uppercase tracking-[0.14em] text-[#2A6B52] transition-colors hover:bg-[#F4F9F7] focus:outline-none focus:ring-1 focus:ring-[#2A6B52]/35"
+              >
+                Buy Credits
+              </button>
+            )}
+            {currentUser && !isDashboardMode && (
               <div className="flex flex-col items-center gap-2.5">
                 <button
                   type="button"
