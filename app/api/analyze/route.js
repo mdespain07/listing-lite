@@ -41,7 +41,7 @@ itemName (short plain name),
 brand (string, empty string if not clearly visible),
 condition (one of the four labels above),
 conditionExplanation (brief, photo-grounded),
-priceLow, priceHigh (numbers), sweetSpotPrice (number): The single best price for a quick but profitable sale — typically 10-20% below priceHigh. This is the price most likely to sell within a week while still getting good value.
+priceLow, priceHigh (numbers), recommendedFirstPrice (number): The best opening list price — typically 5-10% below priceHigh, positioned to sell within 2 weeks while maximizing value. recommendedDiscountPrice (number): The recommended markdown price if the item hasn't sold after 14 days — typically 15-25% below recommendedFirstPrice, always at or above priceLow. This gives Brynn clear pricing guidance without research.
 listings (object): Generate four platform-specific listing variations. Each has a title and description. Follow these rules precisely:\n\nFACEBOOK_MARKETPLACE:\n- Title: under 60 chars, plain and searchable, no punctuation tricks\n- Description: 2-3 casual conversational sentences opener (local buyer tone, like texting a neighbor), then 3-4 short bullet points using • for key specs (condition, size, notable features), then one closing sentence about smoke-free/pet-free home if applicable. Total 60-100 words.\n\nPOSHMARK:\n- Title: under 50 chars, lead with brand if known, then style descriptor\n- Description: 1-2 style-focused sentences opener (aspirational but not hypey — help buyer picture wearing/using it), then 5-6 spec bullet points using • (brand, size, measurements if clothing, material if known, condition details, original retail price if known), then 5-8 relevant hashtags on final line starting with #. Total 80-130 words.\n\nEBAY:\n- Title: as close to 80 chars as possible, keyword-stuffed with brand + model + size + color + condition abbreviation (NWT=new with tags, EUC=excellent used condition, VGC=very good condition, GUC=good used condition)\n- Description: 1 sentence professional opener stating exactly what it is, then 6-8 detailed spec bullet points using • (all searchable attributes: brand, model, size, color, material, condition, measurements, included accessories, original retail if known), then 1 closing sentence about condition and smoke-free/pet-free home. Total 100-150 words.\n\nGENERAL:\n- Title: under 70 chars, clear descriptive, works for KSL/Craigslist/Nextdoor\n- Description: 2-3 sentence opener explaining what the item is and why it's worth buying (informative, not salesy), then 4-6 bullet points using • covering key specs and condition details, then 1 closing sentence. Total 80-120 words.\n\nFor ALL platforms: never reference photos or analysis process. Never use phrases like 'no visible damage', 'no signs of wear', 'appears to be', 'seller to confirm', 'size not legible', 'not confirmed', or any language that reveals uncertainty or references the analysis. Write as a confident seller who knows their item well. Only include details you are certain about. Omit anything uncertain — do not mention the uncertainty in listing copy. No em-dashes (—) anywhere in titles or descriptions — use commas, periods, or natural sentence breaks instead. No hype words like stunning/gorgeous/amazing. Include brand and size in clothing descriptions on all platforms. If retail price is known from a tag, include it on all platforms.
 modelDetails (string): Include style name/number if visible on label, fabric content percentages from care label if visible, country of manufacture if on label, and anything else from tags or labels that is factual but too technical for the main description. Note what could NOT be determined.
 visibleAccessories (array of short strings, [] if none),
@@ -59,7 +59,8 @@ const FULL_REQUIRED_KEYS = [
   "conditionExplanation",
   "priceLow",
   "priceHigh",
-  "sweetSpotPrice",
+  "recommendedFirstPrice",
+  "recommendedDiscountPrice",
   "listings",
   "modelDetails",
   "visibleAccessories",
@@ -76,7 +77,8 @@ const INTAKE_REQUIRED_KEYS = [
   "conditionExplanation",
   "priceLow",
   "priceHigh",
-  "sweetSpotPrice",
+  "recommendedFirstPrice",
+  "recommendedDiscountPrice",
   "listingTitle",
   "modelDetails",
   "visibleAccessories",
@@ -345,6 +347,8 @@ function normalizeAnalysisResponse(parsed, isIntakeMode = false, activePlatforms
         ? Math.max(0, Math.trunc(parsed.heroIndex))
         : 0,
     closeupIndices,
+    recommendedFirstPrice: typeof parsed.recommendedFirstPrice === "number" ? parsed.recommendedFirstPrice : (parsed.sweetSpotPrice ?? null),
+    recommendedDiscountPrice: typeof parsed.recommendedDiscountPrice === "number" ? parsed.recommendedDiscountPrice : null,
   };
 }
 
@@ -460,7 +464,7 @@ export async function POST(request) {
   }));
 
   const instructionText = isIntakeMode
-    ? `Please analyze the photos in this message for a quick consignment intake. Respond with only a single JSON object containing EXACTLY these keys and no others: itemName, brand, condition, conditionExplanation, priceLow, priceHigh, sweetSpotPrice, listingTitle (general, under 70 chars), modelDetails, visibleAccessories, caveat, heroIndex. Do NOT include setContents, closeupIndices, or the full listings object. Do not wrap in markdown.`
+    ? `Please analyze the photos in this message for a quick consignment intake. Respond with only a single JSON object containing EXACTLY these keys and no others: itemName, brand, condition, conditionExplanation, priceLow, priceHigh, recommendedFirstPrice, recommendedDiscountPrice, listingTitle (general, under 70 chars), modelDetails, visibleAccessories, caveat, heroIndex. Do NOT include setContents, closeupIndices, sweetSpotPrice, or the full listings object. Do not wrap in markdown.`
     : `Please analyze the photos in this message for a classified listing. Generate listings ONLY for these platforms: ${activePlatforms.join(", ")}. For platforms not in this list, return empty strings for title and description. Respond with only a single JSON object using the exact keys from your system instructions. Do not wrap the JSON in markdown code fences and do not add any text before or after the JSON.`;
 
   /** @type {Array<{ type: string; text?: string; source?: unknown }>} */

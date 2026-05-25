@@ -547,8 +547,11 @@ export default function IntakePage() {
                     <p className="text-sm font-semibold uppercase tracking-[0.14em] text-[#2A6B52]">AI Suggestion</p>
                     <p className="mt-1 text-base font-medium text-[#1A3A32]">{itemSuggestion.itemName}</p>
                     <p className="text-sm text-[#4A5568]">Suggested range: ${itemSuggestion.priceLow} – ${itemSuggestion.priceHigh}</p>
-                    {itemSuggestion.sweetSpotPrice && (
-                      <p className="text-sm font-semibold text-[#2A6B52]">Sweet spot: ${itemSuggestion.sweetSpotPrice}</p>
+                    {itemSuggestion.recommendedFirstPrice && (
+                      <p className="text-sm font-semibold text-[#2A6B52]">List at: ${itemSuggestion.recommendedFirstPrice}</p>
+                    )}
+                    {itemSuggestion.recommendedDiscountPrice && (
+                      <p className="text-sm text-[#7A8F88]">Discount to ${itemSuggestion.recommendedDiscountPrice} if unsold after 14 days</p>
                     )}
                   </div>
                   {priceAccepted === null && (

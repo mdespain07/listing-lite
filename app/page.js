@@ -2042,15 +2042,30 @@ export default function Home() {
                       {formatMoney(results.priceLow)} –{" "}
                       {formatMoney(results.priceHigh)}
                     </p>
-                    {results.sweetSpotPrice && (
-                      <div className="mt-4 inline-flex flex-col gap-1 rounded-[12px] border-[0.5px] border-[#8FCFB0]/80 bg-[#F4F9F7] px-4 py-3">
-                        <p className="text-xs font-medium uppercase tracking-[0.16em] text-[#2A6B52]">Sweet Spot Price</p>
-                        <p className="font-serif text-2xl font-medium tracking-tight text-[#1A3A32]">
-                          {formatMoney(results.sweetSpotPrice)}
-                        </p>
-                        <p className="text-xs leading-relaxed text-[#7A8F88]">
-                          Estimated best price for a quick, profitable sale. Do your own research before pricing.
-                        </p>
+                    {(results.recommendedFirstPrice || results.recommendedDiscountPrice) && (
+                      <div className="mt-4 flex flex-col gap-3 sm:flex-row">
+                        {results.recommendedFirstPrice && (
+                          <div className="flex-1 inline-flex flex-col gap-1 rounded-[12px] border-[0.5px] border-[#8FCFB0]/80 bg-[#F4F9F7] px-4 py-3">
+                            <p className="text-xs font-medium uppercase tracking-[0.16em] text-[#2A6B52]">List at</p>
+                            <p className="font-serif text-2xl font-medium tracking-tight text-[#1A3A32]">
+                              {formatMoney(results.recommendedFirstPrice)}
+                            </p>
+                            <p className="text-xs leading-relaxed text-[#7A8F88]">
+                              Recommended first listing price.
+                            </p>
+                          </div>
+                        )}
+                        {results.recommendedDiscountPrice && (
+                          <div className="flex-1 inline-flex flex-col gap-1 rounded-[12px] border-[0.5px] border-[#E8EDE9] bg-[#F4F9F7] px-4 py-3">
+                            <p className="text-xs font-medium uppercase tracking-[0.16em] text-[#7A8F88]">Discount to</p>
+                            <p className="font-serif text-2xl font-medium tracking-tight text-[#1A3A32]">
+                              {formatMoney(results.recommendedDiscountPrice)}
+                            </p>
+                            <p className="text-xs leading-relaxed text-[#7A8F88]">
+                              Recommended markdown if unsold after 14 days.
+                            </p>
+                          </div>
+                        )}
                       </div>
                     )}
                   </div>
