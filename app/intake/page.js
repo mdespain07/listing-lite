@@ -240,6 +240,8 @@ export default function IntakePage() {
       ceiling: parseFloat(itemCeiling),
       unsold: itemUnsold,
       daysListed: itemDaysListed,
+      recommendedFirstPrice: itemSuggestion?.recommendedFirstPrice ?? null,
+      recommendedDiscountPrice: itemSuggestion?.recommendedDiscountPrice ?? null,
     }]);
     resetItemForm();
     setScreen(SCREEN.ITEMS);

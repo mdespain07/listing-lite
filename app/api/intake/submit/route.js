@@ -154,6 +154,8 @@ export async function POST(request) {
     price_ceiling: item.ceiling,
     if_unsold: item.unsold,
     days_listed: item.daysListed || 45,
+    recommended_first_price: item.recommendedFirstPrice ?? null,
+    recommended_discount_price: item.recommendedDiscountPrice ?? null,
   }));
 
   const { data: insertedItems, error: itemsError } = await supabase

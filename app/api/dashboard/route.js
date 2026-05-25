@@ -50,6 +50,8 @@ export async function GET() {
         listing_url_4,
         listing_stage,
         listed_at,
+        recommended_first_price,
+        recommended_discount_price,
         current_price,
         first_markdown_at,
         final_markdown_at,
