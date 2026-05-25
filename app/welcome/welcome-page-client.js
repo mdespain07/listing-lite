@@ -16,7 +16,7 @@ export default function WelcomePageClient() {
 
       {/* HEADER */}
       <header className={`fixed top-0 left-0 right-0 z-20 transition-all duration-300 ${scrolled ? "bg-white/95 backdrop-blur-sm shadow-sm py-3" : "bg-white/80 backdrop-blur-sm py-6"}`}>
-        <div className="mx-auto flex max-w-5xl items-center justify-between px-4 sm:px-6">
+        <div className="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-y-3 px-4 sm:px-6">
           <a href="/">
             <img
               src="/logo.svg"
@@ -24,7 +24,7 @@ export default function WelcomePageClient() {
               className={`w-auto transition-all duration-300 ${scrolled ? "h-10" : "h-16 sm:h-20"}`}
             />
           </a>
-          <div className="flex items-center gap-3">
+          <div className="flex w-full items-center justify-end gap-3 sm:w-auto">
             <a
               href="/"
               className={`touch-manipulation inline-flex items-center rounded-full border-2 border-[#7A8F88] bg-white/60 backdrop-blur-sm font-semibold uppercase tracking-[0.14em] text-[#1A3A32] transition-all hover:bg-white ${scrolled ? "min-h-[36px] px-4 py-1 text-xs" : "min-h-[48px] px-6 py-2 text-sm"}`}
@@ -51,14 +51,14 @@ export default function WelcomePageClient() {
           />
         </div>
         <div className="relative z-10 mx-auto w-full max-w-5xl px-4 pb-16 pt-40 sm:px-6 sm:pt-48">
-          <div className="max-w-[60%]">
+          <div className="w-full sm:max-w-[60%]">
             <div className="inline-flex items-center gap-2 rounded-full border border-[#2A6B52]/20 bg-white/70 px-4 py-1.5 backdrop-blur-sm">
               <span className="h-1.5 w-1.5 rounded-full bg-[#2A6B52]" />
               <p className="text-sm font-semibold uppercase tracking-[0.28em] text-[#2A6B52]">
                 Listings in a Snap
               </p>
             </div>
-            <h1 className="font-serif mt-5 text-[3.75rem] font-medium leading-[1.05] tracking-[0.01em] text-[#1A3A32] sm:text-[5.5rem]">
+            <h1 className="font-serif mt-5 text-[2.75rem] font-medium leading-[1.05] tracking-[0.01em] text-[#1A3A32] sm:text-[5.5rem]">
               From cluttered photos to polished listings.
             </h1>
             <p className="mt-6 max-w-lg text-xl leading-relaxed text-[#1A3A32]/70">
@@ -67,9 +67,9 @@ export default function WelcomePageClient() {
             <div className="mt-10 flex flex-row items-center gap-4">
               <a
                 href="/"
-                className="touch-manipulation inline-flex min-h-[56px] items-center justify-center rounded-[12px] bg-[#2A6B52] px-8 py-3 text-base font-semibold uppercase tracking-[0.18em] text-white transition-opacity hover:opacity-90 shadow-[0_8px_32px_rgba(42,107,82,0.25)] whitespace-nowrap"
+                className="touch-manipulation inline-flex min-h-[56px] items-center justify-center rounded-[12px] bg-[#2A6B52] px-6 py-3 text-sm font-semibold uppercase tracking-[0.14em] text-white transition-opacity hover:opacity-90 shadow-[0_8px_32px_rgba(42,107,82,0.25)] whitespace-nowrap"
               >
-                Try free — 3 credits included
+                Try free | 3 credits included
               </a>
               <p className="text-base text-[#1A3A32]/50 whitespace-nowrap">No credit card required.</p>
             </div>
@@ -342,29 +342,26 @@ export default function WelcomePageClient() {
       </section>
 
       {/* FOOTER */}
-      <footer className="border-t border-[#E8EDE9] bg-[#FFFFFF] py-8 text-center space-y-3">
+      <footer className="space-y-3 py-8 text-center border-t border-[#E8EDE9] bg-white">
         <img src="/logo.svg" alt="BrightListed" className="mx-auto h-10 w-auto" />
+        <div className="mx-auto max-w-sm rounded-[12px] bg-[#2A6B52] px-5 py-4 text-center">
+          <p className="text-sm font-medium text-white leading-snug">Want help selling your items? We offer services in Salt Lake County to sell your items for you!</p>
+          <a href="/sell" className="mt-3 inline-block rounded-[8px] bg-white px-4 py-2 text-xs font-semibold uppercase tracking-[0.14em] text-[#2A6B52] hover:opacity-90 transition-opacity">Learn More</a>
+        </div>
         <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2">
-          <a href="/sell" className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#2A6B52] underline-offset-2 hover:underline transition-colors">
-            Sell My Items — Salt Lake County
-          </a>
+          <a href="/sell" className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#2A6B52] underline-offset-2 hover:underline transition-colors">Sell My Items — Salt Lake County</a>
           <span className="text-[#E8EDE9]">·</span>
-          <a href="/book" className="text-[11px] uppercase tracking-[0.14em] text-[#7A8F88] underline-offset-2 hover:text-[#2A6B52] hover:underline transition-colors">
-            Schedule Drop-Off
-          </a>
+          <a href="/book" className="text-[11px] uppercase tracking-[0.14em] text-[#7A8F88] underline-offset-2 hover:text-[#2A6B52] hover:underline transition-colors">Schedule Drop-Off</a>
           <span className="text-[#E8EDE9]">·</span>
-          <a href="/book/pickup" className="text-[11px] uppercase tracking-[0.14em] text-[#7A8F88] underline-offset-2 hover:text-[#2A6B52] hover:underline transition-colors">
-            Pick Up Items
-          </a>
+          <a href="/book/pickup" className="text-[11px] uppercase tracking-[0.14em] text-[#7A8F88] underline-offset-2 hover:text-[#2A6B52] hover:underline transition-colors">Pick Up Items</a>
           <span className="text-[#E8EDE9]">·</span>
-          <a href="/book/buy" className="text-[11px] uppercase tracking-[0.14em] text-[#7A8F88] underline-offset-2 hover:text-[#2A6B52] hover:underline transition-colors">
-            Shop BrightListed
-          </a>
+          <a href="/book/buy" className="text-[11px] uppercase tracking-[0.14em] text-[#7A8F88] underline-offset-2 hover:text-[#2A6B52] hover:underline transition-colors">Shop BrightListed</a>
         </div>
         <p className="text-[11px] text-[#7A8F88]">
-          <a href="/terms" className="underline-offset-2 transition-colors hover:text-[#2A6B52] hover:underline">Terms of Service</a>
+          <a href="/terms" className="underline-offset-2 transition-colors duration-150 hover:text-[#2A6B52] hover:underline">Terms of Service</a>
           <span className="mx-2">·</span>
-          <a href="/privacy" className="underline-offset-2 transition-colors hover:text-[#2A6B52] hover:underline">Privacy Policy</a><span className="mx-2">·</span>
+          <a href="/privacy" className="underline-offset-2 transition-colors duration-150 hover:text-[#2A6B52] hover:underline">Privacy Policy</a>
+          <span className="mx-2">·</span>
           <a href="/contact" className="underline-offset-2 transition-colors hover:text-[#2A6B52] hover:underline">Contact</a>
         </p>
       </footer>

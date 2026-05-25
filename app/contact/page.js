@@ -149,29 +149,25 @@ export default function ContactPage() {
         )}
       </main>
 
-      <footer className="border-t border-[#E8EDE9] bg-[#FFFFFF] py-8 text-center space-y-3">
+      <footer className="space-y-3 py-8 text-center border-t border-[#E8EDE9] bg-white">
         <img src="/logo.svg" alt="BrightListed" className="mx-auto h-10 w-auto" />
+        <div className="mx-auto max-w-sm rounded-[12px] bg-[#2A6B52] px-5 py-4 text-center">
+          <p className="text-sm font-medium text-white leading-snug">Want help selling your items? We offer services in Salt Lake County to sell your items for you!</p>
+          <a href="/sell" className="mt-3 inline-block rounded-[8px] bg-white px-4 py-2 text-xs font-semibold uppercase tracking-[0.14em] text-[#2A6B52] hover:opacity-90 transition-opacity">Learn More</a>
+        </div>
         <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2">
-          <a href="/sell" className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#2A6B52] underline-offset-2 hover:underline transition-colors">
-            Sell My Items — Salt Lake County
-          </a>
+          <a href="/sell" className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#2A6B52] underline-offset-2 hover:underline transition-colors">Sell My Items — Salt Lake County</a>
           <span className="text-[#E8EDE9]">·</span>
-          <a href="/book" className="text-[11px] uppercase tracking-[0.14em] text-[#7A8F88] underline-offset-2 hover:text-[#2A6B52] hover:underline transition-colors">
-            Schedule Drop-Off
-          </a>
+          <a href="/book" className="text-[11px] uppercase tracking-[0.14em] text-[#7A8F88] underline-offset-2 hover:text-[#2A6B52] hover:underline transition-colors">Schedule Drop-Off</a>
           <span className="text-[#E8EDE9]">·</span>
-          <a href="/book/pickup" className="text-[11px] uppercase tracking-[0.14em] text-[#7A8F88] underline-offset-2 hover:text-[#2A6B52] hover:underline transition-colors">
-            Pick Up Items
-          </a>
+          <a href="/book/pickup" className="text-[11px] uppercase tracking-[0.14em] text-[#7A8F88] underline-offset-2 hover:text-[#2A6B52] hover:underline transition-colors">Pick Up Items</a>
           <span className="text-[#E8EDE9]">·</span>
-          <a href="/book/buy" className="text-[11px] uppercase tracking-[0.14em] text-[#7A8F88] underline-offset-2 hover:text-[#2A6B52] hover:underline transition-colors">
-            Shop BrightListed
-          </a>
+          <a href="/book/buy" className="text-[11px] uppercase tracking-[0.14em] text-[#7A8F88] underline-offset-2 hover:text-[#2A6B52] hover:underline transition-colors">Shop BrightListed</a>
         </div>
         <p className="text-[11px] text-[#7A8F88]">
-          <a href="/terms" className="underline-offset-2 transition-colors hover:text-[#2A6B52] hover:underline">Terms of Service</a>
+          <a href="/terms" className="underline-offset-2 transition-colors duration-150 hover:text-[#2A6B52] hover:underline">Terms of Service</a>
           <span className="mx-2">·</span>
-          <a href="/privacy" className="underline-offset-2 transition-colors hover:text-[#2A6B52] hover:underline">Privacy Policy</a>
+          <a href="/privacy" className="underline-offset-2 transition-colors duration-150 hover:text-[#2A6B52] hover:underline">Privacy Policy</a>
           <span className="mx-2">·</span>
           <a href="/contact" className="underline-offset-2 transition-colors hover:text-[#2A6B52] hover:underline">Contact</a>
         </p>

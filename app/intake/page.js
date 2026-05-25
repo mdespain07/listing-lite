@@ -491,7 +491,7 @@ export default function IntakePage() {
                         <p className="text-sm text-[#7A8F88]">AI will suggest a price automatically</p>
                       </>
                     )}
-                    <input type="file" accept="image/*" capture="environment" onChange={handlePhotoChange} className="sr-only" disabled={itemAnalyzing} />
+                    <input type="file" accept="image/*" onChange={handlePhotoChange} className="sr-only" disabled={itemAnalyzing} />
                   </label>
                 )}
               </Field>
