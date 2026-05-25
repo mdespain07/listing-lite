@@ -80,10 +80,8 @@ const INTAKE_REQUIRED_KEYS = [
   "listingTitle",
   "modelDetails",
   "visibleAccessories",
-  "setContents",
   "caveat",
   "heroIndex",
-  "closeupIndices",
 ];
 
 const ALLOWED_MEDIA_TYPES = new Set([
