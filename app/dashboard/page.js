@@ -227,9 +227,17 @@ export default function DashboardPage() {
 
   const filteredItems = allItems
     .filter((item) => {
+      if (filterStatus === "all") return true;
+      if (["pending", "ready_to_post", "live"].includes(filterStatus)) {
+        return item.status === "available" && (item.listing_stage || "pending") === filterStatus;
+      }
       if (filterStatus !== "all" && item.status !== filterStatus) return false;
       if (filterClient && !item.session.client_name.toLowerCase().includes(filterClient.toLowerCase())) return false;
       return true;
+    })
+    .filter((item) => {
+      if (!filterClient) return true;
+      return item.session.client_name.toLowerCase().includes(filterClient.toLowerCase());
     })
     .sort((a, b) => {
       if (sortBy === "intake_date") {
@@ -433,7 +441,7 @@ export default function DashboardPage() {
     if (!selectedItem) return;
     try {
       const now = new Date();
-      const newDeadline = new Date(now.getTime() + (selectedItem.days_listed || 45) * 24 * 60 * 60 * 1000);
+      const newDeadline = new Date(now.getTime() + (selectedItem.days_listed || 45) * 24 * 60 * 60 * 1000 + 60 * 60 * 1000);
       const updated = await patchItem(selectedItem.id, {
         listed_at: now.toISOString(),
         listing_stage: LISTING_STAGE.LIVE,
@@ -669,8 +677,10 @@ export default function DashboardPage() {
           />
           <select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)}
             className="min-h-[40px] rounded-[10px] border border-[#E8EDE9] bg-white px-3 py-2 text-sm text-[#1A3A32] focus:outline-none focus:ring-1 focus:ring-[#2A6B52]/30">
-            <option value="all">All Statuses</option>
-            <option value="available">Available</option>
+            <option value="all">All</option>
+            <option value="pending">Pending</option>
+            <option value="ready_to_post">Ready to Post</option>
+            <option value="live">Live</option>
             <option value="sold">Sold</option>
             <option value="donated">Donated</option>
             <option value="picked_up">Picked Up</option>
@@ -734,18 +744,28 @@ export default function DashboardPage() {
                     <p className="text-sm text-[#7A8F88]">{item.session.client_name}</p>
                     <div className="flex items-center justify-between text-sm">
                       <span className="text-[#4A5568]">{formatMoney(item.price_floor)} – {formatMoney(item.price_ceiling)}</span>
-                      {item.status === "available" && (
+                      {item.status === "available" && item.listed_at && (
                         <span className={`text-xs ${daysUntilDeadline(item) <= 7 ? "text-amber-600 font-semibold" : "text-[#7A8F88]"}`}>
                           {daysUntilDeadline(item)}d left
                         </span>
+                      )}
+                      {item.status === "available" && !item.listed_at && (
+                        <span className="text-xs text-[#C5D4CC]">Not listed yet</span>
                       )}
                       {item.status === "sold" && (
                         <span className="text-blue-600 font-semibold text-xs">Sold {formatMoney(item.sale_price)}</span>
                       )}
                     </div>
-                    <p className="text-xs text-[#C5D4CC]">
-                      Intake: {new Date(item.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
-                    </p>
+                    <div className="flex flex-col gap-0.5">
+                      <p className="text-xs text-[#C5D4CC]">
+                        Intake: {new Date(item.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+                      </p>
+                      {item.listed_at && (
+                        <p className="text-xs text-[#8FCFB0]">
+                          Listed: {new Date(item.listed_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+                        </p>
+                      )}
+                    </div>
                   </div>
                 </button>
               );
@@ -848,8 +868,8 @@ export default function DashboardPage() {
                 <div className="flex justify-between items-center">
                   <span className="text-[#7A8F88]">Days Remaining</span>
                   <div className="flex items-center gap-2">
-                    <span className={`font-semibold ${daysUntilDeadline(selectedItem) <= 7 ? "text-amber-600" : "text-[#2A6B52]"}`}>
-                      {daysUntilDeadline(selectedItem)} days
+                    <span className={`font-semibold ${!selectedItem.listed_at ? "text-[#C5D4CC]" : daysUntilDeadline(selectedItem) <= 7 ? "text-amber-600" : "text-[#2A6B52]"}`}>
+                      {selectedItem.listed_at ? `${daysUntilDeadline(selectedItem)} days` : "Not listed yet"}
                     </span>
                     <div className="flex gap-1">
                       {[15, 30].map((days) => (
@@ -908,12 +928,26 @@ export default function DashboardPage() {
                   <button
                     type="button"
                     onClick={() => { addToCart(selectedItem); closeItem(); }}
-                    className={`inline-flex items-center gap-2 rounded-[10px] border px-4 py-2.5 text-sm font-semibold uppercase tracking-[0.14em] transition-all min-h-[40px] ${cart.find((c) => c.id === selectedItem.id) ? "border-emerald-200 bg-emerald-50 text-emerald-700" : "border-[#E8EDE9] bg-white text-[#4A5568] hover:bg-[#F4F9F7]"}`}
+                    title={cart.find((c) => c.id === selectedItem.id) ? "Already in sale" : "Add to sale"}
+                    className={`relative inline-flex items-center justify-center rounded-[10px] border min-h-[40px] w-[48px] transition-all ${cart.find((c) => c.id === selectedItem.id) ? "border-emerald-200 bg-emerald-50 text-emerald-600" : "border-[#E8EDE9] bg-white text-[#E8A020] hover:bg-[#FFF8EE] hover:border-[#E8A020]/40"}`}
                   >
-                    <svg className="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437M7.5 14.25a3 3 0 00-3 3h15.75m-12.75-3h11.218c1.121-2.3 2.1-4.684 2.924-7.138a60.114 60.114 0 00-16.536-1.84M7.5 14.25L5.106 5.272M6 20.25a.75.75 0 11-1.5 0 .75.75 0 011.5 0zm12.75 0a.75.75 0 11-1.5 0 .75.75 0 011.5 0z" />
                     </svg>
-                    {cart.find((c) => c.id === selectedItem.id) ? "✓ In Sale" : "+ Sale"}
+                    {!cart.find((c) => c.id === selectedItem.id) && (
+                      <span className="absolute -right-1.5 -top-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-[#E8A020] text-white">
+                        <svg className="h-2.5 w-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                        </svg>
+                      </span>
+                    )}
+                    {cart.find((c) => c.id === selectedItem.id) && (
+                      <span className="absolute -right-1.5 -top-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-emerald-500 text-white">
+                        <svg className="h-2.5 w-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                        </svg>
+                      </span>
+                    )}
                   </button>
                   <Btn onClick={() => setSoldModal(true)} variant="outline" className="flex-1">Mark as Sold</Btn>
                 </div>
