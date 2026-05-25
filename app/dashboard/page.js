@@ -23,12 +23,14 @@ function daysUntilDeadline(item) {
     const diff = new Date(item.deadline_date).getTime() - Date.now();
     return Math.max(0, Math.floor(diff / (1000 * 60 * 60 * 24)));
   }
-  return Math.max(0, (item.days_listed || 45) - daysAgo(item.created_at));
+  const startDate = item.listed_at || item.created_at;
+  return Math.max(0, (item.days_listed || 45) - daysAgo(startDate));
 }
 
 function markdownStatus(item) {
   if (item.status !== "available") return null;
-  const age = daysAgo(item.created_at);
+  const startDate = item.listed_at || item.created_at;
+  const age = daysAgo(startDate);
   const total = item.days_listed || 45;
   const firstMarkdownDay = Math.floor(total * 0.31); // ~14 days on 45-day listing
   const finalMarkdownDay = Math.floor(total * 0.67); // ~30 days on 45-day listing
@@ -369,6 +371,19 @@ export default function DashboardPage() {
       const updated = await patchItem(selectedItem.id, {
         status,
         resolved_at: new Date().toISOString(),
+      });
+      await fetchData();
+      setSelectedItem((prev) => ({ ...prev, ...updated }));
+    } catch (e) {
+      alert(e.message);
+    }
+  };
+
+  const handleMarkListed = async () => {
+    if (!selectedItem) return;
+    try {
+      const updated = await patchItem(selectedItem.id, {
+        listed_at: new Date().toISOString(),
       });
       await fetchData();
       setSelectedItem((prev) => ({ ...prev, ...updated }));
@@ -1062,7 +1077,25 @@ export default function DashboardPage() {
 
             {/* Listing URLs */}
             <div className="space-y-2">
-              <p className="text-sm font-semibold uppercase tracking-[0.14em] text-[#7A8F88]">Live Listing URLs</p>
+              <div className="flex items-center justify-between">
+                <p className="text-sm font-semibold uppercase tracking-[0.14em] text-[#7A8F88]">Live Listing URLs</p>
+                {selectedItem.listed_at ? (
+                  <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700">
+                    <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                    </svg>
+                    Listed {new Date(selectedItem.listed_at).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+                  </span>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={handleMarkListed}
+                    className="inline-flex items-center gap-1.5 rounded-full border border-[#2A6B52] bg-white px-3 py-1 text-xs font-semibold uppercase tracking-[0.12em] text-[#2A6B52] hover:bg-[#F4F9F7] transition-colors"
+                  >
+                    Mark as Listed
+                  </button>
+                )}
+              </div>
               {listingUrls.map((url, i) => (
                 <input
                   key={i}
