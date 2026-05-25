@@ -146,6 +146,7 @@ export default function DashboardPage() {
 
   // Generate listing
   const [generatingListing, setGeneratingListing] = useState(false);
+  const [selectedListingPlatform, setSelectedListingPlatform] = useState("general");
   const [selectedPlatforms, setSelectedPlatforms] = useState({
     facebook: false,
     poshmark: false,
@@ -237,6 +238,7 @@ export default function DashboardPage() {
     ]);
     setSoldModal(false);
     setSalePrice("");
+    setSelectedListingPlatform("general");
   };
 
   const closeItem = () => {
@@ -409,6 +411,7 @@ export default function DashboardPage() {
       const updated = await patchItem(selectedItem.id, {
         listing_title: data.listingTitle,
         listing_description: data.listingDescription,
+        listing_data: data.listings ?? null,
         listing_generated_at: new Date().toISOString(),
       });
       await fetchData();
@@ -985,15 +988,74 @@ export default function DashboardPage() {
                 )}
               </div>
               {selectedItem.listing_title && (
-                <div className="rounded-[10px] border border-[#E8EDE9] bg-[#F4F9F7] p-3 space-y-2">
-                  <p className="text-xs font-semibold uppercase tracking-[0.12em] text-[#7A8F88]">Last Generated</p>
-                  <p className="text-sm font-medium text-[#1A3A32]">{selectedItem.listing_title}</p>
-                  <p className="text-sm text-[#4A5568] leading-relaxed line-clamp-3">{selectedItem.listing_description}</p>
-                  {selectedItem.listing_generated_at && (
-                    <p className="text-xs text-[#C5D4CC]">
-                      {new Date(selectedItem.listing_generated_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
-                    </p>
+                <div className="rounded-[10px] border border-[#E8EDE9] bg-[#F4F9F7] p-3 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <p className="text-xs font-semibold uppercase tracking-[0.12em] text-[#7A8F88]">Generated Listing</p>
+                    {selectedItem.listing_generated_at && (
+                      <p className="text-xs text-[#C5D4CC]">
+                        {new Date(selectedItem.listing_generated_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+                      </p>
+                    )}
+                  </div>
+                  {selectedItem.listing_data && (
+                    <div className="flex flex-wrap gap-1.5">
+                      {[
+                        { key: "general", label: "General" },
+                        { key: "facebook", label: "Facebook" },
+                        { key: "ebay", label: "eBay" },
+                        { key: "poshmark", label: "Poshmark" },
+                      ].filter(({ key }) => {
+                        const l = selectedItem.listing_data[key];
+                        return l?.title || l?.description;
+                      }).map(({ key, label }) => (
+                        <button
+                          key={key}
+                          type="button"
+                          onClick={() => setSelectedListingPlatform(key)}
+                          className={`rounded-full border px-3 py-1 text-xs font-semibold uppercase tracking-[0.12em] transition-colors ${selectedListingPlatform === key ? "border-[#2A6B52] bg-[#2A6B52] text-white" : "border-[#E8EDE9] bg-white text-[#4A5568] hover:border-[#8FCFB0]/60"}`}
+                        >
+                          {label}
+                        </button>
+                      ))}
+                    </div>
                   )}
+                  {(() => {
+                    const listings = selectedItem.listing_data;
+                    const title = listings?.[selectedListingPlatform]?.title || selectedItem.listing_title || "";
+                    const description = listings?.[selectedListingPlatform]?.description || selectedItem.listing_description || "";
+                    return (
+                      <div className="space-y-2">
+                        <div>
+                          <p className="text-xs font-semibold uppercase tracking-[0.1em] text-[#7A8F88] mb-1">Title</p>
+                          <div className="flex items-start gap-2">
+                            <p className="flex-1 text-sm font-medium text-[#1A3A32] leading-snug">{title}</p>
+                            <button
+                              type="button"
+                              onClick={() => navigator.clipboard.writeText(title)}
+                              className="shrink-0 rounded-[6px] border border-[#E8EDE9] bg-white px-2 py-1 text-xs font-semibold text-[#4A5568] hover:bg-[#F4F9F7] transition-colors"
+                            >
+                              Copy
+                            </button>
+                          </div>
+                        </div>
+                        {description && (
+                          <div>
+                            <p className="text-xs font-semibold uppercase tracking-[0.1em] text-[#7A8F88] mb-1">Description</p>
+                            <div className="flex items-start gap-2">
+                              <p className="flex-1 text-sm text-[#4A5568] leading-relaxed whitespace-pre-wrap">{description}</p>
+                              <button
+                                type="button"
+                                onClick={() => navigator.clipboard.writeText(description)}
+                                className="shrink-0 rounded-[6px] border border-[#E8EDE9] bg-white px-2 py-1 text-xs font-semibold text-[#4A5568] hover:bg-[#F4F9F7] transition-colors"
+                              >
+                                Copy
+                              </button>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })()}
                 </div>
               )}
             </div>
