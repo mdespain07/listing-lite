@@ -519,7 +519,20 @@ export default function IntakePage() {
                   </p>
                   <button
                     type="button"
-                    onClick={() => { setManualMode(false); setItemError(""); }}
+                    onClick={async () => {
+                      setManualMode(false);
+                      setItemError("");
+                      if (itemPhotoPreview) {
+                        try {
+                          const res = await fetch(itemPhotoPreview);
+                          const blob = await res.blob();
+                          const file = new File([blob], "retry.jpg", { type: blob.type || "image/jpeg" });
+                          handleAnalyzePhoto(file);
+                        } catch {
+                          setItemError("Could not retry — please remove the photo and try again.");
+                        }
+                      }
+                    }}
                     className="mt-1 text-xs text-amber-700 underline-offset-2 hover:underline"
                   >
                     Try AI again
