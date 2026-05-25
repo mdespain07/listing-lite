@@ -597,6 +597,7 @@ function appendHomeEnvironmentSuffix(description, smokeFree, petFree) {
 export default function Home() {
   const [files, setFiles] = useState([]);
   const [manualHeroIndex, setManualHeroIndex] = useState(null);
+  const [isSet, setIsSet] = useState(false);
   const [notes, setNotes] = useState("");
   const [category, setCategory] = useState("");
   const [packagingIncluded, setPackagingIncluded] = useState("no");
@@ -936,6 +937,7 @@ export default function Home() {
         partsIncluded: partsComplete,
         approximateAge,
         platforms: activePlatforms,
+        isSet,
       });
 
       let analyzeRes;
@@ -1049,6 +1051,7 @@ export default function Home() {
           return largestIndex;
         })(),
         itemName: String(analyzeData.itemName ?? ""),
+        closeupIndices: Array.isArray(analyzeData.closeupIndices) ? analyzeData.closeupIndices : [],
       });
 
       /** Optional: never fail the main flow if enhance errors or times out. */
@@ -1127,6 +1130,7 @@ export default function Home() {
   const resetNewListing = useCallback(() => {
     setFiles([]);
     setManualHeroIndex(null);
+    setIsSet(false);
     setResults(null);
     setSelectedPlatform("general");
     setSelectedPlatforms({ general: true, facebook: false, ebay: false, poshmark: false });
@@ -1225,6 +1229,7 @@ export default function Home() {
             partsIncluded: partsComplete,
             approximateAge,
             correction: trimmed,
+            isSet,
           }),
         });
       } catch (e) {
@@ -1601,6 +1606,15 @@ export default function Home() {
               <p className="mt-4 text-sm leading-relaxed text-[#7A8F88] italic">
                 💡 For best results, include one full-length photo of your item.
               </p>
+              <label className="mt-4 flex min-h-11 cursor-pointer items-center gap-3 text-sm leading-snug text-[#5C6F66]">
+                <input
+                  type="checkbox"
+                  checked={isSet}
+                  onChange={(e) => setIsSet(e.target.checked)}
+                  className="h-5 w-5 shrink-0 rounded border-[#C5D4CC] accent-[#2A6B52] focus:outline-none focus:ring-2 focus:ring-[#2A6B52]/30 focus:ring-offset-2 focus:ring-offset-[#FFFFFF]"
+                />
+                This is a set or lot (multiple items sold together)
+              </label>
             </div>
 
             <div>
@@ -1953,6 +1967,20 @@ export default function Home() {
                       </div>
                       <p className="text-[15px] leading-relaxed text-[#1A3A32]">
                         {String(results.modelDetails ?? "")}
+                      </p>
+                    </div>
+                  )}
+
+                  {String(results.setContents ?? "").trim() !== "" && (
+                    <div>
+                      <div className="mb-3 flex min-w-0 items-center gap-3">
+                        <span className="shrink-0 text-sm font-medium uppercase tracking-[0.18em] text-[#4A5568] sm:text-base">
+                          Items in this set
+                        </span>
+                        <span className="h-px min-w-[1rem] flex-1 bg-[#E8EDE9]" aria-hidden />
+                      </div>
+                      <p className="text-[15px] leading-relaxed text-[#1A3A32]">
+                        {String(results.setContents ?? "")}
                       </p>
                     </div>
                   )}

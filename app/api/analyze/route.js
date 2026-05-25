@@ -30,7 +30,7 @@ GENERAL RULES:
 - Do not reference other listings, comparable sales, or what is typically included.
 - Do not assume completeness of accessories or parts.
 - Do not use promotional or sales hype. Listing title and description must be factual and limited to what the photos support.
-- Include brand AND model when each is visible or legible. Note model numbers, edition markings, or production dates ONLY when they appear in the photos.
+- Include brand AND model when each is visible or legible. Note model numbers, edition markings, or production dates ONLY when they appear in the photos. CRITICAL: When a model number is identifiable from the photos or seller notes, do not limit the description to only what is visually observable — look up and include the known specifications, features, and details for that exact model (dimensions, technical specs, materials, included accessories, original retail price if known). State these as facts about the item, not as observations from the photo. This makes listings significantly more useful and accurate for buyers.
 - List only accessories and inclusions that are VISIBLY PRESENT in the photos.
 - When uncertain about any detail, OMIT IT ENTIRELY. Do not use hedged language like 'appears to be', 'possibly', 'likely', 'no visible damage', 'not confirmed', 'seller to confirm', 'size not legible', or any similar qualifier. If you cannot confirm a detail from the photos or seller notes, leave it out completely and note it in the caveat field instead. The listing copy must read as if written by a confident seller who knows their item — not an AI analyzing photos.
 
@@ -46,7 +46,9 @@ listings (object): Generate four platform-specific listing variations. Each has 
 modelDetails (string): Include style name/number if visible on label, fabric content percentages from care label if visible, country of manufacture if on label, and anything else from tags or labels that is factual but too technical for the main description. Note what could NOT be determined.
 visibleAccessories (array of short strings, [] if none),
 caveat (string): Write this note TO THE SELLER, not the buyer. If details could not be clearly read from the photos, tell the seller what to verify and suggest they use the correction box to fix it. Example: 'The size tag was difficult to read clearly — please confirm the size and add it in the Something look off box if needed.' If everything was clear, write an empty string.
-heroIndex (number): CRITICAL — always pick the photo showing the most complete view of the ENTIRE item from furthest away. For clothing: always pick the full-length view over any closeup, detail shot, or partial view — even if the closeup is sharper. For all items: prefer the photo where the complete item is visible with the least cropping. If uncertain, pick index 0. Never pick a closeup or detail photo as hero.
+setContents (string): If this is a set or lot, list each individual item visible in the photos as a plain comma-separated string (e.g. '6 dinner plates, 6 salad plates, 4 bowls'). If this is a single item, return an empty string.
+closeupIndices (array of numbers): List the index (0-based) of any photo where the subject fills 80% or more of the frame with no meaningful background visible — tight detail shots, texture closeups, label shots, or any photo where background removal would be destructive or pointless. Return [] if no photos qualify. Never include the heroIndex in this array.
+heroIndex (number): CRITICAL — always pick the photo showing the most complete view of the ENTIRE item from furthest away. For sets and lots: always pick the photo that shows ALL pieces together in a single frame over any individual item closeup — the group shot is always the hero. For clothing: always pick the full-length view over any closeup, detail shot, or partial view — even if the closeup is sharper. For all items: prefer the photo where the complete item is visible with the least cropping. If uncertain, pick index 0. Never pick a closeup or detail photo as hero.
 
 If the request includes mode=intake, respond with only these keys: itemName, brand, condition, conditionExplanation, priceLow, priceHigh, sweetSpotPrice, listingTitle (general only, under 70 chars), modelDetails, visibleAccessories, caveat, heroIndex. Skip the full listings object entirely.`;
 
@@ -61,8 +63,10 @@ const FULL_REQUIRED_KEYS = [
   "listings",
   "modelDetails",
   "visibleAccessories",
+  "setContents",
   "caveat",
   "heroIndex",
+  "closeupIndices",
 ];
 
 const INTAKE_REQUIRED_KEYS = [
@@ -76,8 +80,10 @@ const INTAKE_REQUIRED_KEYS = [
   "listingTitle",
   "modelDetails",
   "visibleAccessories",
+  "setContents",
   "caveat",
   "heroIndex",
+  "closeupIndices",
 ];
 
 const ALLOWED_MEDIA_TYPES = new Set([
@@ -318,6 +324,12 @@ function normalizeAnalysisResponse(parsed, isIntakeMode = false, activePlatforms
     general: { title: "", description: "" },
   };
 
+  const closeupIndices = Array.isArray(parsed.closeupIndices)
+    ? parsed.closeupIndices
+        .map((n) => (typeof n === "number" ? Math.trunc(n) : -1))
+        .filter((n) => n >= 0)
+    : [];
+
   return {
     ...parsed,
     itemName: String(parsed.itemName ?? ""),
@@ -334,6 +346,7 @@ function normalizeAnalysisResponse(parsed, isIntakeMode = false, activePlatforms
       typeof parsed.heroIndex === "number"
         ? Math.max(0, Math.trunc(parsed.heroIndex))
         : 0,
+    closeupIndices,
   };
 }
 
@@ -366,6 +379,7 @@ export async function POST(request) {
     correction,
     mode,
     platforms,
+    isSet,
   } = body;
 
   const isIntakeMode = mode === "intake";
@@ -424,6 +438,9 @@ export async function POST(request) {
   };
 
   const sellerContextText = buildSellerContextBlock(contextFields, notesText);
+  const setContextLine = isSet
+    ? "\nSELLER HAS INDICATED THIS IS A SET OR LOT: Treat this as multiple items sold together. Identify each individual item visible in the photos. List all items in the setContents field. Write all listing titles and descriptions for the complete set/lot, not individual items. Price for the full lot."
+    : "\nAnalyze this as a single item unless the photos clearly show multiple distinct items being sold together as a set.";
 
   const apiKey = process.env.ANTHROPIC_API_KEY?.trim();
   if (!apiKey) {
@@ -448,7 +465,7 @@ export async function POST(request) {
 
   /** @type {Array<{ type: string; text?: string; source?: unknown }>} */
   const userContent = [
-    { type: "text", text: sellerContextText },
+    { type: "text", text: sellerContextText + setContextLine },
     ...imageBlocks,
   ];
   if (correctionText) {

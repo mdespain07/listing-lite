@@ -339,11 +339,18 @@ async function processOneImage(
   img,
   index,
   isHero,
+  isCloseup,
   category,
   itemName,
   errorsOut
 ) {
   const { data, media_type } = img;
+
+  if (isCloseup) {
+    const originalUrl = `data:${media_type};base64,${data}`;
+    return { index, isHero, outputs: [{ label: "clean", url: originalUrl }] };
+  }
+
   const clothing = isClothing(category, itemName);
 
   /** @type {{ label: string; url: string | null }[]} */
@@ -417,6 +424,9 @@ export async function POST(request) {
   }
 
   const { images } = body;
+  const closeupIndices = Array.isArray(body.closeupIndices)
+    ? body.closeupIndices.map((n) => Number(n)).filter((n) => Number.isFinite(n)).map(Math.trunc)
+    : [];
 
   if (!Array.isArray(images)) {
     return NextResponse.json(
@@ -513,6 +523,7 @@ export async function POST(request) {
       normalized[i],
       i,
       isHero,
+      closeupIndices.includes(i),
       category,
       itemName,
       errors
