@@ -74,6 +74,65 @@ function buildSaleEmail({ clientName, itemTitle, itemNumber, salePrice, clientEa
 </html>`;
 }
 
+function buildAdminSaleEmail({ clientName, clientEmail, itemTitle, itemNumber, salePrice, clientEarnings, brynnEarnings, blEarnings }) {
+  return `
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"></head>
+<body style="font-family: Georgia, serif; background: #F4F9F7; margin: 0; padding: 32px 16px;">
+  <div style="max-width: 520px; margin: 0 auto; background: #FFFFFF; border-radius: 16px; border: 1px solid #E8EDE9; overflow: hidden;">
+    <div style="background: #1A3A32; padding: 32px;">
+      <p style="color: #8FCFB0; font-size: 10px; font-family: Arial, sans-serif; letter-spacing: 0.2em; text-transform: uppercase; margin: 0 0 8px;">BrightListed Dashboard</p>
+      <h1 style="color: #F4F9F7; font-size: 26px; margin: 0; font-weight: normal;">Item Sold 🎉</h1>
+    </div>
+    <div style="padding: 32px;">
+      <div style="background: #F4F9F7; border-radius: 12px; padding: 20px; margin-bottom: 20px;">
+        <p style="color: #7A8F88; font-size: 11px; font-family: Arial, sans-serif; letter-spacing: 0.16em; text-transform: uppercase; margin: 0 0 8px;">Item</p>
+        <p style="color: #1A3A32; font-size: 16px; font-weight: bold; margin: 0 0 4px;">${itemTitle}</p>
+        <p style="color: #7A8F88; font-size: 13px; margin: 0;">${itemNumber}</p>
+      </div>
+      <div style="background: #F4F9F7; border-radius: 12px; padding: 20px; margin-bottom: 20px;">
+        <p style="color: #7A8F88; font-size: 11px; font-family: Arial, sans-serif; letter-spacing: 0.16em; text-transform: uppercase; margin: 0 0 12px;">Client</p>
+        <p style="color: #1A3A32; font-size: 15px; margin: 0 0 4px;">${clientName}</p>
+        <p style="color: #7A8F88; font-size: 13px; margin: 0;">${clientEmail}</p>
+      </div>
+      <div style="background: #F4F9F7; border-radius: 12px; padding: 20px; margin-bottom: 20px;">
+        <p style="color: #7A8F88; font-size: 11px; font-family: Arial, sans-serif; letter-spacing: 0.16em; text-transform: uppercase; margin: 0 0 12px;">Earnings Breakdown</p>
+        <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+          <span style="color: #4A5568; font-size: 15px;">Sale price</span>
+          <span style="color: #1A3A32; font-size: 15px; font-weight: bold;">${formatMoney(salePrice)}</span>
+        </div>
+        <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+          <span style="color: #4A5568; font-size: 15px;">Client payout (60%)</span>
+          <span style="color: #2A6B52; font-size: 15px; font-weight: bold;">${formatMoney(clientEarnings)}</span>
+        </div>
+        <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+          <span style="color: #4A5568; font-size: 15px;">Brynn commission (30%)</span>
+          <span style="color: #1A3A32; font-size: 15px; font-weight: bold;">${formatMoney(brynnEarnings)}</span>
+        </div>
+        <div style="display: flex; justify-content: space-between; border-top: 1px solid #E8EDE9; margin-top: 8px; padding-top: 8px;">
+          <span style="color: #4A5568; font-size: 15px;">BrightListed (10%)</span>
+          <span style="color: #1A3A32; font-size: 15px; font-weight: bold;">${formatMoney(blEarnings)}</span>
+        </div>
+      </div>
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td align="center">
+            <a href="https://www.brightlisted.ai/dashboard" style="display: inline-block; background: #2A6B52; color: #FFFFFF; text-decoration: none; padding: 14px 32px; border-radius: 10px; font-size: 14px; font-family: Arial, sans-serif; font-weight: bold; letter-spacing: 0.1em; text-transform: uppercase;">
+              Open Dashboard →
+            </a>
+          </td>
+        </tr>
+      </table>
+    </div>
+    <div style="background: #F4F9F7; border-top: 1px solid #E8EDE9; padding: 16px 32px; text-align: center;">
+      <p style="color: #7A8F88; font-size: 11px; font-family: Arial, sans-serif; letter-spacing: 0.16em; text-transform: uppercase; margin: 0;">BrightListed · Listings in a Snap</p>
+    </div>
+  </div>
+</body>
+</html>`;
+}
+
 export async function POST(request) {
   let body;
   try { body = await request.json(); } catch {
@@ -135,24 +194,54 @@ export async function POST(request) {
     return NextResponse.json({ error: "Email not configured" }, { status: 500 });
   }
 
-  const emailRes = await fetch("https://api.resend.com/emails", {
-    method: "POST",
-    headers: {
-      "Authorization": `Bearer ${resendKey}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      from: "BrightListed <hello@brightlisted.ai>",
-      to: [session.client_email],
-      subject: `Your item sold — ${formatMoney(clientEarnings)} is on its way!`,
-      html,
-    }),
+  const brynnEarnings = parseFloat(salePrice) * 0.30;
+  const blEarnings = parseFloat(salePrice) * 0.10;
+
+  const adminHtml = buildAdminSaleEmail({
+    clientName: session.client_name,
+    clientEmail: session.client_email,
+    itemTitle: item.item_title,
+    itemNumber: item.item_number || "",
+    salePrice: parseFloat(salePrice),
+    clientEarnings,
+    brynnEarnings,
+    blEarnings,
   });
 
-  if (!emailRes.ok) {
-    const err = await emailRes.text();
-    console.error("Resend error:", err);
-    return NextResponse.json({ error: "Email failed to send" }, { status: 500 });
+  const [clientEmailRes, adminEmailRes] = await Promise.allSettled([
+    fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${resendKey}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        from: "BrightListed <hello@brightlisted.ai>",
+        to: [session.client_email],
+        subject: `Your item sold — ${formatMoney(clientEarnings)} is on its way!`,
+        html,
+      }),
+    }),
+    fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${resendKey}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        from: "BrightListed <hello@brightlisted.ai>",
+        to: ["hello@brightlisted.ai"],
+        subject: `Item sold — ${item.item_title} · ${formatMoney(parseFloat(salePrice))}`,
+        html: adminHtml,
+      }),
+    }),
+  ]);
+
+  if (clientEmailRes.status === "rejected" || !(await clientEmailRes.value?.ok)) {
+    console.error("Client email failed:", clientEmailRes);
+  }
+  if (adminEmailRes.status === "rejected") {
+    console.error("Admin email failed:", adminEmailRes);
   }
 
   return NextResponse.json({ success: true });

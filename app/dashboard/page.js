@@ -358,10 +358,32 @@ export default function DashboardPage() {
       setSelectedItem((prev) => ({ ...prev, ...updated }));
       setSoldModal(false);
       setSalePrice("");
+      // Fire sale notification emails — don't block on failure
+      fetch("/api/notifications/sale", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ itemId: selectedItem.id, salePrice: parseFloat(salePrice) }),
+      }).catch((e) => console.error("Sale notification failed:", e));
     } catch (e) {
       alert(e.message);
     } finally {
       setSoldBusy(false);
+    }
+  };
+
+  const handleUndoSold = async () => {
+    if (!selectedItem) return;
+    if (!confirm("Undo this sale? The item will be marked available again and the sale price cleared.")) return;
+    try {
+      const updated = await patchItem(selectedItem.id, {
+        status: "available",
+        sale_price: null,
+        sold_at: null,
+      });
+      await fetchData();
+      setSelectedItem((prev) => ({ ...prev, ...updated }));
+    } catch (e) {
+      alert(e.message);
     }
   };
 
@@ -830,6 +852,16 @@ export default function DashboardPage() {
                   <div className="flex justify-between">
                     <span className="text-[#7A8F88]">Client Payout</span>
                     <span className="font-semibold text-[#2A6B52]">{formatMoney((selectedItem.sale_price || 0) * COMMISSION_CLIENT)}</span>
+                  </div>
+                  <div className="flex justify-between items-center pt-1">
+                    <span className="text-[#7A8F88]">Marked sold in error?</span>
+                    <button
+                      type="button"
+                      onClick={handleUndoSold}
+                      className="text-xs font-semibold text-red-500 underline-offset-2 hover:underline transition-colors"
+                    >
+                      Undo Sale
+                    </button>
                   </div>
                 </>
               )}
