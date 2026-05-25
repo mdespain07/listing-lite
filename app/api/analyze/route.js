@@ -436,9 +436,11 @@ export async function POST(request) {
   };
 
   const sellerContextText = buildSellerContextBlock(contextFields, notesText);
-  const setContextLine = isSet
+  const setContextLine = isSet && !isIntakeMode
     ? "\nSELLER HAS INDICATED THIS IS A SET OR LOT: Treat this as multiple items sold together. Identify each individual item visible in the photos. List all items in the setContents field. Write all listing titles and descriptions for the complete set/lot, not individual items. Price for the full lot."
-    : "\nAnalyze this as a single item unless the photos clearly show multiple distinct items being sold together as a set.";
+    : !isIntakeMode
+    ? "\nAnalyze this as a single item unless the photos clearly show multiple distinct items being sold together as a set."
+    : "";
 
   const apiKey = process.env.ANTHROPIC_API_KEY?.trim();
   if (!apiKey) {
@@ -458,7 +460,7 @@ export async function POST(request) {
   }));
 
   const instructionText = isIntakeMode
-    ? `Please analyze the photos in this message for a quick consignment intake. Respond with only a single JSON object with these keys: itemName, brand, condition, conditionExplanation, priceLow, priceHigh, sweetSpotPrice, listingTitle (general, under 70 chars), modelDetails, visibleAccessories, caveat, heroIndex. Do not include the full listings object. Do not wrap in markdown.`
+    ? `Please analyze the photos in this message for a quick consignment intake. Respond with only a single JSON object containing EXACTLY these keys and no others: itemName, brand, condition, conditionExplanation, priceLow, priceHigh, sweetSpotPrice, listingTitle (general, under 70 chars), modelDetails, visibleAccessories, caveat, heroIndex. Do NOT include setContents, closeupIndices, or the full listings object. Do not wrap in markdown.`
     : `Please analyze the photos in this message for a classified listing. Generate listings ONLY for these platforms: ${activePlatforms.join(", ")}. For platforms not in this list, return empty strings for title and description. Respond with only a single JSON object using the exact keys from your system instructions. Do not wrap the JSON in markdown code fences and do not add any text before or after the JSON.`;
 
   /** @type {Array<{ type: string; text?: string; source?: unknown }>} */
