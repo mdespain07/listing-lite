@@ -352,7 +352,7 @@ export default function ShopPage() {
         marginTop: 40,
       }}>
         <p style={{ fontSize: 13, color: '#7A8F88', margin: 0 }}>
-          © 2026 BrightListed · <Link href="/terms" style={{ color: '#7A8F88' }}>Terms</Link> · <Link href="/privacy" style={{ color: '#7A8F88' }}>Privacy</Link> · <Link href="/contact" style={{ color: '#7A8F88' }}>Contact</Link>
+          &copy; 2026 BrightListed · <Link href="/terms" style={{ color: '#7A8F88' }}>Terms</Link> · <Link href="/privacy" style={{ color: '#7A8F88' }}>Privacy</Link> · <Link href="/contact" style={{ color: '#7A8F88' }}>Contact</Link>
         </p>
       </footer>
     </div>
