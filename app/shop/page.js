@@ -191,7 +191,7 @@ export default function ShopPage() {
             </h2>
             <p style={{ color: '#7A8F88', marginBottom: 24 }}>
               {items.length === 0
-                ? 'We're adding inventory regularly — check back soon!'
+                ? 'We\'re adding inventory regularly - check back soon!'
                 : 'Try adjusting your search or price filter.'}
             </p>
             {items.length === 0 && (
