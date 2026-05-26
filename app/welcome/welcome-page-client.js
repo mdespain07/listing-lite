@@ -358,6 +358,8 @@ export default function WelcomePageClient() {
           <a href="/book/buy" className="text-[11px] uppercase tracking-[0.14em] text-[#7A8F88] underline-offset-2 hover:text-[#2A6B52] hover:underline transition-colors">Shop BrightListed</a>
         </div>
         <p className="text-[11px] text-[#7A8F88]">
+          <a href="/shop" className="underline-offset-2 transition-colors duration-150 hover:text-[#2A6B52] hover:underline">Shop</a>
+          <span className="mx-2">·</span>
           <a href="/terms" className="underline-offset-2 transition-colors duration-150 hover:text-[#2A6B52] hover:underline">Terms of Service</a>
           <span className="mx-2">·</span>
           <a href="/privacy" className="underline-offset-2 transition-colors duration-150 hover:text-[#2A6B52] hover:underline">Privacy Policy</a>
