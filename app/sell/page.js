@@ -1,6 +1,54 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+
+function LiveListingsPreview() {
+  const [items, setItems] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetch('/api/shop')
+      .then(r => r.json())
+      .then(data => setItems((data.items || []).slice(0, 4)))
+      .catch(() => setItems([]))
+      .finally(() => setLoading(false));
+  }, []);
+
+  if (loading) return (
+    <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+      {[...Array(4)].map((_, i) => (
+        <div key={i} className="rounded-[16px] bg-[#F4F9F7] animate-pulse" style={{ paddingBottom: '100%' }} />
+      ))}
+    </div>
+  );
+
+  if (items.length === 0) return (
+    <div className="rounded-[20px] border border-[#E8EDE9] bg-[#F4F9F7] px-8 py-12 text-center">
+      <p className="font-serif text-2xl text-[#1A3A32] mb-2">New inventory coming soon.</p>
+      <p className="text-[#7A8F88]">Check back shortly — items are added regularly.</p>
+    </div>
+  );
+
+  return (
+    <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+      {items.map(item => (
+        <div key={item.id} className="group rounded-[16px] border border-[#E8EDE9] bg-white overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+          <div className="relative" style={{ paddingBottom: '100%' }}>
+            {item.photo_url ? (
+              <img src={item.photo_url} alt={item.item_title || 'Item'} className="absolute inset-0 w-full h-full object-cover" />
+            ) : (
+              <div className="absolute inset-0 flex items-center justify-center bg-[#F4F9F7] text-[#8FCFB0] text-3xl">✦</div>
+            )}
+          </div>
+          <div className="p-4">
+            <p className="font-serif text-base font-medium text-[#1A3A32] leading-snug line-clamp-2">{item.item_title || 'Available Item'}</p>
+            <p className="mt-1 text-lg font-semibold text-[#2A6B52]">${parseFloat(item.current_price || 0).toFixed(2)}</p>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
 
 export default function SellPage() {
   const [openFaq, setOpenFaq] = useState(null);
@@ -11,7 +59,11 @@ export default function SellPage() {
       {/* HEADER */}
       <div className="absolute top-0 left-0 right-0 z-20">
         <div className="bg-[#2A6B52] py-2 text-center">
-          <a href="/my-items" className="text-xs font-semibold uppercase tracking-[0.2em] text-white/90 hover:text-white transition-colors">My Items →</a>
+          <div className="flex items-center justify-center gap-6">
+            <a href="/shop" className="text-xs font-semibold uppercase tracking-[0.2em] text-white/90 hover:text-white transition-colors">Shop Listings →</a>
+            <span className="text-white/30">·</span>
+            <a href="/my-items" className="text-xs font-semibold uppercase tracking-[0.2em] text-white/90 hover:text-white transition-colors">My Items →</a>
+          </div>
         </div>
         <header className="bg-white/95 backdrop-blur-sm border-b border-[#E8EDE9]">
           <div className="mx-auto flex max-w-5xl flex-col items-center gap-3 px-4 py-4 sm:flex-row sm:justify-between sm:gap-4 sm:px-6">
@@ -417,6 +469,23 @@ export default function SellPage() {
               </div>
             ))}
           </div>
+        </div>
+      </section>
+
+      {/* CURRENT LISTINGS */}
+      <section className="border-b border-[#E8EDE9] bg-[#FFFFFF]">
+        <div className="mx-auto max-w-5xl px-4 py-16 sm:px-6 sm:py-24">
+          <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-12">
+            <div>
+              <p className="text-sm font-semibold uppercase tracking-[0.28em] text-[#2A6B52]">Live inventory</p>
+              <h2 className="font-serif mt-4 text-4xl font-medium text-[#1A3A32] sm:text-5xl">What's selling right now.</h2>
+              <p className="mt-4 text-lg leading-relaxed text-[#4A5568] max-w-lg">These are real items from real clients, listed and selling through BrightListed today.</p>
+            </div>
+            <a href="/shop" className="shrink-0 inline-flex min-h-[44px] items-center justify-center rounded-[12px] border-2 border-[#2A6B52] px-7 text-sm font-semibold uppercase tracking-[0.16em] text-[#2A6B52] transition-colors hover:bg-[#F4F9F7]">
+              Browse all →
+            </a>
+          </div>
+          <LiveListingsPreview />
         </div>
       </section>
 
