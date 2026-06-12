@@ -302,7 +302,7 @@ export default function ShopPage() {
                       margin: 0,
                       fontFamily: 'Cormorant Garamond, Georgia, serif',
                     }}>
-                      ${parseFloat(item.current_price || 0).toFixed(2)}
+                      ${parseFloat(item.current_price || item.recommended_first_price || item.price_ceiling || item.price_floor || 0).toFixed(2)}
                     </p>
 
                     {/* Links */}

@@ -598,6 +598,17 @@ export default function Home() {
   const [files, setFiles] = useState([]);
   const [manualHeroIndex, setManualHeroIndex] = useState(null);
   const [isSet, setIsSet] = useState(false);
+  const [setDetails, setSetDetails] = useState({
+    pieceCount: "",
+    sizeRange: "",
+    brands: "",
+    completeness: "",
+    missingPieces: "",
+    conditionNotes: "",
+  });
+  const [showSetWarningModal, setShowSetWarningModal] = useState(false);
+  const skipSetWarning = useRef(false);
+  const setDetailsFormRef = useRef(null);
   const [notes, setNotes] = useState("");
   const [category, setCategory] = useState("");
   const [packagingIncluded, setPackagingIncluded] = useState("no");
@@ -962,6 +973,19 @@ export default function Home() {
       setAuthModalOpen(true);
       return;
     }
+    if (isSet && !skipSetWarning.current) {
+      const emptySetFields = [
+        !setDetails.pieceCount.trim(),
+        !setDetails.brands.trim(),
+        !setDetails.completeness,
+        !setDetails.conditionNotes.trim(),
+      ].filter(Boolean).length;
+      if (emptySetFields >= 2) {
+        setShowSetWarningModal(true);
+        return;
+      }
+    }
+    skipSetWarning.current = false;
     setAnalyzing(true);
     setAnalysisPhase("compress");
     setError(null);
@@ -989,6 +1013,7 @@ export default function Home() {
         approximateAge,
         platforms: activePlatforms,
         isSet,
+        setDetails: isSet ? setDetails : undefined,
       });
 
       let analyzeRes;
@@ -1204,6 +1229,8 @@ export default function Home() {
     setFiles([]);
     setManualHeroIndex(null);
     setIsSet(false);
+    setSetDetails({ pieceCount: "", sizeRange: "", brands: "", completeness: "", missingPieces: "", conditionNotes: "" });
+    setShowSetWarningModal(false);
     setResults(null);
     setSelectedPlatform("general");
     setSelectedPlatforms({ general: true, facebook: false, ebay: false, poshmark: false });
@@ -1694,6 +1721,91 @@ export default function Home() {
                 />
                 This is a set or lot (multiple items sold together)
               </label>
+              {isSet && (
+                <div
+                  ref={setDetailsFormRef}
+                  style={{ marginTop: 16, background: "#F4F9F7", border: "1px solid #e0ece6", borderRadius: 10, padding: 16, display: "flex", flexDirection: "column", gap: 10 }}
+                >
+                  <div>
+                    <p style={{ fontSize: 10, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.16em", color: "#7A8F88", marginBottom: 4 }}>Number of pieces</p>
+                    <input
+                      type="number"
+                      value={setDetails.pieceCount}
+                      onChange={(e) => setSetDetails((prev) => ({ ...prev, pieceCount: e.target.value }))}
+                      placeholder="e.g. 6"
+                      className="min-h-[40px] w-full rounded-[8px] border-[0.5px] border-[#E8EDE9] bg-[#FFFFFF] px-3 py-2 text-sm text-[#1A3A32] placeholder:text-[#9CA3AF] focus:outline-none focus:ring-1 focus:ring-[#2A6B52]/35"
+                    />
+                  </div>
+                  {(!category || /clothing|apparel|shoes|accessories/i.test(category)) && (
+                    <div>
+                      <p style={{ fontSize: 10, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.16em", color: "#7A8F88", marginBottom: 4 }}>Size / size range</p>
+                      <input
+                        type="text"
+                        value={setDetails.sizeRange}
+                        onChange={(e) => setSetDetails((prev) => ({ ...prev, sizeRange: e.target.value }))}
+                        placeholder="e.g. 6M–12M or 2T"
+                        className="min-h-[40px] w-full rounded-[8px] border-[0.5px] border-[#E8EDE9] bg-[#FFFFFF] px-3 py-2 text-sm text-[#1A3A32] placeholder:text-[#9CA3AF] focus:outline-none focus:ring-1 focus:ring-[#2A6B52]/35"
+                      />
+                    </div>
+                  )}
+                  <div>
+                    <p style={{ fontSize: 10, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.16em", color: "#7A8F88", marginBottom: 4 }}>Brands included</p>
+                    <input
+                      type="text"
+                      value={setDetails.brands}
+                      onChange={(e) => setSetDetails((prev) => ({ ...prev, brands: e.target.value }))}
+                      placeholder="e.g. Spin Master, or Mixed brands"
+                      className="min-h-[40px] w-full rounded-[8px] border-[0.5px] border-[#E8EDE9] bg-[#FFFFFF] px-3 py-2 text-sm text-[#1A3A32] placeholder:text-[#9CA3AF] focus:outline-none focus:ring-1 focus:ring-[#2A6B52]/35"
+                    />
+                  </div>
+                  <div>
+                    <p style={{ fontSize: 10, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.16em", color: "#7A8F88", marginBottom: 4 }}>Completeness</p>
+                    <div className="flex flex-wrap gap-2">
+                      {["Complete set", "Missing some pieces", "Not sure"].map((opt) => (
+                        <button
+                          key={opt}
+                          type="button"
+                          onClick={() => setSetDetails((prev) => ({
+                            ...prev,
+                            completeness: opt,
+                            missingPieces: opt !== "Missing some pieces" ? "" : prev.missingPieces,
+                          }))}
+                          className={[
+                            "touch-manipulation min-h-[36px] rounded-[8px] border-[0.5px] px-3 py-1.5 text-sm font-medium transition-colors",
+                            setDetails.completeness === opt
+                              ? "border-[#2A6B52] bg-[#2A6B52] text-white"
+                              : "border-[#E8EDE9] bg-white text-[#1A3A32] hover:bg-[#F4F9F7]/80",
+                          ].join(" ")}
+                        >
+                          {opt}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                  {setDetails.completeness === "Missing some pieces" && (
+                    <div>
+                      <p style={{ fontSize: 10, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.16em", color: "#7A8F88", marginBottom: 4 }}>Missing pieces</p>
+                      <input
+                        type="text"
+                        value={setDetails.missingPieces}
+                        onChange={(e) => setSetDetails((prev) => ({ ...prev, missingPieces: e.target.value }))}
+                        placeholder="What's missing? e.g. Missing Skye figure"
+                        className="min-h-[40px] w-full rounded-[8px] border-[0.5px] border-[#E8EDE9] bg-[#FFFFFF] px-3 py-2 text-sm text-[#1A3A32] placeholder:text-[#9CA3AF] focus:outline-none focus:ring-1 focus:ring-[#2A6B52]/35"
+                      />
+                    </div>
+                  )}
+                  <div>
+                    <p style={{ fontSize: 10, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.16em", color: "#7A8F88", marginBottom: 4 }}>Condition notes</p>
+                    <input
+                      type="text"
+                      value={setDetails.conditionNotes}
+                      onChange={(e) => setSetDetails((prev) => ({ ...prev, conditionNotes: e.target.value }))}
+                      placeholder="e.g. One shirt has a small stain"
+                      className="min-h-[40px] w-full rounded-[8px] border-[0.5px] border-[#E8EDE9] bg-[#FFFFFF] px-3 py-2 text-sm text-[#1A3A32] placeholder:text-[#9CA3AF] focus:outline-none focus:ring-1 focus:ring-[#2A6B52]/35"
+                    />
+                  </div>
+                </div>
+              )}
             </div>
 
             <div>
@@ -2308,6 +2420,70 @@ export default function Home() {
                   ? "Shrinking images for upload."
                   : "Generating listing details and enhanced images."}
               </p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showSetWarningModal && (
+        <div
+          className="fixed inset-0 z-[70] flex items-center justify-center p-4"
+          role="presentation"
+          onMouseDown={(e) => { if (e.target === e.currentTarget) setShowSetWarningModal(false); }}
+        >
+          <div className="absolute inset-0 bg-[#1A3A32]/50" aria-hidden />
+          <div
+            className="relative z-10 w-full max-w-[440px] rounded-[16px] bg-white p-8"
+            role="dialog"
+            aria-modal
+            aria-labelledby="set-warning-title"
+          >
+            <h2
+              id="set-warning-title"
+              className="font-serif text-2xl font-medium text-[#1A3A32]"
+            >
+              Your listing may be less accurate
+            </h2>
+            <p className="mt-3 text-sm leading-relaxed text-[#4A5568]">
+              For the best pricing and description, it helps to know a few details about your set. Sets with complete details typically get significantly more accurate pricing.
+            </p>
+            <ul className="mt-4 space-y-1.5">
+              {[
+                !setDetails.pieceCount.trim() && "Number of pieces",
+                !setDetails.brands.trim() && "Brands included",
+                !setDetails.completeness && "Whether the set is complete",
+                !setDetails.conditionNotes.trim() && "Any condition notes",
+              ].filter(Boolean).map((label) => (
+                <li key={label} className="flex items-center gap-2 text-sm text-[#4A5568]">
+                  <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-[#7A8F88]" aria-hidden />
+                  {label}
+                </li>
+              ))}
+            </ul>
+            <div className="mt-6 flex gap-3">
+              <button
+                type="button"
+                onClick={() => {
+                  setShowSetWarningModal(false);
+                  setTimeout(() => {
+                    setDetailsFormRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+                  }, 50);
+                }}
+                className="flex-1 touch-manipulation min-h-[44px] rounded-[10px] border-2 border-[#2A6B52] bg-transparent px-4 py-2.5 text-sm font-semibold text-[#2A6B52] transition-colors hover:bg-[#F4F9F7] focus:outline-none focus:ring-1 focus:ring-[#2A6B52]/35"
+              >
+                ← Fill in details
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  skipSetWarning.current = true;
+                  setShowSetWarningModal(false);
+                  handleAnalyze();
+                }}
+                className="flex-1 touch-manipulation min-h-[44px] rounded-[10px] bg-[#2A6B52] px-4 py-2.5 text-sm font-semibold text-white transition-opacity hover:opacity-90 focus:outline-none focus:ring-1 focus:ring-[#2A6B52]/35"
+              >
+                Analyze anyway →
+              </button>
             </div>
           </div>
         </div>

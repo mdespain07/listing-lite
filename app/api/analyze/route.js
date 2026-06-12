@@ -382,6 +382,7 @@ export async function POST(request) {
     mode,
     platforms,
     isSet,
+    setDetails,
   } = body;
 
   const isIntakeMode = mode === "intake";
@@ -446,6 +447,30 @@ export async function POST(request) {
     ? "\nAnalyze this as a single item unless the photos clearly show multiple distinct items being sold together as a set."
     : "";
 
+  const setDetailsBlock = (() => {
+    if (!isSet || !setDetails || typeof setDetails !== "object") return "";
+    const pieceCount = typeof setDetails.pieceCount === "string" ? setDetails.pieceCount.trim() : "";
+    const sizeRange = typeof setDetails.sizeRange === "string" ? setDetails.sizeRange.trim() : "";
+    const brands = typeof setDetails.brands === "string" ? setDetails.brands.trim() : "";
+    const completeness = typeof setDetails.completeness === "string" ? setDetails.completeness.trim() : "";
+    const missingPieces = typeof setDetails.missingPieces === "string" ? setDetails.missingPieces.trim() : "";
+    const conditionNotes = typeof setDetails.conditionNotes === "string" ? setDetails.conditionNotes.trim() : "";
+    if (!pieceCount && !sizeRange && !brands && !completeness && !missingPieces && !conditionNotes) return "";
+    const lines = [
+      "\nAdditional details about this set provided by the seller:",
+      "- Number of pieces: " + (pieceCount || "not specified"),
+      "- Brands: " + (brands || "not specified"),
+    ];
+    if (sizeRange) lines.push("- Size/size range: " + sizeRange);
+    lines.push("- Completeness: " + (completeness || "not specified"));
+    if (completeness === "Missing some pieces" && missingPieces) {
+      lines.push("- Missing pieces: " + missingPieces);
+    }
+    lines.push("- Condition notes: " + (conditionNotes || "not specified"));
+    lines.push("\nUse these details to improve pricing accuracy and listing copy. Reference the piece count, brands, and completeness status prominently in listing titles and descriptions. If pieces are missing, note this clearly in the listing.");
+    return lines.join("\n");
+  })();
+
   const apiKey = process.env.ANTHROPIC_API_KEY?.trim();
   if (!apiKey) {
     return NextResponse.json(
@@ -469,7 +494,7 @@ export async function POST(request) {
 
   /** @type {Array<{ type: string; text?: string; source?: unknown }>} */
   const userContent = [
-    { type: "text", text: sellerContextText + setContextLine },
+    { type: "text", text: sellerContextText + setContextLine + setDetailsBlock },
     ...imageBlocks,
   ];
   if (correctionText) {
