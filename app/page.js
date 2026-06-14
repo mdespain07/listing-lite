@@ -1540,6 +1540,12 @@ export default function Home() {
             )}
             {currentUser && !isDashboardMode && (
               <div className="flex flex-col items-center gap-2.5">
+                <a
+                  href="/account"
+                  className="touch-manipulation min-h-[44px] inline-flex items-center rounded-full border-2 border-[#7A8F88] bg-transparent px-5 py-1.5 text-sm sm:text-xs sm:px-4 sm:py-1 font-semibold uppercase tracking-[0.14em] text-[#7A8F88] transition-colors hover:bg-[#F4F9F7]"
+                >
+                  My Account
+                </a>
                 <button
                   type="button"
                   tabIndex={-1}

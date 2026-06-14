@@ -47,6 +47,7 @@ export async function POST(request) {
 
   const credits = Number(body?.credits);
   const userId = typeof body?.user_id === "string" ? body.user_id.trim() : "";
+  const return_path = typeof body?.return_path === "string" ? body.return_path : null;
   const pkg = PACKAGES.get(credits);
   if (!pkg || !Number.isInteger(credits) || credits < 1) {
     return NextResponse.json({ error: "Invalid credit package." }, { status: 400 });
@@ -84,8 +85,8 @@ export async function POST(request) {
           },
         },
       ],
-      success_url: `${base}/?success=true&credits=${encodeURIComponent(String(credits))}&session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${base}/?cancelled=true`,
+      success_url: `${base}${return_path ? return_path : '/'}?success=true&credits=${encodeURIComponent(String(credits))}&session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${base}${return_path ? return_path : '/'}?cancelled=true`,
       metadata: { credits: String(credits), user_id: String(body?.user_id ?? "") },
     });
 
