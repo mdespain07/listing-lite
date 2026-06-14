@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { createClient } from '@supabase/supabase-js';
+import AccountNav from '../components/account-nav';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL,
@@ -94,18 +95,7 @@ export default function MyListingsPage() {
   return (
     <div style={{ minHeight: '100vh', backgroundColor: '#F4F9F7', fontFamily: 'Inter, sans-serif' }}>
 
-      {/* Header */}
-      <header style={{ backgroundColor: '#fff', borderBottom: '1px solid #e0ece6', padding: '0 24px', height: 64, display: 'flex', alignItems: 'center', justifyContent: 'space-between', position: 'sticky', top: 0, zIndex: 50 }}>
-        <a href="/" style={{ display: 'flex', alignItems: 'center', gap: 10, textDecoration: 'none' }}>
-          <img src="/logo.svg" alt="BrightListed" style={{ height: 36 }} />
-          <span style={{ fontFamily: 'Cormorant Garamond, Georgia, serif', fontSize: 20, color: '#1A3A32', fontWeight: 600 }}>
-            Bright<span style={{ color: '#8FCFB0' }}>Listed</span>
-          </span>
-        </a>
-        <a href="/" style={{ backgroundColor: '#2A6B52', color: '#fff', padding: '8px 18px', borderRadius: 8, fontSize: 14, fontWeight: 500, textDecoration: 'none' }}>
-          + New Listing
-        </a>
-      </header>
+      <AccountNav activePage="/my-listings" />
 
       <main style={{ maxWidth: 800, margin: '0 auto', padding: '40px 24px' }}>
 

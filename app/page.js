@@ -1177,6 +1177,20 @@ export default function Home() {
           setEnhanceNotice(NETWORK_TIMEOUT_MESSAGE);
         } else if (Array.isArray(enhanceData.images)) {
           setEnhancedImages(enhanceData.images);
+          if (currentUser && enrichedResults) {
+            const firstPhoto = enhanceData.images[0]?.outputs?.[0]?.url || null;
+            if (firstPhoto) {
+              supabase
+                .from('saved_listings')
+                .update({ photo_url: firstPhoto })
+                .eq('user_id', currentUser.id)
+                .order('created_at', { ascending: false })
+                .limit(1)
+                .then(({ error }) => {
+                  if (error) console.error('Photo URL update error:', error);
+                });
+            }
+          }
           if (!enhanceRes.ok) {
             setEnhanceNotice(
               typeof enhanceData.error === "string"
@@ -1449,12 +1463,15 @@ export default function Home() {
   }, [currentUser]);
 
   async function saveListingToAccount(analysisResults) {
-    if (!currentUser) return;
+    if (!currentUser) {
+      console.error('saveListingToAccount: no currentUser, aborting');
+      return;
+    }
 
     try {
       const photoUrl = null;
 
-      await supabase.from('saved_listings').insert({
+      const { data, error } = await supabase.from('saved_listings').insert({
         user_id: currentUser.id,
         item_name: analysisResults.itemName || null,
         brand: analysisResults.brand || null,
@@ -1471,12 +1488,18 @@ export default function Home() {
         set_contents: analysisResults.setContents || null,
         caveat: analysisResults.caveat || null,
         photo_url: photoUrl,
-        platforms: selectedPlatforms || []
+        platforms: Object.entries(selectedPlatforms || {}).filter(([_, v]) => v).map(([k]) => k)
       });
 
+      if (error) {
+        console.error('Supabase insert error:', JSON.stringify(error));
+        return;
+      }
+
+      console.log('Listing saved successfully:', data);
       setListingSaved(true);
     } catch (err) {
-      console.error('Failed to save listing:', err);
+      console.error('saveListingToAccount exception:', err);
     }
   }
 
