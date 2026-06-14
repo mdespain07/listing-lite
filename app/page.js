@@ -622,8 +622,8 @@ export default function Home() {
   const [results, setResults] = useState(null);
   const [selectedPlatform, setSelectedPlatform] = useState("general");
   const [selectedPlatforms, setSelectedPlatforms] = useState({
-    general: true,
-    facebook: false,
+    general: false,
+    facebook: true,
     ebay: false,
     poshmark: false,
   });
