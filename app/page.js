@@ -1525,13 +1525,15 @@ export default function Home() {
             />
           </div>
           <div className="flex w-full shrink-0 flex-row justify-center gap-5 sm:w-auto sm:justify-end">
-            {currentUser && !isDashboardMode && (
-              <a
-                href="/account"
-                className="touch-manipulation min-h-[44px] rounded-full border-2 border-[#7A8F88] bg-transparent px-5 py-1.5 text-sm sm:text-xs sm:px-4 sm:py-1 font-semibold uppercase tracking-[0.14em] text-[#7A8F88] transition-colors hover:bg-[#F4F9F7] focus:outline-none focus:ring-1 focus:ring-[#2A6B52]/35"
+            {/* Signed out: Sign In + Buy Credits */}
+            {!currentUser && !isDashboardMode && (
+              <button
+                type="button"
+                onClick={() => setAuthModalOpen(true)}
+                className="touch-manipulation min-h-[44px] rounded-full border-2 border-[#7A8F88] bg-transparent px-5 py-1.5 text-xs font-semibold uppercase tracking-[0.14em] text-[#7A8F88] transition-colors hover:bg-[#F4F9F7] focus:outline-none focus:ring-1 focus:ring-[#2A6B52]/35"
               >
-                My Account
-              </a>
+                Sign In
+              </button>
             )}
             {!isDashboardMode && (
               <button
@@ -1540,22 +1542,40 @@ export default function Home() {
                   setCheckoutClientError(null);
                   setCreditsModalOpen(true);
                 }}
-                className="touch-manipulation min-h-[44px] self-start rounded-full border-2 border-[#2A6B52] bg-transparent px-6 py-1.5 text-sm sm:text-xs sm:px-4 sm:py-1 font-semibold uppercase tracking-[0.14em] text-[#2A6B52] transition-colors hover:bg-[#F4F9F7] focus:outline-none focus:ring-1 focus:ring-[#2A6B52]/35"
+                className="touch-manipulation min-h-[44px] rounded-full border-2 border-[#2A6B52] bg-transparent px-4 py-1.5 text-xs font-semibold uppercase tracking-[0.14em] text-[#2A6B52] transition-colors hover:bg-[#F4F9F7] focus:outline-none focus:ring-1 focus:ring-[#2A6B52]/35"
               >
                 Buy Credits
               </button>
             )}
+            {/* Signed in: My Account + Credits counter + Sign out */}
             {currentUser && !isDashboardMode && (
-              <button
-                type="button"
-                tabIndex={-1}
-                role="status"
-                className="flex min-h-[44px] shrink-0 cursor-default items-center justify-center rounded-full border-0 bg-[#2A6B52] px-6 py-1.5 text-sm font-semibold uppercase tracking-[0.16em]"
-                style={{ color: "#FFFFFF" }}
-                aria-label={`${credits} credits remaining`}
-              >
-                {credits} credits
-              </button>
+              <>
+                <a
+                  href="/account"
+                  className="touch-manipulation min-h-[44px] inline-flex items-center rounded-full border-2 border-[#7A8F88] bg-transparent px-4 py-1.5 text-xs font-semibold uppercase tracking-[0.14em] text-[#7A8F88] transition-colors hover:bg-[#F4F9F7] focus:outline-none focus:ring-1 focus:ring-[#2A6B52]/35"
+                >
+                  My Account
+                </a>
+                <div className="flex flex-col items-center gap-1">
+                  <button
+                    type="button"
+                    tabIndex={-1}
+                    role="status"
+                    className="flex min-h-[44px] shrink-0 cursor-default items-center justify-center rounded-full border-0 bg-[#2A6B52] px-4 py-1.5 text-xs font-semibold uppercase tracking-[0.16em]"
+                    style={{ color: '#FFFFFF' }}
+                    aria-label={`${credits} credits remaining`}
+                  >
+                    {credits} Credits
+                  </button>
+                  <button
+                    type="button"
+                    onClick={async () => { await supabase.auth.signOut(); setCurrentUser(null); }}
+                    style={{ fontSize: 11, color: '#7A8F88', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
+                  >
+                    Sign out
+                  </button>
+                </div>
+              </>
             )}
           </div>
         </div>

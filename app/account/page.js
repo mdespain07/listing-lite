@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { createClient } from '@supabase/supabase-js';
 import AccountNav from '../components/account-nav';
+import BuyCreditsModal from '../components/buy-credits-modal';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL,
@@ -24,6 +25,9 @@ export default function AccountPage() {
   const [deleteConfirm, setDeleteConfirm] = useState('');
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [deleteMsg, setDeleteMsg] = useState(null);
+  const [creditsModalOpen, setCreditsModalOpen] = useState(false);
+  const [busyCredits, setBusyCredits] = useState(null);
+  const [checkoutError, setCheckoutError] = useState(null);
 
   useEffect(() => {
     supabase.auth.getSession().then(async ({ data: { session } }) => {
@@ -91,6 +95,30 @@ export default function AccountPage() {
     }
   }
 
+
+  async function startCheckout(credits) {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) return;
+    setBusyCredits(credits);
+    setCheckoutError(null);
+    try {
+      const res = await fetch('/api/create-checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ credits, user_id: session.user.id, return_path: '/account' }),
+      });
+      const data = await res.json();
+      if (data.url) {
+        window.location.href = data.url;
+      } else {
+        setCheckoutError(data.error || 'Something went wrong. Please try again.');
+        setBusyCredits(null);
+      }
+    } catch (err) {
+      setCheckoutError('Something went wrong. Please try again.');
+      setBusyCredits(null);
+    }
+  }
 
   if (!user && !loading) return (
     <div style={{ minHeight: '100vh', backgroundColor: '#F4F9F7', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Inter, sans-serif' }}>
@@ -167,22 +195,21 @@ export default function AccountPage() {
             <p style={{ fontSize: 15, color: '#1A3A32', margin: 0 }}>
               You have <span style={{ fontWeight: 700, color: '#2A6B52', fontSize: 20 }}>{credits ?? '—'}</span> credit{credits !== 1 ? 's' : ''} remaining.
             </p>
-            <a
-              href="/?buy=true"
+            <button
+              onClick={() => { setCheckoutError(null); setCreditsModalOpen(true); }}
               style={{
                 backgroundColor: '#2A6B52',
                 color: '#fff',
+                border: 'none',
                 padding: '10px 22px',
                 borderRadius: 8,
                 fontSize: 14,
                 fontWeight: 600,
-                textDecoration: 'none',
-                display: 'inline-block',
-                marginTop: 4,
+                cursor: 'pointer',
               }}
             >
               Buy more credits →
-            </a>
+            </button>
           </div>
           <p style={{ fontSize: 13, color: '#7A8F88', margin: '12px 0 0' }}>Each credit = one item analysis. Credits never expire.</p>
         </div>
@@ -264,6 +291,18 @@ export default function AccountPage() {
         </div>
 
       </main>
+
+      <BuyCreditsModal
+        open={creditsModalOpen}
+        onClose={() => {
+          if (busyCredits !== null) return;
+          setCreditsModalOpen(false);
+          setCheckoutError(null);
+        }}
+        onSelectCredits={(c) => void startCheckout(c)}
+        busyCredits={busyCredits}
+        error={checkoutError}
+      />
     </div>
   );
 }
