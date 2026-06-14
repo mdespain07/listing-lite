@@ -20,6 +20,9 @@ export default function MyListingsPage() {
   const [activeTabs, setActiveTabs] = useState({});
   const [copied, setCopied] = useState({});
   const [deleting, setDeleting] = useState(null);
+  const [corrections, setCorrections] = useState({});
+  const [reanalyzing, setReanalyzing] = useState({});
+  const [reanalyzedResults, setReanalyzedResults] = useState({});
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -80,6 +83,52 @@ export default function MyListingsPage() {
   }
 
   const formatDate = (ts) => new Date(ts).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+
+  async function handleCorrection(listing) {
+    const correction = corrections[listing.id];
+    if (!correction?.trim()) return;
+    setReanalyzing(prev => ({ ...prev, [listing.id]: true }));
+    try {
+      const res = await fetch('/api/analyze', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          images: listing.photo_urls?.length > 0
+            ? listing.photo_urls.map((url, i) => ({ url, index: i }))
+            : listing.photo_url ? [{ url: listing.photo_url, index: 0 }] : [],
+          notes: correction.trim(),
+          platforms: listing.platforms?.length > 0 ? listing.platforms : ['facebook', 'general'],
+          isSet: false,
+        }),
+      });
+      const data = await res.json();
+      if (data.listings) {
+        setReanalyzedResults(prev => ({ ...prev, [listing.id]: data }));
+        // Update the saved listing in Supabase with new content
+        await supabase.from('saved_listings').update({
+          listing_title: data.listingTitle || null,
+          listing_description: data.listingDescription || null,
+          listings: data.listings || null,
+          recommended_first_price: data.recommendedFirstPrice || null,
+          recommended_discount_price: data.recommendedDiscountPrice || null,
+        }).eq('id', listing.id);
+        // Refresh listings
+        setListings(prev => prev.map(l => l.id === listing.id ? {
+          ...l,
+          listing_title: data.listingTitle,
+          listing_description: data.listingDescription,
+          listings: data.listings,
+          recommended_first_price: data.recommendedFirstPrice,
+          recommended_discount_price: data.recommendedDiscountPrice,
+        } : l));
+      }
+    } catch (err) {
+      console.error('Correction error:', err);
+    } finally {
+      setReanalyzing(prev => ({ ...prev, [listing.id]: false }));
+      setCorrections(prev => ({ ...prev, [listing.id]: '' }));
+    }
+  }
 
   if (!user && !loading) return (
     <div style={{ minHeight: '100vh', backgroundColor: '#F4F9F7', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Inter, sans-serif' }}>
@@ -304,6 +353,52 @@ export default function MyListingsPage() {
                         💡 {listing.caveat}
                       </div>
                     )}
+
+                    {/* Correction box */}
+                    <div style={{ marginTop: 16, backgroundColor: '#F4F9F7', border: '1px solid #e0ece6', borderRadius: 10, padding: 16 }}>
+                      <p style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', color: '#7A8F88', margin: '0 0 8px' }}>
+                        Have more details? Add a correction
+                      </p>
+                      <p style={{ fontSize: 13, color: '#7A8F88', margin: '0 0 10px', lineHeight: 1.5 }}>
+                        Found the model number, size, or other details? Add them here and we'll regenerate your listing.
+                      </p>
+                      <textarea
+                        value={corrections[listing.id] || ''}
+                        onChange={e => setCorrections(prev => ({ ...prev, [listing.id]: e.target.value }))}
+                        placeholder="e.g. Model number is MBB-800, size is 8 inch"
+                        rows={3}
+                        style={{
+                          width: '100%',
+                          border: '1px solid #d0e4dc',
+                          borderRadius: 8,
+                          padding: '10px 12px',
+                          fontSize: 14,
+                          fontFamily: 'Inter, sans-serif',
+                          resize: 'vertical',
+                          outline: 'none',
+                          boxSizing: 'border-box',
+                          color: '#1A3A32',
+                        }}
+                      />
+                      <button
+                        onClick={() => handleCorrection(listing)}
+                        disabled={!corrections[listing.id]?.trim() || reanalyzing[listing.id]}
+                        style={{
+                          marginTop: 10,
+                          backgroundColor: corrections[listing.id]?.trim() ? '#2A6B52' : '#d0e4dc',
+                          color: '#fff',
+                          border: 'none',
+                          borderRadius: 8,
+                          padding: '9px 20px',
+                          fontSize: 14,
+                          fontWeight: 600,
+                          cursor: corrections[listing.id]?.trim() ? 'pointer' : 'not-allowed',
+                          transition: 'background 0.15s',
+                        }}
+                      >
+                        {reanalyzing[listing.id] ? 'Regenerating...' : 'Regenerate listing →'}
+                      </button>
+                    </div>
 
                     <div style={{ marginTop: 16, textAlign: 'right' }}>
                       <a href="/" style={{ fontSize: 13, color: '#2A6B52', fontWeight: 500, textDecoration: 'none' }}>
