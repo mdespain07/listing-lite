@@ -1545,17 +1545,16 @@ export default function Home() {
               </button>
             )}
 
-            {/* Signed in: Buy Credits + Credits pill on same line, My Account text link below credits pill */}
             {currentUser && !isDashboardMode && (
-              <>
-                <button
-                  type="button"
-                  onClick={() => { setCheckoutClientError(null); setCreditsModalOpen(true); }}
-                  className="touch-manipulation min-h-[44px] self-center rounded-full border-2 border-[#2A6B52] bg-transparent px-4 py-1.5 text-xs font-semibold uppercase tracking-[0.14em] text-[#2A6B52] transition-colors hover:bg-[#F4F9F7] focus:outline-none focus:ring-1 focus:ring-[#2A6B52]/35"
-                >
-                  Buy Credits
-                </button>
-                <div className="flex flex-col items-center gap-1">
+              <div className="flex flex-col items-end gap-1">
+                <div className="flex flex-row items-center gap-3">
+                  <button
+                    type="button"
+                    onClick={() => { setCheckoutClientError(null); setCreditsModalOpen(true); }}
+                    className="touch-manipulation min-h-[44px] rounded-full border-2 border-[#2A6B52] bg-transparent px-4 py-1.5 text-xs font-semibold uppercase tracking-[0.14em] text-[#2A6B52] transition-colors hover:bg-[#F4F9F7] focus:outline-none focus:ring-1 focus:ring-[#2A6B52]/35"
+                  >
+                    Buy Credits
+                  </button>
                   <button
                     type="button"
                     tabIndex={-1}
@@ -1565,16 +1564,16 @@ export default function Home() {
                   >
                     {credits} Credits
                   </button>
-                  <a
-                    href="/account"
-                    style={{ fontSize: 11, color: '#7A8F88', textDecoration: 'none' }}
-                    onMouseEnter={e => e.currentTarget.style.textDecoration = 'underline'}
-                    onMouseLeave={e => e.currentTarget.style.textDecoration = 'none'}
-                  >
-                    My Account
-                  </a>
                 </div>
-              </>
+                <a
+                  href="/account"
+                  style={{ fontSize: 11, color: '#7A8F88', textDecoration: 'none', letterSpacing: '0.1em', textTransform: 'uppercase', fontWeight: 600 }}
+                  onMouseEnter={e => e.currentTarget.style.textDecoration = 'underline'}
+                  onMouseLeave={e => e.currentTarget.style.textDecoration = 'none'}
+                >
+                  My Account
+                </a>
+              </div>
             )}
           </div>
         </div>
