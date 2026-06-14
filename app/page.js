@@ -641,6 +641,7 @@ export default function Home() {
   const photoPreviewRef = useRef(/** @type {HTMLDivElement | null} */ (null));
   const resultsSectionRef = useRef(/** @type {HTMLElement | null} */ (null));
   const prevFilesLengthRef = useRef(0);
+  const lastSavedListingId = useRef(null);
   const [listingCorrection, setListingCorrection] = useState("");
   const [correctionBusy, setCorrectionBusy] = useState(false);
   const [correctionFlash, setCorrectionFlash] = useState(false);
@@ -1177,17 +1178,16 @@ export default function Home() {
           setEnhanceNotice(NETWORK_TIMEOUT_MESSAGE);
         } else if (Array.isArray(enhanceData.images)) {
           setEnhancedImages(enhanceData.images);
-          if (currentUser && enrichedResults) {
-            const firstPhoto = enhanceData.images[0]?.outputs?.[0]?.url || null;
+          if (currentUser && lastSavedListingId.current) {
+            const firstPhoto = enhanceData.images?.[0]?.outputs?.[0]?.url || null;
             if (firstPhoto) {
               supabase
                 .from('saved_listings')
                 .update({ photo_url: firstPhoto })
-                .eq('user_id', currentUser.id)
-                .order('created_at', { ascending: false })
-                .limit(1)
+                .eq('id', lastSavedListingId.current)
                 .then(({ error }) => {
                   if (error) console.error('Photo URL update error:', error);
+                  else lastSavedListingId.current = null;
                 });
             }
           }
@@ -1270,6 +1270,7 @@ export default function Home() {
     setLockedPriceCeiling(null);
     setDashboardItemId(null);
     setListingSaved(false);
+    lastSavedListingId.current = null;
     prevFilesLengthRef.current = 0;
     window.scrollTo({ top: 0, behavior: "smooth" });
   }, []);
@@ -1489,7 +1490,7 @@ export default function Home() {
         caveat: analysisResults.caveat || null,
         photo_url: photoUrl,
         platforms: Object.entries(selectedPlatforms || {}).filter(([_, v]) => v).map(([k]) => k)
-      });
+      }).select();
 
       if (error) {
         console.error('Supabase insert error:', JSON.stringify(error));
@@ -1497,6 +1498,7 @@ export default function Home() {
       }
 
       console.log('Listing saved successfully:', data);
+      if (data?.[0]?.id) lastSavedListingId.current = data?.[0]?.id;
       setListingSaved(true);
     } catch (err) {
       console.error('saveListingToAccount exception:', err);
