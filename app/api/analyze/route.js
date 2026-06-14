@@ -607,5 +607,8 @@ export async function POST(request) {
     );
   }
 
-  return NextResponse.json(normalizeAnalysisResponse(parsed, isIntakeMode, activePlatforms));
+  const normalized = normalizeAnalysisResponse(parsed, isIntakeMode, activePlatforms);
+  console.log('normalized facebook:', JSON.stringify(normalized?.listings?.facebook));
+  console.log('raw listings keys:', JSON.stringify(Object.keys(parsed?.listings || {})));
+  return NextResponse.json({ ...normalized, _debug: { rawListingsKeys: Object.keys(parsed?.listings || {}), rawFacebook: parsed?.listings?.FACEBOOK_MARKETPLACE || parsed?.listings?.facebook || null }});
 }
