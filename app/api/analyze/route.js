@@ -489,9 +489,11 @@ export async function POST(request) {
   }));
 
   console.log('activePlatforms received:', activePlatforms);
+  const platformKeyMap = { facebook: 'FACEBOOK_MARKETPLACE', ebay: 'EBAY', poshmark: 'POSHMARK', general: 'GENERAL' };
+  const mappedPlatforms = activePlatforms.map(p => platformKeyMap[p] || p.toUpperCase());
   const instructionText = isIntakeMode
     ? `Please analyze the photos in this message for a quick consignment intake. Respond with only a single JSON object containing EXACTLY these keys and no others: itemName, brand, condition, conditionExplanation, priceLow, priceHigh, recommendedFirstPrice, recommendedDiscountPrice, listingTitle (general, under 70 chars), modelDetails, visibleAccessories, caveat, heroIndex. Do NOT include setContents, closeupIndices, or the full listings object. Do not wrap in markdown.`
-    : `Please analyze the photos in this message for a classified listing. Generate listings ONLY for these platforms: ${activePlatforms.join(", ")}. For platforms not in this list, return empty strings for title and description. Respond with only a single JSON object using the exact keys from your system instructions. Do not wrap the JSON in markdown code fences and do not add any text before or after the JSON.`;
+    : `Please analyze the photos in this message for a classified listing. Generate listings ONLY for these platforms: ${mappedPlatforms.join(", ")}. For platforms not in this list, return empty strings for title and description. Respond with only a single JSON object using the exact keys from your system instructions. Do not wrap the JSON in markdown code fences and do not add any text before or after the JSON.`;
 
   /** @type {Array<{ type: string; text?: string; source?: unknown }>} */
   const userContent = [
