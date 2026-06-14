@@ -1530,50 +1530,49 @@ export default function Home() {
               <button
                 type="button"
                 onClick={() => setAuthModalOpen(true)}
-                className="touch-manipulation min-h-[44px] rounded-full border-2 border-[#7A8F88] bg-transparent px-5 py-1.5 text-xs font-semibold uppercase tracking-[0.14em] text-[#7A8F88] transition-colors hover:bg-[#F4F9F7] focus:outline-none focus:ring-1 focus:ring-[#2A6B52]/35"
+                className="touch-manipulation min-h-[44px] rounded-full border-2 border-[#7A8F88] bg-transparent px-4 py-1.5 text-xs font-semibold uppercase tracking-[0.14em] text-[#7A8F88] transition-colors hover:bg-[#F4F9F7] focus:outline-none focus:ring-1 focus:ring-[#2A6B52]/35"
               >
                 Sign In
               </button>
             )}
-            {!isDashboardMode && (
+            {!currentUser && !isDashboardMode && (
               <button
                 type="button"
-                onClick={() => {
-                  setCheckoutClientError(null);
-                  setCreditsModalOpen(true);
-                }}
+                onClick={() => { setCheckoutClientError(null); setCreditsModalOpen(true); }}
                 className="touch-manipulation min-h-[44px] rounded-full border-2 border-[#2A6B52] bg-transparent px-4 py-1.5 text-xs font-semibold uppercase tracking-[0.14em] text-[#2A6B52] transition-colors hover:bg-[#F4F9F7] focus:outline-none focus:ring-1 focus:ring-[#2A6B52]/35"
               >
                 Buy Credits
               </button>
             )}
-            {/* Signed in: My Account + Credits counter + Sign out */}
+
+            {/* Signed in: Buy Credits + Credits pill on same line, My Account text link below credits pill */}
             {currentUser && !isDashboardMode && (
               <>
-                <a
-                  href="/account"
-                  className="touch-manipulation min-h-[44px] inline-flex items-center rounded-full border-2 border-[#7A8F88] bg-transparent px-4 py-1.5 text-xs font-semibold uppercase tracking-[0.14em] text-[#7A8F88] transition-colors hover:bg-[#F4F9F7] focus:outline-none focus:ring-1 focus:ring-[#2A6B52]/35"
+                <button
+                  type="button"
+                  onClick={() => { setCheckoutClientError(null); setCreditsModalOpen(true); }}
+                  className="touch-manipulation min-h-[44px] self-center rounded-full border-2 border-[#2A6B52] bg-transparent px-4 py-1.5 text-xs font-semibold uppercase tracking-[0.14em] text-[#2A6B52] transition-colors hover:bg-[#F4F9F7] focus:outline-none focus:ring-1 focus:ring-[#2A6B52]/35"
                 >
-                  My Account
-                </a>
+                  Buy Credits
+                </button>
                 <div className="flex flex-col items-center gap-1">
                   <button
                     type="button"
                     tabIndex={-1}
                     role="status"
-                    className="flex min-h-[44px] shrink-0 cursor-default items-center justify-center rounded-full border-0 bg-[#2A6B52] px-4 py-1.5 text-xs font-semibold uppercase tracking-[0.16em]"
-                    style={{ color: '#FFFFFF' }}
+                    className="flex min-h-[44px] cursor-default items-center justify-center rounded-full border-0 bg-[#2A6B52] px-4 py-1.5 text-xs font-semibold uppercase tracking-[0.16em] text-white"
                     aria-label={`${credits} credits remaining`}
                   >
                     {credits} Credits
                   </button>
-                  <button
-                    type="button"
-                    onClick={async () => { await supabase.auth.signOut(); setCurrentUser(null); }}
-                    style={{ fontSize: 11, color: '#7A8F88', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
+                  <a
+                    href="/account"
+                    style={{ fontSize: 11, color: '#7A8F88', textDecoration: 'none' }}
+                    onMouseEnter={e => e.currentTarget.style.textDecoration = 'underline'}
+                    onMouseLeave={e => e.currentTarget.style.textDecoration = 'none'}
                   >
-                    Sign out
-                  </button>
+                    My Account
+                  </a>
                 </div>
               </>
             )}
