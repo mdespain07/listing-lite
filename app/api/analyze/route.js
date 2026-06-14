@@ -592,6 +592,8 @@ export async function POST(request) {
 
   console.log('AI raw listings keys:', parsed?.listings ? Object.keys(parsed.listings) : 'no listings key');
   console.log('AI facebook listing:', JSON.stringify(parsed?.listings?.FACEBOOK_MARKETPLACE || parsed?.listings?.facebook || 'not found'));
+  console.log('AI listings all keys:', JSON.stringify(Object.keys(parsed?.listings || {})));
+  console.log('AI full listings object:', JSON.stringify(parsed?.listings));
 
   const REQUIRED_KEYS = isIntakeMode ? INTAKE_REQUIRED_KEYS : FULL_REQUIRED_KEYS;
   const missing = missingKeys(parsed, REQUIRED_KEYS);
