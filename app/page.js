@@ -1069,6 +1069,7 @@ export default function Home() {
         ),
       };
       setResults(enrichedResults);
+      saveListingToAccount(enrichedResults);
       requestAnimationFrame(() => {
         resultsSectionRef.current?.scrollIntoView({
           behavior: "smooth",
@@ -1446,6 +1447,38 @@ export default function Home() {
     }
     setCheckoutBusyCredits(null);
   }, [currentUser]);
+
+  async function saveListingToAccount(analysisResults) {
+    if (!currentUser) return;
+
+    try {
+      const photoUrl = null;
+
+      await supabase.from('saved_listings').insert({
+        user_id: currentUser.id,
+        item_name: analysisResults.itemName || null,
+        brand: analysisResults.brand || null,
+        condition: analysisResults.condition || null,
+        condition_explanation: analysisResults.conditionExplanation || null,
+        price_low: analysisResults.priceLow || null,
+        price_high: analysisResults.priceHigh || null,
+        recommended_first_price: analysisResults.recommendedFirstPrice || null,
+        recommended_discount_price: analysisResults.recommendedDiscountPrice || null,
+        listing_title: analysisResults.listingTitle || null,
+        listing_description: analysisResults.listingDescription || null,
+        listings: analysisResults.listings || null,
+        model_details: analysisResults.modelDetails || null,
+        set_contents: analysisResults.setContents || null,
+        caveat: analysisResults.caveat || null,
+        photo_url: photoUrl,
+        platforms: selectedPlatforms || []
+      });
+
+      setListingSaved(true);
+    } catch (err) {
+      console.error('Failed to save listing:', err);
+    }
+  }
 
   return (
     <div className="flex min-h-dvh flex-col bg-[#F4F9F7] font-sans text-[#1A3A32] antialiased">
@@ -2030,6 +2063,61 @@ export default function Home() {
           </div>
 
           <div className="px-6 py-6 sm:px-8 sm:py-8">
+            {results && currentUser && listingSaved && !dashboardItemId && (
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 8,
+                backgroundColor: '#f0faf4',
+                border: '1px solid #b8dece',
+                borderRadius: 10,
+                padding: '10px 16px',
+                marginBottom: 16,
+                fontSize: 14,
+                color: '#2A6B52',
+                fontWeight: 500,
+              }}>
+                <span>✓</span>
+                <span>Saved to your account</span>
+                <a href="/my-listings" style={{ marginLeft: 'auto', fontSize: 13, color: '#2A6B52', textDecoration: 'underline' }}>
+                  View all listings →
+                </a>
+              </div>
+            )}
+            {results && !currentUser && (
+              <div style={{
+                backgroundColor: '#F4F9F7',
+                border: '1px solid #e0ece6',
+                borderRadius: 10,
+                padding: '12px 16px',
+                marginBottom: 16,
+                fontSize: 14,
+                color: '#4a6b5f',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                flexWrap: 'wrap',
+                gap: 8,
+              }}>
+                <span>Sign in to save your listings and access them anytime.</span>
+                <button
+                  type="button"
+                  onClick={() => setAuthModalOpen(true)}
+                  style={{
+                    backgroundColor: '#2A6B52',
+                    color: '#fff',
+                    border: 'none',
+                    borderRadius: 7,
+                    padding: '6px 14px',
+                    fontSize: 13,
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                  }}
+                >
+                  Sign in →
+                </button>
+              </div>
+            )}
             {error && (
               <p
                 className="rounded-[12px] border-[0.5px] border-red-200/90 bg-red-50/90 px-4 py-3.5 text-sm leading-relaxed text-red-900"
@@ -2367,7 +2455,7 @@ export default function Home() {
 
             {results ? (
               <div className="border-t-[0.5px] border-[#E8EDE9] px-6 py-6 sm:px-8">
-                {listingSaved && (
+                {listingSaved && dashboardItemId && (
                   <div className="mb-4 rounded-[10px] border border-[#8FCFB0]/60 bg-[#F4F9F7] px-4 py-3 flex items-center justify-between">
                     <p className="text-sm font-medium text-[#2A6B52]">✓ Listing saved to dashboard</p>
                     <a
