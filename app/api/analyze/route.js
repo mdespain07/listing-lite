@@ -488,7 +488,6 @@ export async function POST(request) {
     },
   }));
 
-  console.log('activePlatforms received:', activePlatforms);
   const platformKeyMap = { facebook: 'FACEBOOK_MARKETPLACE', ebay: 'EBAY', poshmark: 'POSHMARK', general: 'GENERAL' };
   const mappedPlatforms = activePlatforms.map(p => platformKeyMap[p] || p.toUpperCase());
   const instructionText = isIntakeMode
@@ -592,10 +591,6 @@ export async function POST(request) {
     );
   }
 
-  console.log('AI raw listings keys:', parsed?.listings ? Object.keys(parsed.listings) : 'no listings key');
-  console.log('AI facebook listing:', JSON.stringify(parsed?.listings?.FACEBOOK_MARKETPLACE || parsed?.listings?.facebook || 'not found'));
-  console.log('AI listings all keys:', JSON.stringify(Object.keys(parsed?.listings || {})));
-  console.log('AI full listings object:', JSON.stringify(parsed?.listings));
 
   const REQUIRED_KEYS = isIntakeMode ? INTAKE_REQUIRED_KEYS : FULL_REQUIRED_KEYS;
   const missing = missingKeys(parsed, REQUIRED_KEYS);
@@ -609,8 +604,5 @@ export async function POST(request) {
     );
   }
 
-  const normalized = normalizeAnalysisResponse(parsed, isIntakeMode, activePlatforms);
-  console.log('normalized facebook:', JSON.stringify(normalized?.listings?.facebook));
-  console.log('raw listings keys:', JSON.stringify(Object.keys(parsed?.listings || {})));
-  return NextResponse.json({ ...normalized, _debug: { rawListingsKeys: Object.keys(parsed?.listings || {}), rawFacebook: parsed?.listings?.FACEBOOK_MARKETPLACE || parsed?.listings?.facebook || null }});
+  return NextResponse.json(normalizeAnalysisResponse(parsed, isIntakeMode, activePlatforms));
 }
