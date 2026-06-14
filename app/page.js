@@ -1179,11 +1179,19 @@ export default function Home() {
         } else if (Array.isArray(enhanceData.images)) {
           setEnhancedImages(enhanceData.images);
           if (currentUser && lastSavedListingId.current) {
-            const firstPhoto = enhanceData.images?.[0]?.outputs?.[0]?.url || null;
-            if (firstPhoto) {
+            // Collect all enhanced photo URLs across all images and outputs
+            const allPhotoUrls = (enhanceData.images || []).flatMap(imgResult =>
+              (imgResult.outputs || []).map(output => output.url).filter(Boolean)
+            );
+            const heroPhoto = enhanceData.images?.[0]?.outputs?.[0]?.url || null;
+
+            if (allPhotoUrls.length > 0) {
               supabase
                 .from('saved_listings')
-                .update({ photo_url: firstPhoto })
+                .update({
+                  photo_url: heroPhoto,
+                  photo_urls: allPhotoUrls,
+                })
                 .eq('id', lastSavedListingId.current)
                 .then(({ error }) => {
                   if (error) console.error('Photo URL update error:', error);

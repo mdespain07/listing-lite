@@ -185,6 +185,61 @@ export default function MyListingsPage() {
                       </div>
                     )}
 
+                    {/* Photo gallery */}
+                    {(listing.photo_urls?.length > 0 || listing.photo_url) && (
+                      <div style={{ marginBottom: 20 }}>
+                        <p style={{ fontSize: 11, color: '#7A8F88', textTransform: 'uppercase', letterSpacing: '0.08em', margin: '0 0 10px', fontWeight: 600 }}>
+                          Enhanced Photos
+                        </p>
+                        <div style={{
+                          display: 'grid',
+                          gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))',
+                          gap: 10,
+                        }}>
+                          {(listing.photo_urls?.length > 0 ? listing.photo_urls : [listing.photo_url]).map((url, i) => (
+                            <div key={i} style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                              <div style={{
+                                aspectRatio: '1',
+                                borderRadius: 8,
+                                overflow: 'hidden',
+                                border: '1px solid #e0ece6',
+                                backgroundColor: '#F4F9F7',
+                                cursor: 'pointer',
+                              }}
+                                onClick={() => window.open(url, '_blank')}
+                              >
+                                <img
+                                  src={url}
+                                  alt={`Enhanced photo ${i + 1}`}
+                                  style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                                />
+                              </div>
+                              <a
+                                href={url}
+                                download={`brightlisted-photo-${i + 1}.jpg`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                style={{
+                                  display: 'block',
+                                  textAlign: 'center',
+                                  fontSize: 11,
+                                  fontWeight: 600,
+                                  color: '#2A6B52',
+                                  textDecoration: 'none',
+                                  backgroundColor: '#F4F9F7',
+                                  border: '1px solid #e0ece6',
+                                  borderRadius: 6,
+                                  padding: '4px 0',
+                                }}
+                              >
+                                Download
+                              </a>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
                     {/* Platform tabs */}
                     {availablePlatforms.length > 0 && (
                       <div>
