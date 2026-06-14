@@ -91,17 +91,6 @@ export default function AccountPage() {
     }
   }
 
-  async function handleBuyCredits(credits) {
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session) { window.location.href = '/'; return; }
-    const res = await fetch('/api/create-checkout', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ credits, user_id: session.user.id, return_path: '/account' }),
-    });
-    const data = await res.json();
-    if (data.url) window.location.href = data.url;
-  }
 
   if (!user && !loading) return (
     <div style={{ minHeight: '100vh', backgroundColor: '#F4F9F7', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Inter, sans-serif' }}>
@@ -178,49 +167,22 @@ export default function AccountPage() {
             <p style={{ fontSize: 15, color: '#1A3A32', margin: 0 }}>
               You have <span style={{ fontWeight: 700, color: '#2A6B52', fontSize: 20 }}>{credits ?? '—'}</span> credit{credits !== 1 ? 's' : ''} remaining.
             </p>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, marginTop: 4 }}>
-              {[
-                { credits: 1, price: '$0.99' },
-                { credits: 5, price: '$3.99' },
-                { credits: 15, price: '$9.99', popular: true },
-                { credits: 30, price: '$17.99' },
-              ].map(({ credits, price, popular }) => (
-                <button
-                  key={credits}
-                  onClick={() => handleBuyCredits(credits)}
-                  style={{
-                    padding: '10px 18px',
-                    borderRadius: 8,
-                    border: popular ? '2px solid #2A6B52' : '1px solid #d0e4dc',
-                    backgroundColor: popular ? '#2A6B52' : '#fff',
-                    color: popular ? '#fff' : '#1A3A32',
-                    fontSize: 14,
-                    fontWeight: 600,
-                    cursor: 'pointer',
-                    position: 'relative',
-                  }}
-                >
-                  {credits} credit{credits !== 1 ? 's' : ''} — {price}
-                  {popular && (
-                    <span style={{
-                      position: 'absolute',
-                      top: -10,
-                      right: 8,
-                      backgroundColor: '#E8C97A',
-                      color: '#1A3A32',
-                      fontSize: 10,
-                      fontWeight: 700,
-                      padding: '2px 7px',
-                      borderRadius: 10,
-                      textTransform: 'uppercase',
-                      letterSpacing: '0.06em',
-                    }}>
-                      Popular
-                    </span>
-                  )}
-                </button>
-              ))}
-            </div>
+            <a
+              href="/?buy=true"
+              style={{
+                backgroundColor: '#2A6B52',
+                color: '#fff',
+                padding: '10px 22px',
+                borderRadius: 8,
+                fontSize: 14,
+                fontWeight: 600,
+                textDecoration: 'none',
+                display: 'inline-block',
+                marginTop: 4,
+              }}
+            >
+              Buy more credits →
+            </a>
           </div>
           <p style={{ fontSize: 13, color: '#7A8F88', margin: '12px 0 0' }}>Each credit = one item analysis. Credits never expire.</p>
         </div>

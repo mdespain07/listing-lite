@@ -1525,14 +1525,13 @@ export default function Home() {
             />
           </div>
           <div className="flex w-full shrink-0 flex-row justify-center gap-5 sm:w-auto sm:justify-end">
-            {!currentUser && !isDashboardMode && (
-              <button
-                type="button"
-                onClick={() => setAuthModalOpen(true)}
+            {currentUser && !isDashboardMode && (
+              <a
+                href="/account"
                 className="touch-manipulation min-h-[44px] rounded-full border-2 border-[#7A8F88] bg-transparent px-5 py-1.5 text-sm sm:text-xs sm:px-4 sm:py-1 font-semibold uppercase tracking-[0.14em] text-[#7A8F88] transition-colors hover:bg-[#F4F9F7] focus:outline-none focus:ring-1 focus:ring-[#2A6B52]/35"
               >
-                Sign In
-              </button>
+                My Account
+              </a>
             )}
             {!isDashboardMode && (
               <button
@@ -1547,13 +1546,16 @@ export default function Home() {
               </button>
             )}
             {currentUser && !isDashboardMode && (
-              <div className="flex flex-col items-center gap-2.5">
-                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
-                  <span style={{ fontSize: 13, fontWeight: 600, color: '#1A3A32' }}>{credits} credits</span>
-                  <a href="/account" style={{ fontSize: 11, color: '#7A8F88', textDecoration: 'none' }} onMouseEnter={e => e.target.style.textDecoration='underline'} onMouseLeave={e => e.target.style.textDecoration='none'}>My Account</a>
-                </div>
-                <button onClick={async () => { await supabase.auth.signOut(); setCurrentUser(null); }} style={{ fontSize: 11, color: '#7A8F88', background: 'none', border: 'none', cursor: 'pointer', padding: 0, textDecoration: 'none' }} onMouseEnter={e => e.target.style.textDecoration='underline'} onMouseLeave={e => e.target.style.textDecoration='none'}>Sign out</button>
-              </div>
+              <button
+                type="button"
+                tabIndex={-1}
+                role="status"
+                className="flex min-h-[44px] shrink-0 cursor-default items-center justify-center rounded-full border-0 bg-[#2A6B52] px-6 py-1.5 text-sm font-semibold uppercase tracking-[0.16em]"
+                style={{ color: "#FFFFFF" }}
+                aria-label={`${credits} credits remaining`}
+              >
+                {credits} credits
+              </button>
             )}
           </div>
         </div>
