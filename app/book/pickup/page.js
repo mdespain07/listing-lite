@@ -31,20 +31,29 @@ export default function PickupPage() {
         <div className="rounded-[20px] border border-[#E8EDE9] bg-white overflow-hidden shadow-[0_8px_40px_rgba(26,58,50,0.08)]">
           <div className="grid grid-cols-1 sm:grid-cols-3 divide-y sm:divide-y-0 sm:divide-x divide-[#E8EDE9]">
             {[
-              { icon: "📋", title: "Check your items", body: "Log in to your My Items portal to see which items are ready for pickup." },
-              { icon: "📅", title: "Pick a time", body: "Choose a convenient pickup window below. Appointments are 15 minutes." },
+              { icon: "📋", title: "Check your items", body: "Log in to your My Items portal to see which items are ready for pickup.", href: "/my-items" },
+              { icon: "📅", title: "Pick a time", body: "Choose a convenient pickup window below. Appointments are 15 minutes.", scrollTo: "calendly-section" },
               { icon: "✅", title: "Collect your items", body: "We'll have everything organized and ready when you arrive." },
-            ].map(({ icon, title, body }) => (
+            ].map(({ icon, title, body, href, scrollTo }) => (
               <div key={title} className="flex flex-col items-center gap-3 px-6 py-8 text-center">
                 <span className="text-3xl">{icon}</span>
-                <p className="font-serif text-lg font-medium text-[#1A3A32]">{title}</p>
+                {href ? (
+                  <a href={href} className="font-serif text-lg font-medium text-[#1A3A32] underline-offset-2 hover:text-[#2A6B52] hover:underline transition-colors">{title}</a>
+                ) : (
+                  <p className="font-serif text-lg font-medium text-[#1A3A32]">{title}</p>
+                )}
                 <p className="text-sm leading-relaxed text-[#7A8F88]">{body}</p>
+                {scrollTo && (
+                  <a href={`#${scrollTo}`} data-smooth-to={scrollTo} className="mt-1 text-sm font-semibold text-[#2A6B52] underline-offset-2 hover:underline">
+                    Pick a time →
+                  </a>
+                )}
               </div>
             ))}
           </div>
         </div>
 
-        <div className="mt-8 rounded-[20px] border border-[#E8EDE9] bg-white overflow-hidden shadow-[0_8px_40px_rgba(26,58,50,0.08)]">
+        <div id="calendly-section" className="mt-8 rounded-[20px] border border-[#E8EDE9] bg-white overflow-hidden shadow-[0_8px_40px_rgba(26,58,50,0.08)]">
           <div className="border-b border-[#E8EDE9] bg-gradient-to-b from-[#F4F9F7] to-white px-6 py-5">
             <p className="text-sm font-semibold uppercase tracking-[0.2em] text-[#2A6B52]">Pick a time</p>
             <p className="mt-1 text-base text-[#7A8F88]">Select a date and time for your pickup below.</p>
@@ -52,7 +61,7 @@ export default function PickupPage() {
           <div
             className="calendly-inline-widget w-full"
             data-url="https://calendly.com/hello-brightlisted/item-pickup?hide_gdpr_banner=1&primary_color=2A6B52"
-            style={{ minWidth: "320px", height: "700px" }}
+            style={{ minWidth: "320px", height: "800px" }}
           />
         </div>
 
@@ -69,6 +78,7 @@ export default function PickupPage() {
       </footer>
 
       <script src="https://assets.calendly.com/assets/external/widget.js" async />
+      <script dangerouslySetInnerHTML={{ __html: `(function(){function init(){document.querySelectorAll('[data-smooth-to]').forEach(function(el){el.addEventListener('click',function(e){var id=el.getAttribute('data-smooth-to');var section=document.getElementById(id);if(section){e.preventDefault();section.scrollIntoView({behavior:'smooth'});}});});}if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',init);}else{init();}})();` }} />
     </div>
   );
 }

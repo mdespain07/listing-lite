@@ -9,6 +9,7 @@
  */
 
 import { NextResponse } from "next/server";
+import sharp from "sharp";
 
 export const maxDuration = 60;
 
@@ -327,11 +328,83 @@ async function photoroomLifestyleStaging(
 
 /**
  * @param {string} apiKey
+ * @param {string} base64Data
+ * @param {string} mediaType
+ */
+async function photoroomRelight(apiKey, base64Data, mediaType) {
+  try {
+    return await photoroomEdit(apiKey, base64Data, mediaType, {
+      "relight.enabled": "true",
+    });
+  } catch (err) {
+    if (err instanceof PhotoroomHttpError) {
+      console.error("Photoroom photoroomRelight failed:", { status: err.status, body: err.body });
+    } else {
+      console.error("Photoroom photoroomRelight failed:", { status: undefined, body: err instanceof Error ? err.message : String(err) });
+    }
+    throw err;
+  }
+}
+
+/**
+ * @param {string} apiKey
+ * @param {string} base64Data
+ * @param {string} mediaType
+ */
+async function photoroomIronout(apiKey, base64Data, mediaType) {
+  try {
+    return await photoroomEdit(apiKey, base64Data, mediaType, {
+      "ironOut.mode": "ai.auto",
+    });
+  } catch (err) {
+    if (err instanceof PhotoroomHttpError) {
+      console.error("Photoroom photoroomIronout failed:", { status: err.status, body: err.body });
+    } else {
+      console.error("Photoroom photoroomIronout failed:", { status: undefined, body: err instanceof Error ? err.message : String(err) });
+    }
+    throw err;
+  }
+}
+
+/**
+ * @param {string} apiKey
+ * @param {string} base64Data
+ * @param {string} mediaType
+ */
+async function photoroomRelightAndIronout(apiKey, base64Data, mediaType) {
+  try {
+    return await photoroomEdit(apiKey, base64Data, mediaType, {
+      "relight.enabled": "true",
+      "ironOut.mode": "ai.auto",
+    });
+  } catch (err) {
+    if (err instanceof PhotoroomHttpError) {
+      console.error("Photoroom photoroomRelightAndIronout failed:", { status: err.status, body: err.body });
+    } else {
+      console.error("Photoroom photoroomRelightAndIronout failed:", { status: undefined, body: err instanceof Error ? err.message : String(err) });
+    }
+    throw err;
+  }
+}
+
+/**
+ * Routes one image through the correct Photoroom treatment based on the
+ * full decision matrix:
+ *
+ *   Single clothing  | Hero: clean+ghost_mannequin  | Secondary: clean  | Closeup: enhanced(relight+ironout)
+ *   Single other     | Hero: clean+staged            | Secondary: clean+relight | Closeup: relight
+ *   Clothing set     | Hero: clean                   | Secondary: enhanced      | Closeup: enhanced
+ *   Non-clothing set | Hero: clean+staged            | Secondary: clean         | Closeup: clean
+ *
+ * @param {string} apiKey
  * @param {{ data: string, media_type: string }} img
  * @param {number} index
  * @param {boolean} isHero
+ * @param {boolean} isCloseup
  * @param {string} category
  * @param {string} itemName
+ * @param {boolean} isSet
+ * @param {string} backgroundPrompt
  * @param {{ label: string; message: string; index: number }[]} errorsOut
  */
 async function processOneImage(
@@ -342,67 +415,109 @@ async function processOneImage(
   isCloseup,
   category,
   itemName,
+  isSet,
+  backgroundPrompt,
   errorsOut
 ) {
   const { data, media_type } = img;
-
-  if (isCloseup) {
-    const originalUrl = `data:${media_type};base64,${data}`;
-    return { index, isHero, outputs: [{ label: "clean", url: originalUrl }] };
-  }
-
   const clothing = isClothing(category, itemName);
+  const stagingPrompt = backgroundPrompt || getStagingPrompt(category);
+
+  const makeCatch = (label) => (e) => {
+    errorsOut.push({ index, label, message: e instanceof Error ? e.message : "Enhancement failed" });
+    return null;
+  };
 
   /** @type {{ label: string; url: string | null }[]} */
   let outputs = [];
 
-  if (isHero && clothing) {
-    // PAUSED: Ghost mannequin requires Photoroom Plus ($100/mo) — re-enable when upgraded
-    // const [cleanUrl, ghostUrl] = await Promise.all([
-    //   photoroomCleanBackground(apiKey, data, media_type).catch(...),
-    //   photoroomGhostMannequin(apiKey, data, media_type).catch(...),
-    // ]);
-    // outputs = [{ label: "clean", url: cleanUrl }, { label: "ghost_mannequin", url: ghostUrl }];
-    const cleanUrl = await photoroomCleanBackground(apiKey, data, media_type).catch((e) => {
-      errorsOut.push({ index, label: "clean", message: e instanceof Error ? e.message : "Enhancement failed" });
-      return null;
-    });
-    outputs = [{ label: "clean", url: cleanUrl }];
-  } else if (isHero && !clothing) {
-    // PAUSED: Lifestyle staging requires Photoroom Plus ($100/mo) — re-enable when upgraded
-    // const [cleanUrl, stagedUrl] = await Promise.all([
-    //   photoroomCleanBackground(apiKey, data, media_type).catch(...),
-    //   photoroomLifestyleStaging(apiKey, data, media_type, getStagingPrompt(category)).catch(...),
-    // ]);
-    // outputs = [{ label: "clean", url: cleanUrl }, { label: "staged", url: stagedUrl }];
-    const cleanUrl = await photoroomCleanBackground(apiKey, data, media_type).catch((e) => {
-      errorsOut.push({ index, label: "clean", message: e instanceof Error ? e.message : "Enhancement failed" });
-      return null;
-    });
-    outputs = [{ label: "clean", url: cleanUrl }];
+  if (isSet && clothing) {
+    // ── Clothing set ─────────────────────────────────────────────────────────
+    if (isHero) {
+      // Group shot: background removal only
+      const cleanUrl = await photoroomCleanBackground(apiKey, data, media_type).catch(makeCatch("clean"));
+      outputs = [{ label: "clean", url: cleanUrl }];
+    } else {
+      // Secondary AND closeup: relight + ironout
+      const enhancedUrl = await photoroomRelightAndIronout(apiKey, data, media_type).catch(makeCatch("enhanced"));
+      outputs = [{ label: "enhanced", url: enhancedUrl }];
+    }
+  } else if (isSet && !clothing) {
+    // ── Non-clothing set ─────────────────────────────────────────────────────
+    if (isHero) {
+      // Background removal + AI lifestyle background
+      const [cleanUrl, stagedUrl] = await Promise.all([
+        photoroomCleanBackground(apiKey, data, media_type).catch(makeCatch("clean")),
+        photoroomLifestyleStaging(apiKey, data, media_type, stagingPrompt).catch(makeCatch("staged")),
+      ]);
+      outputs = [{ label: "clean", url: cleanUrl }, { label: "staged", url: stagedUrl }];
+    } else {
+      // Secondary and closeup: background removal (basic)
+      const cleanUrl = await photoroomCleanBackground(apiKey, data, media_type).catch(makeCatch("clean"));
+      outputs = [{ label: "clean", url: cleanUrl }];
+    }
+  } else if (!isSet && clothing) {
+    // ── Single clothing item ─────────────────────────────────────────────────
+    if (isHero) {
+      // Clean background + ghost mannequin in parallel
+      const [cleanUrl, ghostUrl] = await Promise.all([
+        photoroomCleanBackground(apiKey, data, media_type).catch(makeCatch("clean")),
+        photoroomGhostMannequin(apiKey, data, media_type).catch(makeCatch("ghost_mannequin")),
+      ]);
+      outputs = [{ label: "clean", url: cleanUrl }, { label: "ghost_mannequin", url: ghostUrl }];
+    } else if (isCloseup) {
+      // Relight + ironout
+      const enhancedUrl = await photoroomRelightAndIronout(apiKey, data, media_type).catch(makeCatch("enhanced"));
+      outputs = [{ label: "enhanced", url: enhancedUrl }];
+    } else {
+      // Secondary: background removal
+      const cleanUrl = await photoroomCleanBackground(apiKey, data, media_type).catch(makeCatch("clean"));
+      outputs = [{ label: "clean", url: cleanUrl }];
+    }
   } else {
-    // Non-hero images: clean background only
-    outputs = [];
-    const [cleanUrl] = await Promise.all([
-      photoroomCleanBackground(apiKey, data, media_type).catch(
-        (e) => {
-          errorsOut.push({
-            index,
-            label: "clean",
-            message: e.message,
-          });
-          console.error("Photoroom failed:", {
-            status: undefined,
-            body: e.message,
-          });
-          return null;
-        }
-      ),
-    ]);
-    if (cleanUrl) outputs.push({ label: "clean", url: cleanUrl });
+    // ── Single non-clothing item ─────────────────────────────────────────────
+    if (isHero) {
+      // Background removal + AI lifestyle background in parallel
+      const [cleanUrl, stagedUrl] = await Promise.all([
+        photoroomCleanBackground(apiKey, data, media_type).catch(makeCatch("clean")),
+        photoroomLifestyleStaging(apiKey, data, media_type, stagingPrompt).catch(makeCatch("staged")),
+      ]);
+      outputs = [{ label: "clean", url: cleanUrl }, { label: "staged", url: stagedUrl }];
+    } else if (isCloseup) {
+      // Relight only
+      const relightUrl = await photoroomRelight(apiKey, data, media_type).catch(makeCatch("relight"));
+      outputs = [{ label: "relight", url: relightUrl }];
+    } else {
+      // Secondary: background removal + relight in parallel
+      const [cleanUrl, relightUrl] = await Promise.all([
+        photoroomCleanBackground(apiKey, data, media_type).catch(makeCatch("clean")),
+        photoroomRelight(apiKey, data, media_type).catch(makeCatch("relight")),
+      ]);
+      outputs = [{ label: "clean", url: cleanUrl }, { label: "relight", url: relightUrl }];
+    }
   }
 
   return { index, isHero, outputs };
+}
+
+/**
+ * Auto-rotates a JPEG using its EXIF orientation tag, then strips the tag.
+ * Covers the client-side fallback path where raw file bytes (with EXIF) are
+ * forwarded to the server instead of a canvas-corrected JPEG.
+ * Non-JPEG types and any sharp errors pass through unchanged.
+ * @param {string} data  base64-encoded image data
+ * @param {string} media_type
+ * @returns {Promise<{ data: string; media_type: string }>}
+ */
+async function autoRotate(data, media_type) {
+  if (media_type !== "image/jpeg") return { data, media_type };
+  try {
+    const inBuf = Buffer.from(data, "base64");
+    const outBuf = await sharp(inBuf).rotate().jpeg({ quality: 90 }).toBuffer();
+    return { data: outBuf.toString("base64"), media_type: "image/jpeg" };
+  } catch {
+    return { data, media_type };
+  }
 }
 
 export async function POST(request) {
@@ -460,6 +575,8 @@ export async function POST(request) {
   );
   const singleIndex = typeof body.singleIndex === "number" ? Math.trunc(body.singleIndex) : null;
   const singleLabel = typeof body.singleLabel === "string" ? body.singleLabel.trim() : null;
+  const isSet = body.isSet === true;
+  const backgroundPrompt = typeof body.backgroundPrompt === "string" ? body.backgroundPrompt.trim() : "";
 
   const normalized = [];
   for (let i = 0; i < images.length; i++) {
@@ -477,6 +594,10 @@ export async function POST(request) {
       );
     }
     normalized.push(out);
+  }
+
+  for (let i = 0; i < normalized.length; i++) {
+    normalized[i] = await autoRotate(normalized[i].data, normalized[i].media_type);
   }
 
   const apiKey = process.env.PHOTOROOM_API_KEY?.trim();
@@ -507,7 +628,13 @@ export async function POST(request) {
         } else if (singleLabel === "flat_lay") {
           url = await photoroomFlatLay(apiKey, data, media_type);
         } else if (singleLabel === "staged") {
-          url = await photoroomLifestyleStaging(apiKey, data, media_type, getStagingPrompt(category));
+          url = await photoroomLifestyleStaging(apiKey, data, media_type, backgroundPrompt || getStagingPrompt(category));
+        } else if (singleLabel === "relight") {
+          url = await photoroomRelight(apiKey, data, media_type);
+        } else if (singleLabel === "ironout") {
+          url = await photoroomIronout(apiKey, data, media_type);
+        } else if (singleLabel === "enhanced") {
+          url = await photoroomRelightAndIronout(apiKey, data, media_type);
         } else {
           url = await photoroomCleanBackground(apiKey, data, media_type);
         }
@@ -526,6 +653,8 @@ export async function POST(request) {
       closeupIndices.includes(i),
       category,
       itemName,
+      isSet,
+      backgroundPrompt,
       errors
     );
     imagesOut.push(entry);

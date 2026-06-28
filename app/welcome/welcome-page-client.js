@@ -1,15 +1,43 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { supabase } from "../../lib/supabase";
 
 export default function WelcomePageClient() {
   const [scrolled, setScrolled] = useState(false);
+  const [currentUser, setCurrentUser] = useState(null);
+  const [credits, setCredits] = useState(0);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 60);
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setCurrentUser(session?.user ?? null);
+    });
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setCurrentUser(session?.user ?? null);
+    });
+    return () => subscription.unsubscribe();
+  }, []);
+
+  useEffect(() => {
+    if (!currentUser) return;
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
+      if (!session) return;
+      try {
+        const res = await fetch("/api/credits", {
+          headers: { Authorization: `Bearer ${session.access_token}` },
+        });
+        if (!res.ok) return;
+        const data = await res.json();
+        if (typeof data.balance === "number") setCredits(data.balance);
+      } catch {}
+    });
+  }, [currentUser]);
 
   return (
     <div className="flex min-h-dvh flex-col bg-[#F4F9F7] font-sans text-[#1A3A32] antialiased">
@@ -25,18 +53,48 @@ export default function WelcomePageClient() {
             />
           </a>
           <div className="flex w-full items-center justify-center gap-3 sm:w-auto sm:justify-end">
-            <a
-              href="/"
-              className={`touch-manipulation inline-flex items-center rounded-full border-2 border-[#7A8F88] bg-white/60 backdrop-blur-sm font-semibold uppercase tracking-[0.14em] text-[#1A3A32] transition-all hover:bg-white ${scrolled ? "min-h-[36px] px-4 py-1 text-xs" : "min-h-[48px] px-8 py-2 text-sm sm:px-6"}`}
-            >
-              Sign In
-            </a>
-            <a
-              href="/"
-              className={`touch-manipulation inline-flex items-center rounded-full bg-[#2A6B52] font-semibold uppercase tracking-[0.14em] text-white transition-all hover:opacity-90 ${scrolled ? "min-h-[36px] px-4 py-1 text-xs" : "min-h-[48px] px-8 py-2 text-sm sm:px-6"}`}
-            >
-              Try Free
-            </a>
+            {!currentUser ? (
+              <>
+                <a
+                  href="/"
+                  className={`touch-manipulation inline-flex items-center rounded-full border-2 border-[#7A8F88] bg-white/60 backdrop-blur-sm font-semibold uppercase tracking-[0.14em] text-[#1A3A32] transition-all hover:bg-white ${scrolled ? "min-h-[36px] px-4 py-1 text-xs" : "min-h-[48px] px-8 py-2 text-sm sm:px-6"}`}
+                >
+                  Sign In
+                </a>
+                <a
+                  href="/"
+                  className={`touch-manipulation inline-flex items-center rounded-full bg-[#2A6B52] font-semibold uppercase tracking-[0.14em] text-white transition-all hover:opacity-90 ${scrolled ? "min-h-[36px] px-4 py-1 text-xs" : "min-h-[48px] px-8 py-2 text-sm sm:px-6"}`}
+                >
+                  Try Free
+                </a>
+              </>
+            ) : (
+              <div className="flex flex-col items-center gap-1 sm:items-end">
+                <div className="flex flex-row items-center gap-3">
+                  <a
+                    href="/?buy=true"
+                    className={`touch-manipulation inline-flex items-center rounded-full border-2 border-[#2A6B52] bg-transparent font-semibold uppercase tracking-[0.14em] text-[#2A6B52] transition-all hover:bg-white/20 ${scrolled ? "min-h-[36px] px-4 py-1 text-xs" : "min-h-[48px] px-6 py-2 text-sm"}`}
+                  >
+                    Buy Credits
+                  </a>
+                  <span
+                    role="status"
+                    aria-label={`${credits} credits remaining`}
+                    className={`inline-flex items-center rounded-full bg-[#2A6B52] font-semibold uppercase tracking-[0.16em] text-white ${scrolled ? "min-h-[36px] px-4 py-1 text-xs" : "min-h-[48px] px-6 py-2 text-sm"}`}
+                  >
+                    {credits} Credits
+                  </span>
+                </div>
+                <a
+                  href="/account"
+                  style={{ fontSize: 11, color: '#7A8F88', textDecoration: 'none', letterSpacing: '0.1em', textTransform: 'uppercase', fontWeight: 600 }}
+                  onMouseEnter={e => e.currentTarget.style.textDecoration = 'underline'}
+                  onMouseLeave={e => e.currentTarget.style.textDecoration = 'none'}
+                >
+                  My Account
+                </a>
+              </div>
+            )}
           </div>
         </div>
       </header>
@@ -50,7 +108,7 @@ export default function WelcomePageClient() {
             className="h-full w-full object-cover object-center"
           />
         </div>
-        <div className="relative z-10 mx-auto w-full max-w-5xl px-4 pb-16 pt-40 sm:px-6 sm:pt-48">
+        <div className="relative z-10 mx-auto w-full max-w-5xl px-4 pb-16 pt-[188px] sm:px-6 sm:pt-48">
           <div className="w-full sm:max-w-[60%]">
             <div className="inline-flex items-center gap-2 rounded-full border border-[#2A6B52]/20 bg-white/70 px-4 py-1.5 backdrop-blur-sm">
               <span className="h-1.5 w-1.5 rounded-full bg-[#2A6B52]" />

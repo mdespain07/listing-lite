@@ -78,8 +78,8 @@ export default function SellPage() {
       </div>
 
       {/* HERO */}
-      <section className="relative min-h-[95vh] flex items-center overflow-hidden">
-        <div className="absolute inset-0 z-0">
+      <section className="relative min-h-[95vh] flex items-center overflow-hidden bg-white">
+        <div className="absolute inset-0 z-0 hidden sm:block">
           <img src="/sell-hero.jpg" alt="" className="h-full w-full object-cover object-center" />
         </div>
         <div className="relative z-10 mx-auto w-full max-w-5xl px-4 pb-16 pt-36 sm:px-6 sm:pt-48">
@@ -95,11 +95,11 @@ export default function SellPage() {
                 Drop it off.<br />Get paid.
               </h1>
               <p className="mt-4 text-lg leading-relaxed text-[#4A5568]">
-                Ready to get rid of your "to sell" pile for good? Drop off your items, and we'll handle everything from photos and listing to selling. You keep 60% of every sale and get your space back.
+                Drop off your items and we'll handle everything else.
               </p>
               <div className="mt-6 flex flex-col gap-3">
                 <a href="/book" className="touch-manipulation inline-flex min-h-[52px] items-center justify-center rounded-[12px] bg-[#2A6B52] px-8 py-3 text-base font-semibold uppercase tracking-[0.18em] text-white transition-opacity hover:opacity-90">
-                  Schedule a Free Drop-Off
+                  Schedule a Drop-Off
                 </a>
                 <a href="#pickup" className="text-sm text-[#2A6B52] font-semibold text-center underline-offset-2 hover:underline transition-colors">Pickup available →</a>
               </div>
@@ -115,11 +115,11 @@ export default function SellPage() {
               Drop it off.<br />Get paid.
             </h1>
             <p className="mt-6 text-xl leading-relaxed text-[#1A3A32]/70 max-w-md">
-              Ready to get rid of your "to sell" pile for good? Drop off your items, and we'll handle everything from photos and listing to selling. You keep 60% of every sale and get your space back.
+              Drop off your items and we'll handle everything else.
             </p>
             <div className="mt-10 flex flex-col gap-3 items-start">
               <a href="/book" className="touch-manipulation inline-flex min-h-[56px] items-center justify-center rounded-[12px] bg-[#2A6B52] px-10 py-3 text-base font-semibold uppercase tracking-[0.18em] text-white transition-opacity hover:opacity-90 shadow-[0_8px_32px_rgba(42,107,82,0.20)]">
-                Schedule a Free Drop-Off
+                Schedule a Drop-Off
               </a>
               <a href="#pickup" className="text-sm text-[#1A3A32]/60 font-semibold underline-offset-2 hover:underline hover:text-[#2A6B52] transition-colors">Pickup available →</a>
             </div>
@@ -502,7 +502,7 @@ export default function SellPage() {
               Stop donating.<br />Start getting paid.
             </h2>
             <p className="text-xl leading-relaxed text-white/60">
-              Book a free 30-minute drop-off appointment. Bring your items and let us handle the rest.
+              20-minute drop-off appointment
             </p>
             <div className="flex flex-col gap-4 sm:flex-row sm:items-center mt-4">
               <a href="/book" className="touch-manipulation inline-flex min-h-[56px] items-center justify-center rounded-[12px] bg-white px-10 py-3 text-base font-semibold uppercase tracking-[0.18em] text-[#1A3A32] transition-opacity hover:opacity-90 shadow-[0_8px_32px_rgba(255,255,255,0.15)]">

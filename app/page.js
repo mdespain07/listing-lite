@@ -157,32 +157,120 @@ function fileToDataURL(file) {
 }
 
 /**
- * Downscale if longest edge > MAX_IMAGE_LONG_EDGE, then JPEG at JPEG_QUALITY.
- * Falls back to raw data URL if decode/canvas fails (e.g. some HEIC edge cases).
+ * Reads the EXIF orientation tag from the first 64 KB of a JPEG file.
+ * Returns 1–8 per the EXIF spec, or 1 (no-op) on any parse failure or
+ * non-JPEG input. No external dependency — pure DataView byte parsing.
+ * @param {File} file
+ * @returns {Promise<number>}
+ */
+async function readExifOrientation(file) {
+  try {
+    const buf = await file.slice(0, 65536).arrayBuffer();
+    const view = new DataView(buf);
+    // Must start with JPEG SOI marker 0xFFD8
+    if (view.getUint16(0) !== 0xFFD8) return 1;
+    let pos = 2;
+    while (pos + 4 <= view.byteLength) {
+      if (view.getUint8(pos) !== 0xFF) break;
+      const marker = view.getUint8(pos + 1);
+      if (marker === 0xDA) break; // SOS: start of scan data, no more metadata ahead
+      const segLen = view.getUint16(pos + 2); // includes its own 2 bytes, not the marker
+      if (marker === 0xE1 && pos + 10 < view.byteLength) { // APP1
+        // Check for the "Exif\0\0" signature at pos+4
+        if (
+          view.getUint8(pos + 4) === 0x45 && // E
+          view.getUint8(pos + 5) === 0x78 && // x
+          view.getUint8(pos + 6) === 0x69 && // i
+          view.getUint8(pos + 7) === 0x66 && // f
+          view.getUint8(pos + 8) === 0x00 &&
+          view.getUint8(pos + 9) === 0x00
+        ) {
+          const tiff = pos + 10; // TIFF header starts here
+          const le = view.getUint16(tiff) === 0x4949; // "II" = little-endian
+          const ifdOffset = view.getUint32(tiff + 4, le);
+          const ifd = tiff + ifdOffset;
+          if (ifd + 2 > view.byteLength) return 1;
+          const entryCount = view.getUint16(ifd, le);
+          for (let i = 0; i < entryCount; i++) {
+            const entry = ifd + 2 + i * 12;
+            if (entry + 12 > view.byteLength) break;
+            if (view.getUint16(entry, le) === 0x0112) { // Orientation tag
+              return view.getUint16(entry + 8, le);
+            }
+          }
+        }
+        return 1; // APP1 present but no valid EXIF orientation found
+      }
+      pos += 2 + segLen;
+    }
+  } catch {
+    // Silently ignore any parse errors
+  }
+  return 1;
+}
+
+/**
+ * Applies the canvas 2D transform needed to visually correct an EXIF
+ * orientation value before drawing the source image. Call this BEFORE
+ * ctx.drawImage(). For orientations 5–8 the canvas must already have
+ * its width/height swapped (canvas.width = rawH, canvas.height = rawW).
+ * @param {CanvasRenderingContext2D} ctx
+ * @param {number} orientation  EXIF orientation 1–8
+ * @param {number} w  raw (file) image width passed to drawImage
+ * @param {number} h  raw (file) image height passed to drawImage
+ */
+function applyExifOrientationTransform(ctx, orientation, w, h) {
+  switch (orientation) {
+    case 2: ctx.transform(-1,  0,  0,  1,  w,  0); break;
+    case 3: ctx.transform(-1,  0,  0, -1,  w,  h); break;
+    case 4: ctx.transform( 1,  0,  0, -1,  0,  h); break;
+    case 5: ctx.transform( 0,  1,  1,  0,  0,  0); break;
+    case 6: ctx.transform( 0,  1, -1,  0,  h,  0); break;
+    case 7: ctx.transform( 0, -1, -1,  0,  h,  w); break;
+    case 8: ctx.transform( 0, -1,  1,  0,  0,  w); break;
+    default: break; // 1: already correct, no transform needed
+  }
+}
+
+/**
+ * Reads EXIF orientation, corrects rotation on canvas, downscales if the
+ * longest logical edge exceeds MAX_IMAGE_LONG_EDGE, then encodes as JPEG.
+ * Falls back to raw data URL if decode/canvas fails (e.g. HEIC edge cases).
  * @param {File} file
  * @returns {Promise<string>}
  */
-function compressImageFileToDataUrl(file) {
+async function compressImageFileToDataUrl(file) {
+  const orientation = await readExifOrientation(file);
   return new Promise((resolve, reject) => {
     const objectUrl = URL.createObjectURL(file);
     const img = new Image();
     img.onload = () => {
       try {
-        let w = img.naturalWidth || img.width;
-        let h = img.naturalHeight || img.height;
-        if (!w || !h) throw new Error("Invalid dimensions");
-        const long = Math.max(w, h);
+        const rawW = img.naturalWidth || img.width;
+        const rawH = img.naturalHeight || img.height;
+        if (!rawW || !rawH) throw new Error("Invalid dimensions");
+        // Orientations 5–8 transpose the image; logical size has axes swapped.
+        const swapDims = orientation >= 5 && orientation <= 8;
+        const logicalW = swapDims ? rawH : rawW;
+        const logicalH = swapDims ? rawW : rawH;
+        const long = Math.max(logicalW, logicalH);
+        let outW = logicalW;
+        let outH = logicalH;
         if (long > MAX_IMAGE_LONG_EDGE) {
           const scale = MAX_IMAGE_LONG_EDGE / long;
-          w = Math.max(1, Math.round(w * scale));
-          h = Math.max(1, Math.round(h * scale));
+          outW = Math.max(1, Math.round(logicalW * scale));
+          outH = Math.max(1, Math.round(logicalH * scale));
         }
+        // drawW/drawH are the raw (pre-rotation) dimensions for ctx.drawImage
+        const drawW = swapDims ? outH : outW;
+        const drawH = swapDims ? outW : outH;
         const canvas = document.createElement("canvas");
-        canvas.width = w;
-        canvas.height = h;
+        canvas.width = outW;
+        canvas.height = outH;
         const ctx = canvas.getContext("2d");
         if (!ctx) throw new Error("No 2d context");
-        ctx.drawImage(img, 0, 0, w, h);
+        applyExifOrientationTransform(ctx, orientation, drawW, drawH);
+        ctx.drawImage(img, 0, 0, drawW, drawH);
         const dataUrl = canvas.toDataURL("image/jpeg", JPEG_QUALITY);
         URL.revokeObjectURL(objectUrl);
         resolve(dataUrl);
@@ -660,6 +748,7 @@ export default function Home() {
   const [authModalOpen, setAuthModalOpen] = useState(false);
   const [authModalEmail, setAuthModalEmail] = useState("");
   const [currentUser, setCurrentUser] = useState(null);
+  const [showOnboarding, setShowOnboarding] = useState(false);
 
   const hasOversizeUpload = useMemo(
     () => files.some((f) => f.size > MAX_UPLOAD_WARNING_BYTES),
@@ -961,6 +1050,18 @@ export default function Home() {
     });
     return () => subscription.unsubscribe();
   }, []);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (!localStorage.getItem("bl_onboarding_seen")) {
+      setShowOnboarding(true);
+    }
+  }, []);
+
+  const dismissOnboarding = () => {
+    localStorage.setItem("bl_onboarding_seen", "1");
+    setShowOnboarding(false);
+  };
 
   const isDashboardMode = dashboardItemId !== null;
   const canAnalyze =
@@ -2614,6 +2715,70 @@ export default function Home() {
                 Analyze anyway →
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {showOnboarding && (
+        <div
+          className="fixed inset-0 z-[100] flex items-center justify-center p-4"
+          role="presentation"
+          onMouseDown={(e) => { if (e.target === e.currentTarget) dismissOnboarding(); }}
+          style={{ backgroundColor: "rgba(0,0,0,0.5)" }}
+        >
+          <div
+            style={{ width: "100%", maxWidth: 360, backgroundColor: "#FFFFFF", borderRadius: 16, padding: "32px 28px" }}
+            role="dialog"
+            aria-modal
+            aria-labelledby="onboarding-title"
+          >
+            <div style={{ display: "flex", justifyContent: "center", marginBottom: 20 }}>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/logo.svg" alt="BrightListed" style={{ width: 48, height: "auto" }} />
+            </div>
+            <h2
+              id="onboarding-title"
+              className="font-serif"
+              style={{ fontSize: 26, fontWeight: 500, color: "#1A3A32", textAlign: "center", margin: 0 }}
+            >
+              Listings in a Snap
+            </h2>
+            <p style={{ fontSize: 13, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.12em", color: "#7A8F88", textAlign: "center", marginTop: 4, marginBottom: 20 }}>
+              Here&apos;s how it works:
+            </p>
+            <ol style={{ listStyle: "none", padding: 0, margin: 0, display: "flex", flexDirection: "column", gap: 12 }}>
+              <li style={{ fontSize: 15, color: "#1A3A32", lineHeight: 1.6 }}>
+                📷&nbsp;&nbsp;Upload 1–5 photos of your item
+              </li>
+              <li style={{ fontSize: 15, color: "#1A3A32", lineHeight: 1.6 }}>
+                ✨&nbsp;&nbsp;AI writes your title, description, and pricing
+              </li>
+              <li style={{ fontSize: 15, color: "#1A3A32", lineHeight: 1.6 }}>
+                📋&nbsp;&nbsp;Copy your listing to any platform in seconds
+              </li>
+            </ol>
+            <button
+              type="button"
+              onClick={dismissOnboarding}
+              style={{
+                display: "block",
+                width: "100%",
+                backgroundColor: "#2A6B52",
+                color: "#FFFFFF",
+                fontSize: 14,
+                fontWeight: 600,
+                fontFamily: "inherit",
+                textTransform: "uppercase",
+                letterSpacing: "0.1em",
+                borderRadius: 50,
+                padding: "14px 24px",
+                marginTop: 24,
+                border: "none",
+                cursor: "pointer",
+              }}
+            >
+              Got it — let&apos;s go →
+            </button>
           </div>
         </div>
       )}

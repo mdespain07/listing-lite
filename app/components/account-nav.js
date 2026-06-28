@@ -8,6 +8,11 @@ const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 );
 
+const NAV_LINKS = [
+  { label: 'My Listings', href: '/my-listings' },
+  { label: 'Account', href: '/account' },
+];
+
 export default function AccountNav({ activePage }) {
   const [credits, setCredits] = useState(null);
   const [user, setUser] = useState(null);
@@ -26,87 +31,98 @@ export default function AccountNav({ activePage }) {
   }, []);
 
   return (
-    <header style={{
-      backgroundColor: '#fff',
-      borderBottom: '1px solid #e0ece6',
-      padding: '0 24px',
-      height: 64,
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'space-between',
-      position: 'sticky',
-      top: 0,
-      zIndex: 50,
-      gap: 16,
-    }}>
-      {/* Logo */}
-      <a href="/" style={{ display: 'flex', alignItems: 'center', gap: 10, textDecoration: 'none', flexShrink: 0 }}>
-        <img src="/logo.svg" alt="BrightListed" style={{ height: 36 }} />
-      </a>
+    <header className="sticky top-0 z-50 border-b border-[#e0ece6] bg-white">
 
-      {/* Center nav */}
-      <nav style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-        {[
-          { label: 'My Listings', href: '/my-listings' },
-          { label: 'Account', href: '/account' },
-        ].map(({ label, href }) => (
+      {/* Main row — always visible */}
+      <div className="flex h-16 items-center justify-between gap-4 px-6">
+
+        {/* Logo */}
+        <a href="/" className="flex shrink-0 items-center no-underline">
+          <img src="/logo.svg" alt="BrightListed" style={{ height: 36 }} />
+        </a>
+
+        {/* Center nav — desktop only */}
+        <nav className="hidden items-center gap-1 sm:flex">
+          {NAV_LINKS.map(({ label, href }) => (
+            <a
+              key={href}
+              href={href}
+              style={{
+                padding: '6px 16px',
+                borderRadius: 20,
+                fontSize: 14,
+                fontWeight: activePage === href ? 600 : 400,
+                color: activePage === href ? '#2A6B52' : '#7A8F88',
+                backgroundColor: activePage === href ? '#F4F9F7' : 'transparent',
+                border: activePage === href ? '1px solid #e0ece6' : '1px solid transparent',
+                textDecoration: 'none',
+                transition: 'all 0.15s',
+              }}
+            >
+              {label}
+            </a>
+          ))}
+        </nav>
+
+        {/* Right side */}
+        <div className="flex shrink-0 items-center gap-2.5">
+
+          {/* Credits count — desktop only */}
+          {credits !== null && (
+            <span className="hidden text-[13px] text-[#7A8F88] sm:inline">
+              <span style={{ fontWeight: 600, color: '#1A3A32' }}>{credits}</span>{' '}
+              credit{credits !== 1 ? 's' : ''}
+            </span>
+          )}
+
+          {/* Buy credits — desktop only */}
           <a
-            key={href}
-            href={href}
-            style={{
-              padding: '6px 16px',
-              borderRadius: 20,
-              fontSize: 14,
-              fontWeight: activePage === href ? 600 : 400,
-              color: activePage === href ? '#2A6B52' : '#7A8F88',
-              backgroundColor: activePage === href ? '#F4F9F7' : 'transparent',
-              border: activePage === href ? '1px solid #e0ece6' : '1px solid transparent',
-              textDecoration: 'none',
-              transition: 'all 0.15s',
-            }}
+            href="/?buy=true"
+            className="hidden items-center rounded-[8px] border border-[#e0ece6] bg-[#F4F9F7] px-3.5 py-[7px] text-[13px] font-medium text-[#2A6B52] no-underline sm:inline-flex"
           >
-            {label}
+            Buy credits
           </a>
-        ))}
-      </nav>
 
-      {/* Right side */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
+          {/* New Listing — always visible */}
+          <a
+            href="/"
+            className="inline-flex items-center rounded-[8px] bg-[#2A6B52] px-3.5 py-[7px] text-[13px] font-medium text-white no-underline"
+          >
+            + New Listing
+          </a>
+        </div>
+      </div>
+
+      {/* Mobile second row — nav links + credits count */}
+      <div className="flex items-center justify-between gap-3 border-t border-[#e0ece6] px-4 py-2 sm:hidden">
+        <div className="flex items-center gap-1">
+          {NAV_LINKS.map(({ label, href }) => (
+            <a
+              key={href}
+              href={href}
+              style={{
+                padding: '5px 14px',
+                borderRadius: 20,
+                fontSize: 13,
+                fontWeight: activePage === href ? 600 : 400,
+                color: activePage === href ? '#2A6B52' : '#7A8F88',
+                backgroundColor: activePage === href ? '#F4F9F7' : 'transparent',
+                border: activePage === href ? '1px solid #e0ece6' : '1px solid transparent',
+                textDecoration: 'none',
+              }}
+            >
+              {label}
+            </a>
+          ))}
+        </div>
         {credits !== null && (
-          <span style={{ fontSize: 13, color: '#7A8F88' }}>
-            <span style={{ fontWeight: 600, color: '#1A3A32' }}>{credits}</span> credit{credits !== 1 ? 's' : ''}
+          <span className="shrink-0 text-[12px] text-[#7A8F88]">
+            <span style={{ fontWeight: 600, color: '#1A3A32' }}>{credits}</span>{' '}
+            credit{credits !== 1 ? 's' : ''}
           </span>
         )}
-        <a
-          href="/?buy=true"
-          style={{
-            backgroundColor: '#F4F9F7',
-            border: '1px solid #e0ece6',
-            color: '#2A6B52',
-            padding: '7px 14px',
-            borderRadius: 8,
-            fontSize: 13,
-            fontWeight: 500,
-            textDecoration: 'none',
-          }}
-        >
-          Buy credits
-        </a>
-        <a
-          href="/"
-          style={{
-            backgroundColor: '#2A6B52',
-            color: '#fff',
-            padding: '7px 14px',
-            borderRadius: 8,
-            fontSize: 13,
-            fontWeight: 500,
-            textDecoration: 'none',
-          }}
-        >
-          + New Listing
-        </a>
       </div>
+
     </header>
   );
 }
