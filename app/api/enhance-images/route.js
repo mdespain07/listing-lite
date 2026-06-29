@@ -23,7 +23,7 @@ const ALLOWED_MEDIA_TYPES = new Set([
 ]);
 
 const STAGING_DEFAULT =
-  "A warm bright home interior with natural light, clean surfaces, lifestyle product photography style, professional quality";
+  "a warm white surface with soft natural light from a nearby window, clean home interior, lifestyle product photography";
 
 /**
  * @param {unknown} entry
@@ -122,19 +122,19 @@ function getStagingPrompt(category) {
   if (!c) return STAGING_DEFAULT;
 
   if (/\b(electronics|computer|tech|gaming)\b/.test(c)) {
-    return "A clean modern desk setup with soft natural light from a nearby window, light wood surface, subtle bokeh background, minimalist aesthetic, professional product photography";
+    return "a clean light wood desk surface with a slim keyboard partially visible, soft natural window light from the left, minimal modern workspace";
   }
   if (/\b(home|garden|furniture|decor|kitchen)\b/.test(c)) {
-    return "A bright airy living room with warm natural light, white walls, linen textures, tastefully styled like an interior design shoot, professional product photography";
+    return "a bright living room corner with white-painted hardwood floors and a white plaster wall, soft diffused afternoon light, Scandinavian interior style";
   }
   if (/\b(sport|sports|outdoors|tools|automotive)\b/.test(c)) {
-    return "An outdoor patio or clean workshop bench with natural daylight, concrete surface, lifestyle product photography, professional quality";
+    return "an outdoor wooden deck surface with natural wood grain visible, soft overcast daylight, clean lifestyle product photography";
   }
   if (/\b(toys?|kids?|baby)\b/.test(c)) {
-    return "A bright cheerful playroom with soft natural light, pastel tones, clean wooden floor, styled for a lifestyle brand, professional product photography";
+    return "a light natural wood floor with a soft cream play mat, gentle warm indoor light, clean and cheerful lifestyle setting";
   }
   if (/\b(clothing|apparel|shoes|accessories|bags|jewelry|fashion)\b/.test(c)) {
-    return "A clean retail boutique setting with soft diffused studio light, white background, clothing rack visible in soft bokeh focus, professional fashion photography";
+    return "a clean white retail surface with subtle fabric texture, soft studio lighting from above, editorial fashion photography style";
   }
   return STAGING_DEFAULT;
 }
@@ -307,12 +307,18 @@ async function photoroomLifestyleStaging(
   apiKey,
   base64Data,
   mediaType,
-  prompt
+  backgroundPrompt,
+  itemName,
+  category
 ) {
+  const sceneDescription = backgroundPrompt;
+  const anchoredPrompt = `Professional product photography. The subject is: ${itemName || "this item"}. Do not alter, reshape, reinterpret, or replace the subject in any way. The subject must appear exactly as photographed — same shape, same proportions, same colors, same details. Do not add clothing, fabric, or organic shapes to the subject. Only replace the background environment. Place the subject in: ${sceneDescription}. Apply only gentle natural lighting to the product itself — no other modifications to the product.`;
   try {
     return await photoroomEdit(apiKey, base64Data, mediaType, {
       removeBackground: "true",
-      "background.prompt": prompt,
+      "background.prompt": anchoredPrompt,
+      "background.expandPrompt.mode": "ai.never",
+      referenceBox: "originalImage",
       padding: "0.08",
       horizontalAlignment: "center",
       verticalAlignment: "center",
@@ -455,7 +461,7 @@ async function processOneImage(
       // Background removal + AI lifestyle background
       const [cleanUrl, stagedUrl] = await Promise.all([
         photoroomCleanBackground(apiKey, data, media_type).catch(makeCatch("clean")),
-        photoroomLifestyleStaging(apiKey, data, media_type, stagingPrompt).catch(makeCatch("staged")),
+        photoroomLifestyleStaging(apiKey, data, media_type, stagingPrompt, itemName, category).catch(makeCatch("staged")),
       ]);
       outputs = [{ label: "clean", url: cleanUrl }, { label: "staged", url: stagedUrl }];
     } else {
@@ -490,7 +496,7 @@ async function processOneImage(
       // Background removal + AI lifestyle background in parallel
       const [cleanUrl, stagedUrl] = await Promise.all([
         photoroomCleanBackground(apiKey, data, media_type).catch(makeCatch("clean")),
-        photoroomLifestyleStaging(apiKey, data, media_type, stagingPrompt).catch(makeCatch("staged")),
+        photoroomLifestyleStaging(apiKey, data, media_type, stagingPrompt, itemName, category).catch(makeCatch("staged")),
       ]);
       outputs = [{ label: "clean", url: cleanUrl }, { label: "staged", url: stagedUrl }];
     } else if (isCloseup) {
