@@ -387,6 +387,12 @@ const ENHANCE_OUTPUT_ORDER = [
 
 const ENHANCE_SKELETON_SLOTS = 6;
 
+const ENHANCE_LOADING_PHASES = [
+  "Removing background…",
+  "Enhancing lighting…",
+  "Finalizing image…",
+];
+
 /**
  * @param {string} label
  */
@@ -722,6 +728,7 @@ export default function Home() {
   const [enhancedImages, setEnhancedImages] = useState(null);
   const [enhanceNotice, setEnhanceNotice] = useState(null);
   const [enhancingImages, setEnhancingImages] = useState(false);
+  const [enhancePhaseIndex, setEnhancePhaseIndex] = useState(0);
   const [lightboxImage, setLightboxImage] = useState(null);
   const [regeneratingKey, setRegeneratingKey] = useState(null);
   const [regeneratedKeys, setRegeneratedKeys] = useState(new Set());
@@ -839,6 +846,13 @@ export default function Home() {
     const id = window.setTimeout(() => setCorrectionFlash(false), 2000);
     return () => window.clearTimeout(id);
   }, [correctionFlash]);
+
+  useEffect(() => {
+    if (!enhancingImages) return;
+    setEnhancePhaseIndex(0);
+    const id = setInterval(() => setEnhancePhaseIndex((i) => (i + 1) % 3), 2000);
+    return () => clearInterval(id);
+  }, [enhancingImages]);
 
   useEffect(() => {
     if (!analyzing) return;
@@ -2637,7 +2651,10 @@ export default function Home() {
                         key={`enh-skel-${i}`}
                         className="flex flex-col overflow-hidden rounded-lg border border-[#E8EDE9] bg-[#FFFFFF]"
                       >
-                        <div className="aspect-square animate-pulse bg-gradient-to-br from-[#E8EDE9]/90 via-[#F4F9F7] to-[#E8EDE9]/60" />
+                        <div className="aspect-square flex flex-col items-center justify-center gap-3 bg-[#F4F9F7]">
+                          <Spinner className="h-8 w-8" />
+                          <p className="text-xs text-[#7A8F88]">{ENHANCE_LOADING_PHASES[enhancePhaseIndex]}</p>
+                        </div>
                         <div className="flex flex-col gap-2 border-t border-[#E8EDE9]/80 p-3 pt-3">
                           <div className="h-11 animate-pulse rounded-lg bg-[#E8EDE9]/70" />
                         </div>

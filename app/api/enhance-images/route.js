@@ -211,7 +211,7 @@ async function photoroomEdit(apiKey, base64Data, mediaType, fields, extraHeaders
  * @param {string} base64Data
  * @param {string} mediaType
  */
-async function photoroomCleanBackground(apiKey, base64Data, mediaType) {
+async function photoroomCleanBackground(apiKey, base64Data, mediaType, isClothing = false) {
   try {
     return await photoroomEdit(apiKey, base64Data, mediaType, {
       removeBackground: "true",
@@ -220,6 +220,7 @@ async function photoroomCleanBackground(apiKey, base64Data, mediaType) {
       horizontalAlignment: "center",
       verticalAlignment: "center",
       "shadow.mode": "ai.soft",
+      ...(isClothing ? { "ironing.mode": "ai.auto" } : {}),
     });
   } catch (err) {
     if (err instanceof PhotoroomHttpError) {
@@ -251,6 +252,7 @@ async function photoroomGhostMannequin(apiKey, base64Data, mediaType) {
       "background.color": "FFFFFF",
       padding: "0.05",
       "shadow.mode": "ai.soft",
+      "ironing.mode": "ai.auto",
     });
   } catch (err) {
     if (err instanceof PhotoroomHttpError) {
@@ -281,6 +283,7 @@ async function photoroomFlatLay(apiKey, base64Data, mediaType) {
       "background.color": "FFFFFF",
       padding: "0.08",
       "shadow.mode": "ai.soft",
+      "ironing.mode": "ai.auto",
     });
   } catch (err) {
     if (err instanceof PhotoroomHttpError) {
@@ -448,7 +451,7 @@ async function processOneImage(
     // ── Clothing set ─────────────────────────────────────────────────────────
     if (isHero) {
       // Group shot: background removal only
-      const cleanUrl = await photoroomCleanBackground(apiKey, data, media_type).catch(makeCatch("clean"));
+      const cleanUrl = await photoroomCleanBackground(apiKey, data, media_type, true).catch(makeCatch("clean"));
       outputs = [{ label: "clean", url: cleanUrl }];
     } else {
       // Secondary AND closeup: relight + ironout
@@ -474,7 +477,7 @@ async function processOneImage(
     if (isHero) {
       // Clean background + ghost mannequin in parallel
       const [cleanUrl, ghostUrl] = await Promise.all([
-        photoroomCleanBackground(apiKey, data, media_type).catch(makeCatch("clean")),
+        photoroomCleanBackground(apiKey, data, media_type, true).catch(makeCatch("clean")),
         photoroomGhostMannequin(apiKey, data, media_type).catch(makeCatch("ghost_mannequin")),
       ]);
       outputs = [{ label: "clean", url: cleanUrl }, { label: "ghost_mannequin", url: ghostUrl }];
@@ -485,7 +488,7 @@ async function processOneImage(
     } else {
       // Secondary: background removal + flat lay in parallel
       const [cleanUrl, flatLayUrl] = await Promise.all([
-        photoroomCleanBackground(apiKey, data, media_type).catch(makeCatch("clean")),
+        photoroomCleanBackground(apiKey, data, media_type, true).catch(makeCatch("clean")),
         photoroomFlatLay(apiKey, data, media_type).catch(makeCatch("flat_lay")),
       ]);
       outputs = [{ label: "clean", url: cleanUrl }, { label: "flat_lay", url: flatLayUrl }];
