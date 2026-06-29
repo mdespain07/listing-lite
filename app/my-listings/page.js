@@ -108,15 +108,12 @@ export default function MyListingsPage() {
           (listing.photo_urls?.length > 0 ? listing.photo_urls : listing.photo_url ? [listing.photo_url] : [])
             .map(async (url, i) => {
               const base64 = await convertUrlToBase64(url);
-              console.log('BL-DEBUG-1:', String(base64).slice(0, 100));
-              return { url: base64, index: i };
+              return base64;
             })
         );
       } catch {
         throw new Error('Could not load images for re-analysis. Please try again.');
       }
-      console.log('BL-DEBUG-2:', base64Images.length, typeof base64Images[0]?.url, String(base64Images[0]?.url).slice(0, 50));
-      console.log('BL-DEBUG-3:', String(base64Images[0]?.url).slice(0, 100));
       const res = await fetch('/api/analyze', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
