@@ -85,19 +85,40 @@ export default function MyListingsPage() {
 
   const formatDate = (ts) => new Date(ts).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 
+  function convertUrlToBase64(url) {
+    return fetch(url)
+      .then(res => res.blob())
+      .then(blob => new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = () => reject(new Error('Failed to read image'));
+        reader.readAsDataURL(blob);
+      }));
+  }
+
   async function handleCorrection(listing) {
     const correction = corrections[listing.id];
     if (!correction?.trim()) return;
     setReanalyzing(prev => ({ ...prev, [listing.id]: true }));
     setCorrectionsError(prev => ({ ...prev, [listing.id]: null }));
     try {
+      let base64Images;
+      try {
+        base64Images = await Promise.all(
+          (listing.photo_urls?.length > 0 ? listing.photo_urls : listing.photo_url ? [listing.photo_url] : [])
+            .map(async (url, i) => {
+              const base64 = await convertUrlToBase64(url);
+              return { url: base64, index: i };
+            })
+        );
+      } catch {
+        throw new Error('Could not load images for re-analysis. Please try again.');
+      }
       const res = await fetch('/api/analyze', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          images: listing.photo_urls?.length > 0
-            ? listing.photo_urls.map((url, i) => ({ url, index: i }))
-            : listing.photo_url ? [{ url: listing.photo_url, index: 0 }] : [],
+          images: base64Images,
           notes: correction.trim(),
           platforms: listing.platforms?.length > 0 ? listing.platforms : ['facebook', 'general'],
           isSet: false,
