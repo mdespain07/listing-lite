@@ -258,6 +258,18 @@ export default function AccountPage() {
           </a>
         </div>
 
+        {/* Sign out */}
+        <div style={sectionStyle}>
+          <h2 style={{ fontFamily: 'Cormorant Garamond, Georgia, serif', fontSize: 22, color: '#1A3A32', margin: '0 0 8px' }}>Sign Out</h2>
+          <p style={{ fontSize: 14, color: '#7A8F88', margin: '0 0 16px' }}>Sign out of your BrightListed account on this device.</p>
+          <button
+            onClick={async () => { await supabase.auth.signOut(); window.location.href = '/'; }}
+            style={btnStyle}
+          >
+            Sign out
+          </button>
+        </div>
+
         {/* Danger zone */}
         <div style={{ ...sectionStyle, border: '1px solid #f0c0b8' }}>
           <h2 style={{ fontFamily: 'Cormorant Garamond, Georgia, serif', fontSize: 22, color: '#c0392b', margin: '0 0 8px' }}>Delete Account</h2>

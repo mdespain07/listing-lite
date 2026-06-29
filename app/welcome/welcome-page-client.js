@@ -141,7 +141,7 @@ export default function WelcomePageClient() {
           <div className="grid grid-cols-3 divide-x divide-[#E8EDE9]">
             {[
               { stat: "30 sec", label: "Average analysis time" },
-              { stat: "35¢", label: "Or less per listing" },
+              { stat: "35¢", label: "Starting at per listing" },
               { stat: "3 free", label: "Credits when you sign up" },
             ].map(({ stat, label }) => (
               <div key={stat} className="flex flex-col items-center gap-2 px-4 sm:px-8">
@@ -173,33 +173,7 @@ export default function WelcomePageClient() {
               </a>
             </div>
             <div className="overflow-hidden rounded-[20px] border-[0.5px] border-[#E8EDE9] bg-[#F4F9F7] shadow-[0_16px_64px_rgba(26,58,50,0.10)]">
-              {/* Replace this div with an <img src="/listing-screenshot.jpg" ... /> when ready */}
-              <div className="flex aspect-[4/5] flex-col gap-0 overflow-hidden">
-                <div className="h-2 w-full bg-[#E8EDE9]" />
-                <div className="flex flex-1 flex-col gap-4 p-6">
-                  <div className="aspect-video w-full overflow-hidden rounded-[12px] bg-[#E8EDE9] flex items-center justify-center">
-                    <p className="text-sm uppercase tracking-[0.16em] text-[#7A8F88]">Listing photo</p>
-                  </div>
-                  <div className="flex flex-col gap-2">
-                    <div className="h-4 w-3/4 rounded-full bg-[#E8EDE9]" />
-                    <div className="h-4 w-1/2 rounded-full bg-[#E8EDE9]" />
-                  </div>
-                  <div className="flex flex-col gap-1.5">
-                    <div className="h-3 w-full rounded-full bg-[#F0EDE6]" />
-                    <div className="h-3 w-full rounded-full bg-[#F0EDE6]" />
-                    <div className="h-3 w-4/5 rounded-full bg-[#F0EDE6]" />
-                    <div className="h-3 w-full rounded-full bg-[#F0EDE6]" />
-                    <div className="h-3 w-2/3 rounded-full bg-[#F0EDE6]" />
-                  </div>
-                  <div className="mt-auto flex items-center justify-between">
-                    <div className="flex flex-col gap-1">
-                      <div className="h-3 w-16 rounded-full bg-[#E8EDE9]" />
-                      <div className="h-5 w-24 rounded-full bg-[#8FCFB0]/60" />
-                    </div>
-                    <div className="h-9 w-24 rounded-[10px] bg-[#2A6B52]/20" />
-                  </div>
-                </div>
-              </div>
+              <img src="/listing-photo.png" alt="Sample BrightListed listing" className="w-full h-full object-cover" />
             </div>
           </div>
         </div>
