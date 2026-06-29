@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { supabase } from '../lib/supabase';
+import { supabase } from '../../lib/supabase';
 import AccountNav from '../components/account-nav';
 
 const PLATFORMS = ['general', 'facebook', 'ebay', 'poshmark'];
