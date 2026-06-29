@@ -18,13 +18,12 @@ export default function MyListingsPage() {
   const [corrections, setCorrections] = useState({});
   const [reanalyzing, setReanalyzing] = useState({});
   const [reanalyzedResults, setReanalyzedResults] = useState({});
+  const [listingsError, setListingsError] = useState(null);
+  const [correctionsError, setCorrectionsError] = useState({});
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session?.user) {
-        setUser(session.user);
-        loadListings(session.user.id);
-      } else {
+      if (!session?.user) {
         setLoading(false);
       }
     });
@@ -45,13 +44,20 @@ export default function MyListingsPage() {
 
   async function loadListings(userId) {
     setLoading(true);
+    setListingsError(null);
     const { data, error } = await supabase
       .from('saved_listings')
       .select('*')
       .eq('user_id', userId)
       .order('created_at', { ascending: false });
 
-    if (!error) setListings(data || []);
+    if (error) {
+      console.error('Failed to load listings:', error);
+      setListingsError('Failed to load your listings. Please try again.');
+      setLoading(false);
+      return;
+    }
+    setListings(data || []);
     setLoading(false);
   }
 
@@ -83,6 +89,7 @@ export default function MyListingsPage() {
     const correction = corrections[listing.id];
     if (!correction?.trim()) return;
     setReanalyzing(prev => ({ ...prev, [listing.id]: true }));
+    setCorrectionsError(prev => ({ ...prev, [listing.id]: null }));
     try {
       const res = await fetch('/api/analyze', {
         method: 'POST',
@@ -96,18 +103,21 @@ export default function MyListingsPage() {
           isSet: false,
         }),
       });
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.error || `Request failed (${res.status})`);
+      }
       const data = await res.json();
       if (data.listings) {
         setReanalyzedResults(prev => ({ ...prev, [listing.id]: data }));
-        // Update the saved listing in Supabase with new content
-        await supabase.from('saved_listings').update({
+        const { error: updateError } = await supabase.from('saved_listings').update({
           listing_title: data.listingTitle || null,
           listing_description: data.listingDescription || null,
           listings: data.listings || null,
           recommended_first_price: data.recommendedFirstPrice || null,
           recommended_discount_price: data.recommendedDiscountPrice || null,
         }).eq('id', listing.id);
-        // Refresh listings
+        if (updateError) throw updateError;
         setListings(prev => prev.map(l => l.id === listing.id ? {
           ...l,
           listing_title: data.listingTitle,
@@ -119,6 +129,7 @@ export default function MyListingsPage() {
       }
     } catch (err) {
       console.error('Correction error:', err);
+      setCorrectionsError(prev => ({ ...prev, [listing.id]: err.message || 'Something went wrong. Please try again.' }));
     } finally {
       setReanalyzing(prev => ({ ...prev, [listing.id]: false }));
       setCorrections(prev => ({ ...prev, [listing.id]: '' }));
@@ -150,6 +161,18 @@ export default function MyListingsPage() {
 
         {loading && (
           <div style={{ textAlign: 'center', padding: '60px 0', color: '#7A8F88' }}>Loading your listings...</div>
+        )}
+
+        {listingsError && (
+          <div style={{ marginBottom: 20, backgroundColor: '#fff5f5', border: '1px solid #f0c0b8', borderRadius: 10, padding: '14px 18px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+            <p style={{ fontSize: 14, color: '#c0392b', margin: 0 }}>{listingsError}</p>
+            <button
+              onClick={() => user && loadListings(user.id)}
+              style={{ flexShrink: 0, backgroundColor: '#2A6B52', color: '#fff', border: 'none', borderRadius: 8, padding: '7px 16px', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}
+            >
+              Try again
+            </button>
+          </div>
         )}
 
         {!loading && listings.length === 0 && (
@@ -359,7 +382,10 @@ export default function MyListingsPage() {
                       </p>
                       <textarea
                         value={corrections[listing.id] || ''}
-                        onChange={e => setCorrections(prev => ({ ...prev, [listing.id]: e.target.value }))}
+                        onChange={e => {
+                          setCorrections(prev => ({ ...prev, [listing.id]: e.target.value }));
+                          setCorrectionsError(prev => ({ ...prev, [listing.id]: null }));
+                        }}
                         placeholder="e.g. Model number is MBB-800, size is 8 inch"
                         rows={3}
                         style={{
@@ -393,6 +419,9 @@ export default function MyListingsPage() {
                       >
                         {reanalyzing[listing.id] ? 'Regenerating...' : 'Regenerate listing →'}
                       </button>
+                      {correctionsError[listing.id] && (
+                        <p style={{ marginTop: 8, fontSize: 13, color: '#c0392b', margin: '8px 0 0' }}>{correctionsError[listing.id]}</p>
+                      )}
                     </div>
 
                     <div style={{ marginTop: 16, textAlign: 'right' }}>
