@@ -12,10 +12,12 @@ import { useDropzone } from "react-dropzone";
 import AuthModal from "./components/auth-modal";
 import ImageLightbox from "./components/image-lightbox";
 import { supabase } from "../lib/supabase";
+import { Camera, Sparkles, ClipboardCopy } from "lucide-react";
 
 const MAX_IMAGES = 5;
 const INITIAL_CREDITS = 3;
 const CREDITS_STORAGE_KEY = "brightlisted:credits";
+const PENDING_ANALYSIS_KEY = "bl_pending_analysis_state";
 
 /** Ensures `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` is included in the client bundle. */
 const STRIPE_PUBLISHABLE_KEY =
@@ -730,6 +732,7 @@ export default function Home() {
   const resultsSectionRef = useRef(/** @type {HTMLElement | null} */ (null));
   const prevFilesLengthRef = useRef(0);
   const lastSavedListingId = useRef(null);
+  const pendingAutoAnalyzeRef = useRef(false);
   const [listingCorrection, setListingCorrection] = useState("");
   const [correctionBusy, setCorrectionBusy] = useState(false);
   const [correctionFlash, setCorrectionFlash] = useState(false);
@@ -1035,7 +1038,40 @@ export default function Home() {
     });
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setCurrentUser(session?.user ?? null);
-      if (!session) {
+      if (session) {
+        const raw = typeof window !== "undefined" ? localStorage.getItem(PENDING_ANALYSIS_KEY) : null;
+        if (raw) {
+          try {
+            const saved = JSON.parse(raw);
+            localStorage.removeItem(PENDING_ANALYSIS_KEY);
+            if (saved.manualHeroIndex !== undefined) setManualHeroIndex(saved.manualHeroIndex);
+            if (saved.selectedPlatforms) setSelectedPlatforms(saved.selectedPlatforms);
+            if (saved.selectedPlatform) setSelectedPlatform(saved.selectedPlatform);
+            if (typeof saved.category === "string") setCategory(saved.category);
+            if (typeof saved.notes === "string") setNotes(saved.notes);
+            if (typeof saved.isSet === "boolean") setIsSet(saved.isSet);
+            if (saved.setDetails) setSetDetails(saved.setDetails);
+            if (saved.packagingIncluded) setPackagingIncluded(saved.packagingIncluded);
+            if (saved.tagsAttached) setTagsAttached(saved.tagsAttached);
+            if (saved.partsComplete) setPartsComplete(saved.partsComplete);
+            if (saved.approximateAge) setApproximateAge(saved.approximateAge);
+            if (typeof saved.smokeFreeHome === "boolean") setSmokeFreeHome(saved.smokeFreeHome);
+            if (typeof saved.petFreeHome === "boolean") setPetFreeHome(saved.petFreeHome);
+            if (Array.isArray(saved.photos) && saved.photos.length > 0) {
+              Promise.all(
+                saved.photos.map((dataUrl, i) =>
+                  fetch(dataUrl)
+                    .then((r) => r.blob())
+                    .then((blob) => new File([blob], `photo-${i + 1}.jpg`, { type: blob.type || "image/jpeg" }))
+                )
+              ).then((restoredFiles) => {
+                setFiles(restoredFiles);
+                pendingAutoAnalyzeRef.current = true;
+              }).catch(() => {});
+            }
+          } catch {}
+        }
+      } else {
         const raw = localStorage.getItem(CREDITS_STORAGE_KEY);
         const n = Number.parseInt(raw ?? "0", 10);
         setCredits(Number.isNaN(n) ? 0 : n);
@@ -1063,6 +1099,52 @@ export default function Home() {
     setShowOnboarding(false);
   };
 
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const raw = localStorage.getItem(PENDING_ANALYSIS_KEY);
+    if (!raw) return;
+    try {
+      const saved = JSON.parse(raw);
+      localStorage.removeItem(PENDING_ANALYSIS_KEY);
+      if (saved.manualHeroIndex !== undefined) setManualHeroIndex(saved.manualHeroIndex);
+      if (saved.selectedPlatforms) setSelectedPlatforms(saved.selectedPlatforms);
+      if (saved.selectedPlatform) setSelectedPlatform(saved.selectedPlatform);
+      if (typeof saved.category === "string") setCategory(saved.category);
+      if (typeof saved.notes === "string") setNotes(saved.notes);
+      if (typeof saved.isSet === "boolean") setIsSet(saved.isSet);
+      if (saved.setDetails) setSetDetails(saved.setDetails);
+      if (saved.packagingIncluded) setPackagingIncluded(saved.packagingIncluded);
+      if (saved.tagsAttached) setTagsAttached(saved.tagsAttached);
+      if (saved.partsComplete) setPartsComplete(saved.partsComplete);
+      if (saved.approximateAge) setApproximateAge(saved.approximateAge);
+      if (typeof saved.smokeFreeHome === "boolean") setSmokeFreeHome(saved.smokeFreeHome);
+      if (typeof saved.petFreeHome === "boolean") setPetFreeHome(saved.petFreeHome);
+      if (Array.isArray(saved.photos) && saved.photos.length > 0) {
+        Promise.all(
+          saved.photos.map((dataUrl, i) =>
+            fetch(dataUrl)
+              .then((r) => r.blob())
+              .then((blob) => new File([blob], `photo-${i + 1}.jpg`, { type: blob.type || "image/jpeg" }))
+          )
+        ).then((restoredFiles) => {
+          setFiles(restoredFiles);
+          supabase.auth.getSession().then(({ data: { session } }) => {
+            if (session) pendingAutoAnalyzeRef.current = true;
+          });
+        }).catch(() => {});
+      }
+    } catch {}
+  }, []);
+
+  useEffect(() => {
+    if (!pendingAutoAnalyzeRef.current) return;
+    if (!currentUser) return;
+    if (files.length === 0) return;
+    pendingAutoAnalyzeRef.current = false;
+    void handleAnalyze();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentUser, files.length]);
+
   const isDashboardMode = dashboardItemId !== null;
   const canAnalyze =
     files.length >= 1 && !analyzing && Object.values(selectedPlatforms).some(Boolean) &&
@@ -1072,6 +1154,29 @@ export default function Home() {
     if (files.length < 1) return;
     if (!isDashboardMode && credits < 1) return;
     if (!isDashboardMode && !currentUser) {
+      const baseState = {
+        manualHeroIndex,
+        selectedPlatforms,
+        selectedPlatform,
+        category,
+        notes,
+        isSet,
+        setDetails,
+        packagingIncluded,
+        tagsAttached,
+        partsComplete,
+        approximateAge,
+        smokeFreeHome,
+        petFreeHome,
+      };
+      try { localStorage.setItem(PENDING_ANALYSIS_KEY, JSON.stringify(baseState)); } catch {}
+      Promise.all(files.map((f) => compressImageFileToDataUrl(f)))
+        .then((photos) => {
+          try {
+            localStorage.setItem(PENDING_ANALYSIS_KEY, JSON.stringify({ ...baseState, photos }));
+          } catch {}
+        })
+        .catch(() => {});
       setAuthModalOpen(true);
       return;
     }
@@ -1171,6 +1276,7 @@ export default function Home() {
         ),
       };
       setResults(enrichedResults);
+      try { localStorage.removeItem(PENDING_ANALYSIS_KEY); } catch {}
       saveListingToAccount(enrichedResults);
       requestAnimationFrame(() => {
         resultsSectionRef.current?.scrollIntoView({
@@ -1241,15 +1347,11 @@ export default function Home() {
         heroIndex: (() => {
           if (manualHeroIndex !== null) return manualHeroIndex;
           if (files.length <= 1) return 0;
-          let largestIndex = 0;
-          let largestSize = 0;
+          const closeups = new Set(Array.isArray(analyzeData.closeupIndices) ? analyzeData.closeupIndices : []);
           for (let i = 0; i < files.length; i++) {
-            if (files[i].size > largestSize) {
-              largestSize = files[i].size;
-              largestIndex = i;
-            }
+            if (!closeups.has(i)) return i;
           }
-          return largestIndex;
+          return 0;
         })(),
         itemName: String(analyzeData.itemName ?? ""),
         closeupIndices: Array.isArray(analyzeData.closeupIndices) ? analyzeData.closeupIndices : [],
@@ -1380,6 +1482,7 @@ export default function Home() {
     setDashboardItemId(null);
     setListingSaved(false);
     lastSavedListingId.current = null;
+    try { localStorage.removeItem(PENDING_ANALYSIS_KEY); } catch {}
     prevFilesLengthRef.current = 0;
     window.scrollTo({ top: 0, behavior: "smooth" });
   }, []);
@@ -2734,7 +2837,7 @@ export default function Home() {
           >
             <div style={{ display: "flex", justifyContent: "center", marginBottom: 20 }}>
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/logo.svg" alt="BrightListed" style={{ width: 48, height: "auto" }} />
+              <img src="/logo.svg" alt="BrightListed" style={{ width: 72, height: "auto" }} />
             </div>
             <h2
               id="onboarding-title"
@@ -2747,14 +2850,17 @@ export default function Home() {
               Here&apos;s how it works:
             </p>
             <ol style={{ listStyle: "none", padding: 0, margin: 0, display: "flex", flexDirection: "column", gap: 12 }}>
-              <li style={{ fontSize: 15, color: "#1A3A32", lineHeight: 1.6 }}>
-                📷&nbsp;&nbsp;Upload 1–5 photos of your item
+              <li style={{ fontSize: 15, color: "#1A3A32", lineHeight: 1.6, display: "flex", alignItems: "center", gap: 10 }}>
+                <Camera size={20} color="#2A6B52" strokeWidth={1.5} />
+                Upload 1–5 photos of your item
               </li>
-              <li style={{ fontSize: 15, color: "#1A3A32", lineHeight: 1.6 }}>
-                ✨&nbsp;&nbsp;AI writes your title, description, and pricing
+              <li style={{ fontSize: 15, color: "#1A3A32", lineHeight: 1.6, display: "flex", alignItems: "center", gap: 10 }}>
+                <Sparkles size={20} color="#2A6B52" strokeWidth={1.5} />
+                AI writes your title, description, and pricing
               </li>
-              <li style={{ fontSize: 15, color: "#1A3A32", lineHeight: 1.6 }}>
-                📋&nbsp;&nbsp;Copy your listing to any platform in seconds
+              <li style={{ fontSize: 15, color: "#1A3A32", lineHeight: 1.6, display: "flex", alignItems: "center", gap: 10 }}>
+                <ClipboardCopy size={20} color="#2A6B52" strokeWidth={1.5} />
+                Copy your listing to any platform in seconds
               </li>
             </ol>
             <button

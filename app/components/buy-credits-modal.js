@@ -3,11 +3,11 @@
 import { useEffect } from 'react';
 
 const CREDIT_PACKAGES = [
-  { credits: 5,   priceUsd: 3.99,  popular: false },
-  { credits: 10,  priceUsd: 5.99,  popular: false },
-  { credits: 20,  priceUsd: 9.99,  popular: true  },
-  { credits: 50,  priceUsd: 19.99, popular: false },
-  { credits: 100, priceUsd: 34.99, popular: false },
+  { credits: 5,   priceUsd: 3.99,  perCredit: "0.80", popular: false },
+  { credits: 10,  priceUsd: 5.99,  perCredit: "0.60", popular: true  },
+  { credits: 20,  priceUsd: 9.99,  perCredit: "0.50", popular: false },
+  { credits: 50,  priceUsd: 19.99, perCredit: "0.40", popular: false },
+  { credits: 100, priceUsd: 34.99, perCredit: "0.35", popular: false },
 ];
 
 function formatUsd(n) {
@@ -94,9 +94,9 @@ export default function BuyCreditsModal({ open, onClose, onSelectCredits, busyCr
                   {pkg.popular && (
                     <span className="absolute -right-0.5 -top-0.5 rounded-bl-[10px] rounded-tr-[13px] bg-[#2A6B52] px-2.5 py-1 text-[9px] font-semibold uppercase tracking-[0.14em] text-white">Most popular</span>
                   )}
-                  <p className="font-serif text-lg font-medium text-[#1A3A32]">{pkg.credits === 1 ? '1 credit' : `${pkg.credits} credits`}</p>
+                  <p className="font-serif text-lg font-medium text-[#1A3A32]">{`${pkg.credits} credits`}</p>
                   <p className="mt-3 font-serif text-2xl font-medium tracking-tight text-[#1A3A32]">{formatUsd(pkg.priceUsd)}</p>
-                  <p className="mt-2 text-sm leading-snug text-[#4A5568]">{formatPerCredit(pkg.credits, pkg.priceUsd)} per credit</p>
+                  <p className="mt-2 text-sm leading-snug text-[#4A5568]">{'$' + pkg.perCredit} per credit</p>
                   {busy && (
                     <span className="mt-3 inline-flex min-h-11 items-center gap-2 text-xs font-semibold uppercase tracking-[0.14em] text-[#2A6B52]">
                       <Spinner className="h-4 w-4 animate-spin" /> Redirecting…
