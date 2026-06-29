@@ -181,7 +181,17 @@ export default function MyListingsPage() {
         </div>
 
         {loading && (
-          <div style={{ textAlign: 'center', padding: '60px 0', color: '#7A8F88' }}>Loading your listings...</div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+            {[0, 1, 2].map(i => (
+              <div key={i} style={{ backgroundColor: '#fff', borderRadius: 12, border: '1px solid #e0ece6', overflow: 'hidden', boxShadow: '0 2px 8px rgba(42,107,82,0.05)' }}>
+                <div className="animate-pulse" style={{ margin: '16px 20px 0', height: 200, borderRadius: 8, backgroundColor: '#E8EDE9' }} />
+                <div style={{ padding: '14px 20px 20px', display: 'flex', flexDirection: 'column', gap: 10 }}>
+                  <div className="animate-pulse" style={{ height: 18, borderRadius: 6, backgroundColor: '#E8EDE9', width: '55%' }} />
+                  <div className="animate-pulse" style={{ height: 14, borderRadius: 6, backgroundColor: '#E8EDE9', width: '30%' }} />
+                </div>
+              </div>
+            ))}
+          </div>
         )}
 
         {listingsError && (
@@ -206,7 +216,7 @@ export default function MyListingsPage() {
           </div>
         )}
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+        {!loading && <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
           {listings.map(listing => {
             const isExpanded = expandedId === listing.id;
             const availablePlatforms = getAvailablePlatforms(listing);
@@ -455,7 +465,7 @@ export default function MyListingsPage() {
               </div>
             );
           })}
-        </div>
+        </div>}
       </main>
     </div>
   );
