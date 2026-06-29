@@ -141,7 +141,7 @@ export default function WelcomePageClient() {
           <div className="grid grid-cols-3 divide-x divide-[#E8EDE9]">
             {[
               { stat: "30 sec", label: "Average analysis time" },
-              { stat: "$0.99", label: "Or less per analysis" },
+              { stat: "35¢", label: "Or less per listing" },
               { stat: "3 free", label: "Credits when you sign up" },
             ].map(({ stat, label }) => (
               <div key={stat} className="flex flex-col items-center gap-2 px-4 sm:px-8">
@@ -338,12 +338,13 @@ export default function WelcomePageClient() {
           >
             Get Started
           </a>
-          <div className="mt-12 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="mt-12 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
             {[
-              { credits: 1, price: "$0.99", per: "$0.99 per listing", popular: false },
-              { credits: 5, price: "$3.99", per: "$0.80 per listing", popular: false },
-              { credits: 15, price: "$9.99", per: "$0.67 per listing", popular: true },
-              { credits: 30, price: "$17.99", per: "$0.60 per listing", popular: false },
+              { credits: 5,   price: "$3.99",  per: "$0.80 per listing", popular: false },
+              { credits: 10,  price: "$5.99",  per: "$0.60 per listing", popular: true  },
+              { credits: 20,  price: "$9.99",  per: "$0.50 per listing", popular: false },
+              { credits: 50,  price: "$19.99", per: "$0.40 per listing", popular: false },
+              { credits: 100, price: "$34.99", per: "$0.35 per listing", popular: false },
             ].map(({ credits, price, per, popular }) => (
               <div
                 key={credits}
@@ -355,7 +356,7 @@ export default function WelcomePageClient() {
                   </span>
                 )}
                 <p className="font-serif text-xl font-medium text-[#1A3A32]">
-                  {credits === 1 ? "1 credit" : `${credits} credits`}
+                  {`${credits} credits`}
                 </p>
                 <div>
                   <p className="font-serif text-4xl font-medium tracking-tight text-[#1A3A32]">{price}</p>
