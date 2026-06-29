@@ -23,7 +23,7 @@ const ALLOWED_MEDIA_TYPES = new Set([
 ]);
 
 const STAGING_DEFAULT =
-  "Warm inviting home interior, soft natural light, cream and sage color palette, cozy lifestyle feel, item prominently featured as hero";
+  "A warm bright home interior with natural light, clean surfaces, lifestyle product photography style, professional quality";
 
 /**
  * @param {unknown} entry
@@ -122,16 +122,19 @@ function getStagingPrompt(category) {
   if (!c) return STAGING_DEFAULT;
 
   if (/\b(electronics|computer|tech|gaming)\b/.test(c)) {
-    return "Clean wooden desk surface, warm natural window light, soft bokeh background, lifestyle home office feel, item as hero, no text or logos in background";
+    return "A clean modern desk setup with soft natural light from a nearby window, light wood surface, subtle bokeh background, minimalist aesthetic, professional product photography";
   }
   if (/\b(home|garden|furniture|decor|kitchen)\b/.test(c)) {
-    return "Cozy well-lit living room corner, warm afternoon light, neutral cream and sage tones, minimalist styling, item prominently featured as hero";
+    return "A bright airy living room with warm natural light, white walls, linen textures, tastefully styled like an interior design shoot, professional product photography";
   }
   if (/\b(sport|sports|outdoors|tools|automotive)\b/.test(c)) {
-    return "Bright airy backyard patio, warm sunlight, natural greenery softly blurred in background, item as hero";
+    return "An outdoor patio or clean workshop bench with natural daylight, concrete surface, lifestyle product photography, professional quality";
   }
   if (/\b(toys?|kids?|baby)\b/.test(c)) {
-    return "Soft natural light playroom, warm white and wood tones, clean minimal background, item as hero";
+    return "A bright cheerful playroom with soft natural light, pastel tones, clean wooden floor, styled for a lifestyle brand, professional product photography";
+  }
+  if (/\b(clothing|apparel|shoes|accessories|bags|jewelry|fashion)\b/.test(c)) {
+    return "A clean retail boutique setting with soft diffused studio light, white background, clothing rack visible in soft bokeh focus, professional fashion photography";
   }
   return STAGING_DEFAULT;
 }
@@ -157,7 +160,7 @@ class PhotoroomHttpError extends Error {
  * @param {Record<string, string>} fields dotted Photoroom form keys → values
  * @returns {Promise<string>} data URL of result image
  */
-async function photoroomEdit(apiKey, base64Data, mediaType, fields) {
+async function photoroomEdit(apiKey, base64Data, mediaType, fields, extraHeaders = {}) {
   const buffer = Buffer.from(base64Data, "base64");
   const blob = new Blob([buffer], { type: mediaType });
   const form = new FormData();
@@ -171,6 +174,7 @@ async function photoroomEdit(apiKey, base64Data, mediaType, fields) {
     method: "POST",
     headers: {
       "x-api-key": apiKey,
+      ...extraHeaders,
     },
     body: form,
   });
@@ -215,6 +219,7 @@ async function photoroomCleanBackground(apiKey, base64Data, mediaType) {
       padding: "0.08",
       horizontalAlignment: "center",
       verticalAlignment: "center",
+      "shadow.mode": "ai.soft",
     });
   } catch (err) {
     if (err instanceof PhotoroomHttpError) {
@@ -245,6 +250,7 @@ async function photoroomGhostMannequin(apiKey, base64Data, mediaType) {
       "ghostMannequin.colorCorrection": "false",
       "background.color": "FFFFFF",
       padding: "0.05",
+      "shadow.mode": "ai.soft",
     });
   } catch (err) {
     if (err instanceof PhotoroomHttpError) {
@@ -274,6 +280,7 @@ async function photoroomFlatLay(apiKey, base64Data, mediaType) {
       "flatLay.mode": "ai.auto",
       "background.color": "FFFFFF",
       padding: "0.08",
+      "shadow.mode": "ai.soft",
     });
   } catch (err) {
     if (err instanceof PhotoroomHttpError) {
@@ -309,7 +316,7 @@ async function photoroomLifestyleStaging(
       padding: "0.08",
       horizontalAlignment: "center",
       verticalAlignment: "center",
-    });
+    }, { "pr-ai-background-model-version": "background-studio-beta-2025-03-17" });
   } catch (err) {
     if (err instanceof PhotoroomHttpError) {
       console.error(`Photoroom photoroomLifestyleStaging failed:`, {
@@ -334,7 +341,7 @@ async function photoroomLifestyleStaging(
 async function photoroomRelight(apiKey, base64Data, mediaType) {
   try {
     return await photoroomEdit(apiKey, base64Data, mediaType, {
-      "relight.enabled": "true",
+      "lighting.mode": "ai.preserve-hue-and-saturation",
     });
   } catch (err) {
     if (err instanceof PhotoroomHttpError) {
@@ -354,7 +361,7 @@ async function photoroomRelight(apiKey, base64Data, mediaType) {
 async function photoroomIronout(apiKey, base64Data, mediaType) {
   try {
     return await photoroomEdit(apiKey, base64Data, mediaType, {
-      "ironOut.mode": "ai.auto",
+      "ironing.mode": "ai.auto",
     });
   } catch (err) {
     if (err instanceof PhotoroomHttpError) {
@@ -374,8 +381,8 @@ async function photoroomIronout(apiKey, base64Data, mediaType) {
 async function photoroomRelightAndIronout(apiKey, base64Data, mediaType) {
   try {
     return await photoroomEdit(apiKey, base64Data, mediaType, {
-      "relight.enabled": "true",
-      "ironOut.mode": "ai.auto",
+      "lighting.mode": "ai.preserve-hue-and-saturation",
+      "ironing.mode": "ai.auto",
     });
   } catch (err) {
     if (err instanceof PhotoroomHttpError) {
@@ -470,9 +477,12 @@ async function processOneImage(
       const enhancedUrl = await photoroomRelightAndIronout(apiKey, data, media_type).catch(makeCatch("enhanced"));
       outputs = [{ label: "enhanced", url: enhancedUrl }];
     } else {
-      // Secondary: background removal
-      const cleanUrl = await photoroomCleanBackground(apiKey, data, media_type).catch(makeCatch("clean"));
-      outputs = [{ label: "clean", url: cleanUrl }];
+      // Secondary: background removal + flat lay in parallel
+      const [cleanUrl, flatLayUrl] = await Promise.all([
+        photoroomCleanBackground(apiKey, data, media_type).catch(makeCatch("clean")),
+        photoroomFlatLay(apiKey, data, media_type).catch(makeCatch("flat_lay")),
+      ]);
+      outputs = [{ label: "clean", url: cleanUrl }, { label: "flat_lay", url: flatLayUrl }];
     }
   } else {
     // ── Single non-clothing item ─────────────────────────────────────────────
