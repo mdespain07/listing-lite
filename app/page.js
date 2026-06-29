@@ -24,10 +24,11 @@ const STRIPE_PUBLISHABLE_KEY =
   process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY ?? "";
 
 const CREDIT_PACKAGES = [
-  { credits: 1, priceUsd: 0.99, popular: false },
-  { credits: 5, priceUsd: 3.99, popular: false },
-  { credits: 15, priceUsd: 9.99, popular: true },
-  { credits: 30, priceUsd: 17.99, popular: false },
+  { credits: 5,   priceUsd: 3.99,  perCredit: "0.80", popular: false },
+  { credits: 10,  priceUsd: 5.99,  perCredit: "0.60", popular: true  },
+  { credits: 20,  priceUsd: 9.99,  perCredit: "0.50", popular: false },
+  { credits: 50,  priceUsd: 19.99, perCredit: "0.40", popular: false },
+  { credits: 100, priceUsd: 34.99, perCredit: "0.35", popular: false },
 ];
 
 /** Longest edge for resized JPEG sent to APIs (mobile Safari / memory). */
