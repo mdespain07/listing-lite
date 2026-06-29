@@ -25,7 +25,11 @@ export default function AccountPage() {
   const [checkoutError, setCheckoutError] = useState(null);
 
   useEffect(() => {
-    supabase.auth.getSession().then(async ({ data: { session } }) => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (!session?.user) setLoading(false);
+    });
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
       if (session?.user) {
         setUser(session.user);
         const res = await fetch('/api/credits', {
@@ -33,12 +37,11 @@ export default function AccountPage() {
         });
         const data = await res.json();
         if (typeof data.balance === 'number') setCredits(data.balance);
+        setLoading(false);
+      } else {
+        setUser(null);
+        setLoading(false);
       }
-      setLoading(false);
-    });
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null);
     });
 
     return () => subscription.unsubscribe();
