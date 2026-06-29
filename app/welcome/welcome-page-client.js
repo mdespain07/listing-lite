@@ -195,8 +195,8 @@ export default function WelcomePageClient() {
           </div>
           <div className="mt-12 grid grid-cols-1 gap-6 sm:grid-cols-2">
             <div className="overflow-hidden rounded-[20px] border-[0.5px] border-[#E8EDE9] bg-[#FFFFFF]">
-              <div className="relative aspect-[4/3]">
-                <img src="/original-photo.png" alt="Your original photo" className="h-full w-full rounded-[20px] object-cover" />
+              <div className="relative aspect-[3/4]">
+                <img src="/original-photo.png" alt="Your original photo" className="h-full w-full rounded-[20px] object-cover object-center" />
                 <div className="absolute top-4 left-4 rounded-full bg-[#F0EDE6] border border-[#E8EDE9] px-3 py-1">
                   <p className="text-sm font-semibold uppercase tracking-[0.16em] text-[#7A8F88]">Before</p>
                 </div>
@@ -207,8 +207,8 @@ export default function WelcomePageClient() {
               </div>
             </div>
             <div className="overflow-hidden rounded-[20px] border-[0.5px] border-[#8FCFB0]/60 bg-[#FFFFFF] shadow-[0_8px_40px_rgba(42,107,82,0.12)]">
-              <div className="relative aspect-[4/3]">
-                <img src="/sales-photo.png" alt="Sales-ready image" className="h-full w-full rounded-[20px] object-cover" />
+              <div className="relative aspect-[3/4]">
+                <img src="/sales-photo.png" alt="Sales-ready image" className="h-full w-full rounded-[20px] object-cover object-center" />
                 <div className="absolute top-4 left-4 rounded-full bg-[#2A6B52] px-3 py-1">
                   <p className="text-sm font-semibold uppercase tracking-[0.16em] text-white">After</p>
                 </div>
