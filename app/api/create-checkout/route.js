@@ -3,10 +3,11 @@ import Stripe from "stripe";
 
 /** @type {ReadonlyMap<number, { amount: number; productName: string }>} */
 const PACKAGES = new Map([
-  [1, { amount: 99, productName: "BrightListed — 1 Credit" }],
-  [5, { amount: 399, productName: "BrightListed — 5 Credits" }],
-  [15, { amount: 999, productName: "BrightListed — 15 Credits" }],
-  [30, { amount: 1799, productName: "BrightListed — 30 Credits" }],
+  [5,   { amount: 399,  productName: "BrightListed — 5 Credits"   }],
+  [10,  { amount: 599,  productName: "BrightListed — 10 Credits"  }],
+  [20,  { amount: 999,  productName: "BrightListed — 20 Credits"  }],
+  [50,  { amount: 1999, productName: "BrightListed — 50 Credits"  }],
+  [100, { amount: 3499, productName: "BrightListed — 100 Credits" }],
 ]);
 
 /**
