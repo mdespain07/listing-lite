@@ -25,8 +25,8 @@ const STRIPE_PUBLISHABLE_KEY =
 
 const CREDIT_PACKAGES = [
   { credits: 5,   priceUsd: 3.99,  perCredit: "0.80", popular: false },
-  { credits: 10,  priceUsd: 5.99,  perCredit: "0.60", popular: true  },
-  { credits: 20,  priceUsd: 9.99,  perCredit: "0.50", popular: false },
+  { credits: 10,  priceUsd: 5.99,  perCredit: "0.60", popular: false },
+  { credits: 20,  priceUsd: 9.99,  perCredit: "0.50", popular: true  },
   { credits: 50,  priceUsd: 19.99, perCredit: "0.40", popular: false },
   { credits: 100, priceUsd: 34.99, perCredit: "0.35", popular: false },
 ];

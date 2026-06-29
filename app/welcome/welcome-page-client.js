@@ -195,39 +195,27 @@ export default function WelcomePageClient() {
           </div>
           <div className="mt-12 grid grid-cols-1 gap-6 sm:grid-cols-2">
             <div className="overflow-hidden rounded-[20px] border-[0.5px] border-[#E8EDE9] bg-[#FFFFFF]">
-              <div className="relative flex aspect-[4/3] items-center justify-center bg-[#F0EDE6]">
-                <div className="flex flex-col items-center gap-4 text-center px-8">
-                  <div className="flex h-20 w-20 items-center justify-center rounded-full border-2 border-dashed border-[#C5D4CC]">
-                    <svg className="h-9 w-9 text-[#7A8F88]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5zm10.5-11.25h.008v.008h-.008V8.25zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
-                    </svg>
-                  </div>
-                  <div>
-                    <p className="text-lg font-medium text-[#4A5568]">Your original photo</p>
-                    <p className="mt-1 text-base text-[#7A8F88]">Cluttered background · mixed lighting · messy background</p>
-                  </div>
-                </div>
+              <div className="relative aspect-[4/3]">
+                <img src="/original-photo.png" alt="Your original photo" className="h-full w-full rounded-[20px] object-cover" />
                 <div className="absolute top-4 left-4 rounded-full bg-[#F0EDE6] border border-[#E8EDE9] px-3 py-1">
                   <p className="text-sm font-semibold uppercase tracking-[0.16em] text-[#7A8F88]">Before</p>
                 </div>
               </div>
+              <div className="px-6 py-5">
+                <p className="text-lg font-medium text-[#4A5568]">Your original photo</p>
+                <p className="mt-1 text-base text-[#7A8F88]">Cluttered background · mixed lighting · messy background</p>
+              </div>
             </div>
             <div className="overflow-hidden rounded-[20px] border-[0.5px] border-[#8FCFB0]/60 bg-[#FFFFFF] shadow-[0_8px_40px_rgba(42,107,82,0.12)]">
-              <div className="relative flex aspect-[4/3] items-center justify-center bg-gradient-to-br from-[#F4F9F7] via-[#E8F5EE] to-[#F4F9F7]">
-                <div className="flex flex-col items-center gap-4 text-center px-8">
-                  <div className="flex h-20 w-20 items-center justify-center rounded-full bg-[#2A6B52]/15 border border-[#8FCFB0]/40">
-                    <svg className="h-9 w-9 text-[#2A6B52]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z" />
-                    </svg>
-                  </div>
-                  <div>
-                    <p className="text-lg font-semibold text-[#2A6B52]">Sales-ready image</p>
-                    <p className="mt-1 text-base text-[#4A5568]">Clean background · professional presentation</p>
-                  </div>
-                </div>
+              <div className="relative aspect-[4/3]">
+                <img src="/sales-photo.png" alt="Sales-ready image" className="h-full w-full rounded-[20px] object-cover" />
                 <div className="absolute top-4 left-4 rounded-full bg-[#2A6B52] px-3 py-1">
                   <p className="text-sm font-semibold uppercase tracking-[0.16em] text-white">After</p>
                 </div>
+              </div>
+              <div className="px-6 py-5">
+                <p className="text-lg font-semibold text-[#2A6B52]">Sales-ready image</p>
+                <p className="mt-1 text-base text-[#4A5568]">Clean background · professional presentation</p>
               </div>
             </div>
           </div>
@@ -315,8 +303,8 @@ export default function WelcomePageClient() {
           <div className="mt-12 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
             {[
               { credits: 5,   price: "$3.99",  per: "$0.80 per listing", popular: false },
-              { credits: 10,  price: "$5.99",  per: "$0.60 per listing", popular: true  },
-              { credits: 20,  price: "$9.99",  per: "$0.50 per listing", popular: false },
+              { credits: 10,  price: "$5.99",  per: "$0.60 per listing", popular: false },
+              { credits: 20,  price: "$9.99",  per: "$0.50 per listing", popular: true  },
               { credits: 50,  price: "$19.99", per: "$0.40 per listing", popular: false },
               { credits: 100, price: "$34.99", per: "$0.35 per listing", popular: false },
             ].map(({ credits, price, per, popular }) => (

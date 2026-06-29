@@ -102,11 +102,11 @@ function isClothing(category, itemName) {
   const n = String(itemName ?? "").trim().toLowerCase();
 
   const clothingCategoryPattern =
-    /\b(clothing|apparel|shoes|accessories|bags|jewelry|fashion)\b/;
+    /\b(clothing|apparel|shoes|accessories|bags|jewelry|fashion|athletic|sport|activewear|sportswear|outerwear|footwear|swimwear|workwear|dancewear|uniform)\b/;
   if (clothingCategoryPattern.test(c)) return true;
 
   const clothingItemPattern =
-    /\b(dress|shirt|pants|jeans|jacket|coat|blouse|skirt|shorts|sweater|hoodie|cardigan|vest|suit|blazer|leggings|tights|socks|shoe|boot|sneaker|sandal|bag|purse|handbag|scarf|hat|belt|top|tee|tunic|romper|jumpsuit|swimsuit|bikini|underwear|bra|lingerie|pajama|robe|gown|kimono|poncho|cape|trench|parka|fleece|denim|chino|trouser|legging|stocking)\b/;
+    /\b(dress|shirt|pants|jeans|jacket|coat|blouse|skirt|shorts|sweater|hoodie|cardigan|vest|suit|blazer|leggings|tights|socks|shoe|boot|sneaker|sandal|bag|purse|handbag|scarf|hat|belt|top|tee|tunic|romper|jumpsuit|swimsuit|bikini|underwear|bra|lingerie|pajama|robe|gown|kimono|poncho|cape|trench|parka|fleece|denim|chino|trouser|legging|stocking|jersey|polo|turtleneck|sweatshirt|sweatpants|tracksuit|joggers|windbreaker|anorak|raincoat|overcoat|bodysuit|unitard|leotard|tank|camisole|halter|crop|pullover|quarter-zip|zip-up|henley|flannel|chambray|linen|uniform|kit|glove|mitten|beanie|cap|snapback|visor|cleat|loafer|mule|wedge|heel|flat|slipper|flip-flop|thong|wristband|headband|bralette|boxer|brief|swimwear|rashguard|wetsuit|compression|puffer|peacoat|duffle|shawl|wrap|coverup|cover-up|caftan|muumuu|sundress|maxi|midi|mini|pinafore|overalls|dungarees|cargo|chaps|kilt|sarong|dashiki|kurta|sari|obi|yukata)\b/;
   if (clothingItemPattern.test(n)) return true;
 
   return false;
